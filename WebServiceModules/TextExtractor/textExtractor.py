@@ -180,7 +180,7 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': 'Module is ready.'}).
     """
-    return jsonify({"status": "OK", "message": "Module is ready."})
+    return jsonify({"status": "OK", "message": ""})
 
 
 if __name__ == '__main__':
