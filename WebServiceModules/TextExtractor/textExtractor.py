@@ -1,6 +1,7 @@
 import argparse
 
-import docx2txt
+from docx import Document
+import spacy
 import ufal.udpipe as ud
 from conllu import parse
 from flask import Flask, request, jsonify
@@ -67,6 +68,102 @@ def format_none_value(value):
     return "_" if value is None else str(value)
 
 
+def udpipe_token_to_conllup(text, token_list):
+    """
+      Convert a list of tokens to CONLL-U formatted text.
+
+      Parameters:
+          text (str): The original input text from which the tokens were extracted.
+          token_list (list): A list of token dictionaries.
+
+      Returns:
+          str: The CONLL-U formatted text representing the list of tokens.
+
+      Note:
+          The `token_list` parameter should be a list of dictionaries, where each dictionary represents a token and its
+          associated metadata. The function converts this list of tokens to CONLL-U format, where each line corresponds to
+          a token, and the columns represent the token attributes (ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL,
+          DEPS, MISC, START, END, NER)."""
+
+    conllup_text = ""
+    start_offset = 0
+    for sentence in token_list:
+        for token in sentence:
+            end_offset = start_offset + text[start_offset:].find(token["form"]) + len(token["form"]) - 1
+            start_offset += text[start_offset:].find(token["form"])
+
+            token_info = [
+                str(token["id"]),
+                token["form"],
+                token["lemma"],
+                format_none_value(token["upos"]),
+                format_none_value(token["xpos"]),
+                dict_to_string(token["feats"]),
+                format_none_value(str(token["head"])),
+                format_none_value(token["deprel"]),
+                format_none_value(token["deps"]),
+                dict_to_string(token["misc"]),
+                str(start_offset),
+                str(end_offset),
+                "_",  # NER
+            ]
+            conllup_text += "\t".join(token_info) + "\n"
+            start_offset = end_offset
+
+        conllup_text += "\n"
+
+    return conllup_text
+
+
+def spacy_token_to_conllup(text):
+    """
+     Convert a spaCy document to CONLL-U formatted text.
+
+     Parameters:
+         text (spacy.tokens.doc.Doc): The spaCy document object to be converted.
+
+     Returns:
+         str: The CONLL-U formatted text representing the spaCy document.
+
+     Note:
+         The `text` parameter should be a spaCy document object. The function converts the spaCy document to CONLL-U
+         format, where each line corresponds to a token, and the columns represent the token attributes (ID, FORM, LEMMA,
+         UPOS, XPOS, FEATS, HEAD, DEPREL, DEPS, MISC, START, END, NER)."""
+
+    conllup_text = ""
+    token_id = 1
+    for sentence in text.sents:
+        for token in sentence:
+            if token.is_space:
+                continue
+            start_offset = token.idx
+            end_offset = token.idx + len(token.text)-1
+            # Get the token's attributes
+            token_info = [
+                str(token_id),
+                token.text,
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                "_",
+                str(start_offset),
+                str(end_offset),
+                "_",
+            ]
+            token_id += 1
+            conllup_text += "\t".join(token_info) + "\n"
+
+        # Add a new line after each sentence
+        conllup_text += "\n"
+        # Reset token_id for each new sentence
+        token_id = 1
+
+    return conllup_text
+
+
 def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_files=False):
     """
     Convert a .docx file to CONLL-U formatted text.
@@ -79,49 +176,29 @@ def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_fi
 
     Returns:
         str: The path of the output_file after processing (if run_analysis is False) or the CONLL-U formatted text.
-    """
-    text = docx2txt.process(docx_file)
 
-    conllup_text = ""
+    Raises:
+        Exception: If an error occurs while processing text with UDPipe (when run_analysis is True).
+
+    Note:
+        The `run_analysis` parameter determines whether to perform text analysis using UDPipe or spaCy. If `run_analysis`
+        is True, UDPipe is used for tokenization; otherwise, spaCy is used.
+    """
+    text = Document(docx_file)
+
     if run_analysis:
         # Process the text using UDPipe
         token_list, error = process_text_with_udpipe(model, text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
+        conllup_text = udpipe_token_to_conllup(text, token_list)
+    else:
+        nlp = spacy.load("ro_core_news_sm")
+        conllup_text = spacy_token_to_conllup(nlp(text))
 
-        # Convert the TokenList object to CONLL-U formatted string
-        start_offset = 0
-        for sentence in token_list:
-            for token in sentence:
-                end_offset = start_offset + text[start_offset:].find(token["form"]) + len(token["form"]) - 1
-                start_offset += text[start_offset:].find(token["form"])
-
-                token_info = [
-                    str(token["id"]),
-                    token["form"],
-                    token["lemma"],
-                    format_none_value(token["upos"]),
-                    format_none_value(token["xpos"]),
-                    dict_to_string(token["feats"]),
-                    format_none_value(str(token["head"])),
-                    format_none_value(token["deprel"]),
-                    format_none_value(token["deps"]),
-                    dict_to_string(token["misc"]),
-                    str(start_offset),
-                    str(end_offset),
-                    "_",  # NER
-                ]
-                conllup_text += "\t".join(token_info) + "\n"
-
-                # Move the start offset to the end of the token and any spaces after it
-                start_offset = end_offset
-
-            conllup_text += "\n"
-
-    if save_internal_files and run_analysis:
-        # Save the CONLL-U formatted text to the output file
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(conllup_text)
+    # Save the CONLL-U formatted text to the output file
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(conllup_text)
     return output_file
 
 
@@ -161,8 +238,10 @@ def convert_docx_to_conllu():
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
+    if not allowed_file(input_file):
+        return jsonify({"status": "ERROR", "message": "Invalid file format."})
 
-    if input_file and allowed_file(input_file):
+    if input_file:
         try:
             docx_to_conllup(input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
             return jsonify({"status": "OK", "message": output_file})
@@ -178,7 +257,7 @@ def check_health():
     Endpoint to check the health/readiness of the module.
 
     Returns:
-        JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': 'Module is ready.'}).
+        JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
     return jsonify({"status": "OK", "message": ""})
 
