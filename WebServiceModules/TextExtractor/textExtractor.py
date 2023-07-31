@@ -13,16 +13,15 @@ def process_text_with_udpipe(udpipe_model, text):
     Process the input 'text' using UDPipe.
 
     Parameters:
-        udpipe_model (str): The path to the UDPipe model file.
+        udpipe_model (str): The instance of UDPipe model.
         text (str): The text to be processed.
 
     Returns:
         tuple: A tuple containing the parsed token list and any potential error message (None if successful).
     """
-    model = ud.Model.load(udpipe_model)
 
     # Create an UDPipe pipeline
-    pipeline = ud.Pipeline(model, 'tokenizer', 'horizontal', 'conllu', ud.Pipeline.DEFAULT)
+    pipeline = ud.Pipeline(udpipe_model, 'tokenizer', 'horizontal', 'conllu', ud.Pipeline.DEFAULT)
 
     # Process the text
     if not text:
@@ -86,8 +85,7 @@ def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_fi
     conllup_text = ""
     if run_analysis:
         # Process the text using UDPipe
-        udpipe_model_path = "../lib/romanian-rrt-ud-2.5-191206.ud"  # Replace with the actual path to the UDPipe model
-        token_list, error = process_text_with_udpipe(udpipe_model_path, text)
+        token_list, error = process_text_with_udpipe(model, text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
 
@@ -191,6 +189,10 @@ if __name__ == '__main__':
     parser.add_argument('--RUN_ANALYSIS', '-r', action='store_true', help='Y to run text analysis using UDPIPE')
     parser.add_argument('--SAVE_INTERNAL_FILES', '-s', action='store_true',
                         help='Y to save internal files, useful for debugging')
+    parser.add_argument("udpipe_model_path", type=str, help="Path to the UDPipe model file.")
+
     args = parser.parse_args()
+
+    model = ud.Model.load(args.udpipe_model_path)
 
     app.run(debug=True, port=args.PORT)
