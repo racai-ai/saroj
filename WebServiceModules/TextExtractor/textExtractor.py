@@ -160,16 +160,16 @@ def convert_docx_to_conllu():
     output_file = data["output"]
 
     if input_file == '':
-        return jsonify({"status": "ERROR", "message": "No file selected."}), 400
+        return jsonify({"status": "ERROR", "message": "No file selected."})
 
     if input_file and allowed_file(input_file):
         try:
             docx_to_conllup(input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
-            return jsonify({"status": "OK", "message": output_file}), 200
+            return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
-            return jsonify({"status": "ERROR", "message": str(e)}), 500
+            return jsonify({"status": "ERROR", "message": str(e)})
 
-    return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."}), 400
+    return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})
 
 
 @app.route('/checkHealth', methods=['GET'])
