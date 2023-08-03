@@ -1,14 +1,13 @@
 import argparse
-import os
 import re
-import shutil
-import xml.etree.ElementTree as ET
 import zipfile
 
 import spacy
 import ufal.udpipe as ud
 from conllu import parse
 from flask import Flask, request, jsonify
+
+from XMLParser import XMLParserWithPosition
 
 app = Flask(__name__)
 
@@ -106,46 +105,26 @@ def udpipe_token_to_conllup(token_list, words):
 
     conllup_text = ""
     words_id = 0
-    cursor_acc = 0
-    acc = ""
     for sentence in token_list:
         for token in sentence:
             acc_count = 0
-            cursor = 0
-            word_reconstructed = ""
-            while word_reconstructed != token["form"] and words_id < len(words):
-
-                if token["form"] in words[words_id][0][cursor:]:
-                    cursor += words[words_id][0].find(token["form"])
-                    start_offset = words[words_id][1] + cursor
-                    end_offset = start_offset + len(token["form"])
-                    word_reconstructed = words[words_id][0][cursor:cursor + len(token["form"])]
-
-                    if cursor + len(token["form"]) > len(words[words_id][0]):
-                        cursor = 0
-                    cursor_acc = 0
-                    acc = ""
-                    continue
+            acc = ""
+            while words_id < len(words):
+                if token["form"] in words[words_id][0]:
+                    start_offset = words[words_id][1]
+                    end_offset = words[words_id][2]
+                    break
                 else:
                     acc += words[words_id][0]
-                    if bool(re.search(r"\b" + re.escape(token["form"]), acc[cursor_acc:],
-                                      flags=re.UNICODE)) or is_followed_by_punctuation(token["form"], acc[cursor_acc:]):
-                        cursor_acc += acc[cursor_acc:].find(token["form"])
-                        start_offset = words[words_id - acc_count][1] + words[words_id - acc_count][0].rfind(" ") + 1
-                        end_offset = words[words_id][1] + words[words_id][0].find(" ")
-                        word_reconstructed = acc[cursor_acc:cursor_acc + len(token["form"])]
-                        cursor_acc += len(token["form"])
-
-                        if cursor_acc + len(token["form"]) >= len(acc):
-                            cursor_acc = 0
-                            acc = ""
-                        continue
-
+                    if token["form"] in acc:
+                        start_offset = words[words_id - acc_count + 1][1]
+                        end_offset = words[words_id][2]
+                        break
+                    acc_count += 1
                 words_id += 1
-                acc_count += 1
-
+            words_id += 1
             if end_offset < start_offset:
-                print("End position is smaller than start position " + token["form"])
+                raise Exception("End position is smaller than start position for token " + token["form"])
 
             token_info = [
                 str(token["id"]),
@@ -187,46 +166,26 @@ def spacy_token_to_conllup(text, words):
     conllup_text = ""
     token_id = 1
     words_id = 0
-    cursor_acc = 0
-    acc = ""
     for sentence in text.sents:
         for token in sentence:
             acc_count = 0
-            cursor = 0
-            word_reconstructed = ""
-            while word_reconstructed != token.text and words_id < len(words):
-
-                if token.text in words[words_id][0][cursor:]:
-                    cursor += words[words_id][0].find(token.text)
-                    start_offset = words[words_id][1] + cursor
-                    end_offset = start_offset + len(token.text)
-                    word_reconstructed = words[words_id][0][cursor:cursor + len(token.text)]
-
-                    if cursor + len(token.text) > len(words[words_id][0]):
-                        cursor = 0
-                    cursor_acc = 0
-                    acc = ""
-                    continue
+            acc = ""
+            while words_id < len(words):
+                if token.text in words[words_id][0]:
+                    start_offset = words[words_id][1]
+                    end_offset = words[words_id][2]
+                    break
                 else:
                     acc += words[words_id][0]
-                    if bool(re.search(r"\b" + re.escape(token.text), acc[cursor_acc:],
-                                      flags=re.UNICODE)) or is_followed_by_punctuation(token.text, acc[cursor_acc:]):
-                        cursor_acc += acc[cursor_acc:].find(token.text)
-                        start_offset = words[words_id - acc_count][1] + words[words_id - acc_count][0].rfind(" ") + 1
-                        end_offset = words[words_id][1] + words[words_id][0].find(" ")
-                        word_reconstructed = acc[cursor_acc:cursor_acc + len(token.text)]
-                        cursor_acc += len(token.text)
-
-                        if cursor_acc + len(token.text) >= len(acc):
-                            cursor_acc = 0
-                            acc = ""
-                        continue
-
+                    if token.text in acc:
+                        start_offset = words[words_id - acc_count + 1][1]
+                        end_offset = words[words_id][2]
+                        break
+                    acc_count += 1
                 words_id += 1
-                acc_count += 1
-
+            words_id += 1
             if end_offset < start_offset:
-                print("End position is smaller than start position " + token.text)
+                raise Exception("End position is smaller than start position token " + token.text)
             # Get the token's attributes
             token_info = [
                 str(token_id),
@@ -254,35 +213,28 @@ def spacy_token_to_conllup(text, words):
 
 
 def get_words_with_positions(docx_file):
-    words = []
+    """
+    Extracts words with their positions from the 'document.xml' file inside a DOCX file.
 
-    # Unzip the DOCX file to a temporary folder
-    temp_folder = "temp"
-    os.makedirs(temp_folder, exist_ok=True)
+    Parameters:
+        docx_file (str): The path to the DOCX file from which to extract words.
+
+    Returns:
+        list: A list of tuples, each containing the tag name, attributes, and position of the word.
+              The format of the tuples is: (tag_name, attributes, position).
+
+    Raises:
+        FileNotFoundError: If the specified DOCX file does not exist.
+        zipfile.BadZipFile: If the specified file is not a valid ZIP archive.
+        KeyError: If the 'document.xml' file is not found within the DOCX archive.
+    """
+    XMLparser = XMLParserWithPosition()
     with zipfile.ZipFile(docx_file, 'r') as zip_ref:
-        zip_ref.extractall(temp_folder)
+        with zip_ref.open("word/document.xml") as xml_file:
+            for line in xml_file:
+                XMLparser.parser.Parse(line)
 
-    # Load the "document.xml" file
-    xml_file = os.path.join(temp_folder, "word", "document.xml")
-    with open(xml_file, 'r', encoding="utf-8") as xml:
-        xml_content = xml.read()
-
-    # Parse the XML content and find all text elements in paragraphs
-    root = ET.fromstring(xml_content)
-    current_position = 0
-    for paragraph in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
-        for run in paragraph.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r'):
-            text = "".join(text_element.text if text_element.text else "" for text_element in
-                           run.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t'))
-            if text:
-                start_index = xml_content.find(text, current_position)
-                words.append((text, start_index, len(text)))
-                current_position = start_index + len(text)
-
-    # Clean up the temporary folder and its contents
-    shutil.rmtree(temp_folder)
-
-    return words
+    return XMLparser.words
 
 
 def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_files=False):
@@ -320,7 +272,9 @@ def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_fi
         conllup_text = udpipe_token_to_conllup(token_list, words)
     else:
         nlp = spacy.load("ro_core_news_sm")
-        conllup_text = spacy_token_to_conllup(nlp(text), words)
+        # Remove non-breaking spaces
+        processed_text = text.replace("\u00A0", " ")
+        conllup_text = spacy_token_to_conllup(nlp(processed_text), words)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:
