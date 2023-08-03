@@ -1,21 +1,17 @@
-import argparse
 import zipfile
 
 import spacy
 import ufal.udpipe as ud
 from conllu import parse
-from flask import Flask, request, jsonify
 
-from XMLParser import XMLParserWithPosition
-
-app = Flask(__name__)
+from textExtractor_XMLParser import XMLParserWithPosition
 
 
 def process_text_with_udpipe(udpipe_model, text):
     """
     Process the input 'text' using UDPipe.
 
-    Parameters:
+    Args:
         udpipe_model (str): The instance of UDPipe model.
         text (str): The text to be processed.
 
@@ -44,7 +40,7 @@ def dict_to_string(d):
     """
     Convert a dictionary to a string representation.
 
-    Parameters:
+    Args:
         d (dict): The dictionary to be converted.
 
     Returns:
@@ -61,7 +57,7 @@ def format_none_value(value):
     """
     Convert None values to underscores to conform to the CONLL-U format.
 
-    Parameters:
+    Args:
         value: The value to be converted.
 
     Returns:
@@ -72,20 +68,21 @@ def format_none_value(value):
 
 def udpipe_token_to_conllup(token_list, words):
     """
-      Convert a list of tokens to CONLL-U formatted text.
+    Convert a list of tokens to CONLL-U formatted text.
 
-      Parameters:
-          token_list (list): A list of token dictionaries.
-          words (list): A list of tuples containing the words and their offsets in the original text.
+    Args:
+        token_list (list): A list of token dictionaries.
+        words (list): A list of tuples containing the words and their offsets in the original text.
 
-      Returns:
-          str: The CONLL-U formatted text representing the list of tokens.
+    Returns:
+        str: The CONLL-U formatted text representing the list of tokens.
 
-      Note:
-          The `token_list` parameter should be a list of dictionaries, where each dictionary represents a token and its
-          associated metadata. The function converts this list of tokens to CONLL-U format, where each line corresponds to
-          a token, and the columns represent the token attributes (ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL,
-          DEPS, MISC, START, END, NER)."""
+    Note:
+        The `token_list` parameter should be a list of dictionaries, where each dictionary represents a token and its
+        associated metadata. The function converts this list of tokens to CONLL-U format, where each line corresponds to
+        a token, and the columns represent the token attributes (ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL,
+        DEPS, MISC, START, END, NER).
+    """
 
     conllup_text = ""
     words_id = 0
@@ -136,7 +133,7 @@ def spacy_token_to_conllup(text, words):
     """
      Convert a spaCy document to CONLL-U formatted text.
 
-      Parameters:
+    Args:
         text (spacy.tokens.Doc): The SpaCy `Doc` object representing the processed text.
         words (list): A list of tuples containing word forms and their corresponding start and end offsets.
 
@@ -214,7 +211,7 @@ def get_words_with_positions(docx_file):
     """
     Extracts words with their positions from the 'document.xml' file inside a DOCX file.
 
-    Parameters:
+    Args:
         docx_file (str): The path to the DOCX file from which to extract words.
 
     Returns:
@@ -235,11 +232,11 @@ def get_words_with_positions(docx_file):
     return XMLparser.words
 
 
-def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_files=False):
+def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_internal_files=False):
     """
     Convert a .docx file to CONLL-U formatted text.
 
-    Parameters:
+    Args:
         docx_file (str): The path to the input .docx file.
         output_file (str): The path where the CONLL-U formatted text will be saved.
         run_analysis (bool, optional): Whether to run text analysis using UDPipe. Default is False.
@@ -284,7 +281,7 @@ def allowed_file(filename):
     """
     Check if the given filename has a valid extension.
 
-    Parameters:
+    Args:
         filename (str): The name of the file to be checked.
 
     Returns:
@@ -293,63 +290,3 @@ def allowed_file(filename):
     allowed_extensions = {'docx'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
-
-
-@app.route('/process', methods=['POST'])
-def convert_docx_to_conllu():
-    """
-    Route to handle file upload and conversion from .docx to CONLL-U.
-
-    Expects a JSON object with "input" and "output" keys containing file paths.
-
-    Returns:
-        JSON: A response containing status and message (e.g., {'status': 'OK', 'message': 'output_file.conllup'}).
-    """
-    data = request.get_json()
-    if data is None or "input" not in data or "output" not in data:
-        return jsonify({"status": "ERROR",
-                        "message": "Invalid input format. Expected: {'input': '/path/to/file.docx', 'output': "
-                                   "'/path/to/file.conllup'}"})
-
-    input_file = data["input"]
-    output_file = data["output"]
-
-    if input_file == '':
-        return jsonify({"status": "ERROR", "message": "No file selected."})
-    if not allowed_file(input_file):
-        return jsonify({"status": "ERROR", "message": "Invalid file format."})
-
-    if input_file:
-        try:
-            docx_to_conllup(input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
-            return jsonify({"status": "OK", "message": output_file})
-        except Exception as e:
-            return jsonify({"status": "ERROR", "message": str(e)})
-
-    return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})
-
-
-@app.route('/checkHealth', methods=['GET'])
-def check_health():
-    """
-    Endpoint to check the health/readiness of the module.
-
-    Returns:
-        JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
-    """
-    return jsonify({"status": "OK", "message": ""})
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('PORT', type=int, help='port to listen for requests')
-    parser.add_argument('--RUN_ANALYSIS', '-r', action='store_true', help='Y to run text analysis using UDPIPE')
-    parser.add_argument('--SAVE_INTERNAL_FILES', '-s', action='store_true',
-                        help='Y to save internal files, useful for debugging')
-    parser.add_argument("udpipe_model_path", type=str, help="Path to the UDPipe model file.")
-
-    args = parser.parse_args()
-
-    model = ud.Model.load(args.udpipe_model_path)
-
-    app.run(debug=True, port=args.PORT)
