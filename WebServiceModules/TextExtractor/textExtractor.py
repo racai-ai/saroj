@@ -1,5 +1,4 @@
 import argparse
-import re
 import zipfile
 
 import spacy
@@ -56,21 +55,6 @@ def dict_to_string(d):
         return "|".join([f"{key}={value}" for key, value in d.items()])
     else:
         return "_"
-
-
-def is_followed_by_punctuation(token, text):
-    """ Check if a token is followed by punctuation or space in the text."""
-    # Escape the token for use in the regex pattern
-    escaped_token = re.escape(token)
-
-    # List of punctuation characters to check for
-    punctuation_characters = r" .,;:!?()[]{}'\""
-
-    # Construct the regex pattern with positive lookahead for the punctuation characters
-    pattern = r"{0}(?=[{1}])".format(escaped_token, re.escape(punctuation_characters))
-
-    # Check if the pattern is found in the text
-    return bool(re.search(pattern, text))
 
 
 def format_none_value(value):
@@ -152,16 +136,30 @@ def spacy_token_to_conllup(text, words):
     """
      Convert a spaCy document to CONLL-U formatted text.
 
-     Parameters:
-         text (spacy.tokens.doc.Doc): The spaCy document object to be converted.
+      Parameters:
+        text (spacy.tokens.Doc): The SpaCy `Doc` object representing the processed text.
+        words (list): A list of tuples containing word forms and their corresponding start and end offsets.
 
-     Returns:
-         str: The CONLL-U formatted text representing the spaCy document.
+    Returns:
+        str: The CONLL-U formatted text representing the processed `text`.
 
-     Note:
-         The `text` parameter should be a spaCy document object. The function converts the spaCy document to CONLL-U
-         format, where each line corresponds to a token, and the columns represent the token attributes (ID, FORM, LEMMA,
-         UPOS, XPOS, FEATS, HEAD, DEPREL, DEPS, MISC, START, END, NER)."""
+    Raises:
+        Exception: If the end position is smaller than the start position for any token.
+
+    The function takes a SpaCy `Doc` object and a list of word forms with their start and end offsets as input.
+    It converts the content of the `Doc` object into CONLL-U format, which is a common format for representing
+    syntactic annotations of natural language sentences.
+
+    For each token in the `Doc`, the function searches for the corresponding word in the `words` list using its text.
+    It finds the start and end offsets for the token based on the `words` list.
+    The function then generates the CONLL-U lines for each token by assigning token attributes such as token ID, form,
+    start offset, and end offset, while other attributes are left as placeholders with "_".
+
+    If any token's end position is smaller than its start position, an Exception is raised, indicating an error in the
+    word offsets.
+
+    The function returns the CONLL-U formatted text as a string.
+    """
 
     conllup_text = ""
     token_id = 1
