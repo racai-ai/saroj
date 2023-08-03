@@ -259,7 +259,7 @@ def docx_to_conllup(docx_file, output_file, run_analysis=False, save_internal_fi
     text = "".join(str(word[0]) for word in words)
     if save_internal_files:
         with open("words.te1", "w", encoding="utf-8") as f:
-            word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | Length: {word[2]}\n" for word in words]
+            word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
             f.writelines(word_lines)
 
     if run_analysis:
