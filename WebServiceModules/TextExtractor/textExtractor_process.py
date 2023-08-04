@@ -1,3 +1,4 @@
+import os
 import zipfile
 
 import spacy
@@ -254,8 +255,9 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
     """
     words = get_words_with_positions(docx_file)
     text = "".join(str(word[0]) for word in words)
+    filename, _ = os.path.splitext(output_file)
     if save_internal_files:
-        with open("words.te1", "w", encoding="utf-8") as f:
+        with open(filename + ".te1", "w", encoding="utf-8") as f:
             word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
             f.writelines(word_lines)
 
@@ -266,6 +268,7 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
             raise Exception("Error occurred while processing text with UDPipe.")
         conllup_text = udpipe_token_to_conllup(token_list, words)
     else:
+        # Process the text using spaCy
         nlp = spacy.load("ro_core_news_sm")
         # Remove non-breaking spaces
         processed_text = text.replace("\u00A0", " ")
