@@ -89,7 +89,7 @@ def udpipe_token_to_conllup(token_list, words):
     words_id = 0
     for sentence in token_list:
         for token in sentence:
-            acc_count = 0
+            acc_count = 1
             acc = ""
             while words_id < len(words):
                 if token["form"] in words[words_id][0]:
@@ -102,6 +102,9 @@ def udpipe_token_to_conllup(token_list, words):
                         start_offset = words[words_id - acc_count + 1][1]
                         end_offset = words[words_id][2]
                         break
+                    elif acc.startswith(" ") or len(acc) == 0:
+                        acc_count -= 1
+                        acc = acc.strip()
                     acc_count += 1
                 words_id += 1
             words_id += 1
@@ -164,7 +167,7 @@ def spacy_token_to_conllup(text, words):
     words_id = 0
     for sentence in text.sents:
         for token in sentence:
-            acc_count = 0
+            acc_count = 1
             acc = ""
             while words_id < len(words):
                 if token.text in words[words_id][0]:
@@ -177,6 +180,9 @@ def spacy_token_to_conllup(text, words):
                         start_offset = words[words_id - acc_count + 1][1]
                         end_offset = words[words_id][2]
                         break
+                    elif acc.startswith(" ") or len(acc) == 0:
+                        acc_count -= 1
+                        acc = acc.strip()
                     acc_count += 1
                 words_id += 1
             words_id += 1
