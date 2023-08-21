@@ -1,7 +1,7 @@
 import argparse
+import json
 
 import ufal.udpipe as ud
-import json
 from flask import Flask, request, jsonify
 
 from textExtractor_process import docx_to_conllup, allowed_file
@@ -9,7 +9,7 @@ from textExtractor_process import docx_to_conllup, allowed_file
 app = Flask(__name__)
 
 
-@app.route('/process', methods=['POST','GET'])
+@app.route('/process', methods=['POST', 'GET'])
 def convert_docx_to_conllu():
     """
     Route to handle file upload and conversion from .docx to CONLL-U.
@@ -19,6 +19,9 @@ def convert_docx_to_conllu():
     Returns:
         JSON: A response containing status and message (e.g., {'status': 'OK', 'message': 'output_file.conllup'}).
     """
+    if args.RUN_ANALYSIS and model is None:
+        return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
+
     if "input" not in request.values:
         return jsonify({"status": "ERROR",
                         "message": "Missing input parameter"})
@@ -27,8 +30,6 @@ def convert_docx_to_conllu():
     except json.JSONDecodeError:
         return jsonify({"status": "ERROR",
                         "message": "Invalid JSON provided in the input parameter"})
-        
-    #data = request.get_json(silent=True)
     if data is None or "input" not in data or "output" not in data:
         return jsonify({"status": "ERROR",
                         "message": "Invalid input format. Expected: {'input': '/path/to/file.docx', 'output': "
@@ -60,6 +61,9 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
+    if args.RUN_ANALYSIS and model is None:
+        return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
+
     return jsonify({"status": "OK", "message": ""})
 
 
@@ -72,7 +76,6 @@ if __name__ == '__main__':
     parser.add_argument("--udpipe_model", type=str, help="Path to the UDPipe model file.")
 
     args = parser.parse_args()
-
     model = ud.Model.load(args.udpipe_model) if args.udpipe_model else None
 
     app.run(debug=True, port=args.PORT)
