@@ -18,7 +18,7 @@ def convert_docx_to_conllu():
     Returns:
         JSON: A response containing status and message (e.g., {'status': 'OK', 'message': 'output_file.conllup'}).
     """
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if data is None or "input" not in data or "output" not in data:
         return jsonify({"status": "ERROR",
                         "message": "Invalid input format. Expected: {'input': '/path/to/file.docx', 'output': "
