@@ -3,6 +3,7 @@ import json
 
 import ufal.udpipe as ud
 from flask import Flask, request, jsonify
+import spacy
 
 from textExtractor_process import docx_to_conllup, allowed_file
 
@@ -19,7 +20,7 @@ def convert_docx_to_conllu():
     Returns:
         JSON: A response containing status and message (e.g., {'status': 'OK', 'message': 'output_file.conllup'}).
     """
-    if args.RUN_ANALYSIS and model is None:
+    if args.RUN_ANALYSIS and token_model is None:
         return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
 
     if "input" not in request.values:
@@ -45,7 +46,7 @@ def convert_docx_to_conllu():
 
     if input_file:
         try:
-            docx_to_conllup(model, input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
+            docx_to_conllup(token_model, input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
             return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})
@@ -61,7 +62,7 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
-    if args.RUN_ANALYSIS and model is None:
+    if args.RUN_ANALYSIS and token_model is None:
         return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
 
     return jsonify({"status": "OK", "message": ""})
@@ -77,6 +78,12 @@ if __name__ == '__main__':
     parser.add_argument("--udpipe_model", type=str, help="Path to the UDPipe model file.")
 
     args = parser.parse_args()
-    model = ud.Model.load(args.udpipe_model) if args.udpipe_model else None
+
+    token_model = None
+    if args.udpipe_model:
+        token_model = ud.Model.load(args.udpipe_model)
+
+    if not args.RUN_ANALYSIS:
+        token_model = spacy.load("ro_core_news_sm")
 
     app.run(debug=True, port=args.PORT)

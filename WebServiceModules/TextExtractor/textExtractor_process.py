@@ -1,7 +1,6 @@
 import os
 import zipfile
 
-import spacy
 import ufal.udpipe as ud
 from conllu import parse
 
@@ -244,6 +243,8 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
     Convert a .docx file to CONLL-U formatted text.
 
     Args:
+        model(str/spacy): The path to the UDPipe model to use for text analysis if `run_analysis` is True or
+                     spacy model if `run_analysis` is False.
         docx_file (str): The path to the input .docx file.
         output_file (str): The path where the CONLL-U formatted text will be saved.
         run_analysis (bool, optional): Whether to run text analysis using UDPipe. Default is False.
@@ -274,11 +275,9 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
             raise Exception("Error occurred while processing text with UDPipe.")
         conllup_text = udpipe_token_to_conllup(token_list, words)
     else:
-        # Process the text using spaCy
-        nlp = spacy.load("ro_core_news_sm")
         # Remove non-breaking spaces
         processed_text = text.replace("\u00A0", " ")
-        conllup_text = spacy_token_to_conllup(nlp(processed_text), words)
+        conllup_text = spacy_token_to_conllup(model(processed_text), words)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:
