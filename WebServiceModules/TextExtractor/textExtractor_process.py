@@ -166,6 +166,8 @@ def spacy_token_to_conllup(text, words):
     words_id = 0
     for sentence in text.sents:
         for token in sentence:
+            if len(str(token).strip()) == 0:
+                continue
             acc_count = 1
             acc = ""
             while words_id < len(words):
