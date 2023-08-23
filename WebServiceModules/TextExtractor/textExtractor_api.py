@@ -4,6 +4,7 @@ import json
 import ufal.udpipe as ud
 from flask import Flask, request, jsonify
 import spacy
+import gunicorn.app.base
 
 from textExtractor_process import docx_to_conllup, allowed_file
 
@@ -68,6 +69,22 @@ def check_health():
     return jsonify({"status": "OK", "message": ""})
 
 
+class StandaloneApplication(gunicorn.app.base.BaseApplication):
+
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super().__init__()
+
+    def load_config(self):
+        config = {key: value for key, value in self.options.items()
+                  if key in self.cfg.settings and value is not None}
+        for key, value in config.items():
+            self.cfg.set(key.lower(), value)
+
+    def load(self):
+        return self.application
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('PORT', type=int, help='port to listen for requests')
@@ -86,4 +103,9 @@ if __name__ == '__main__':
     if not args.RUN_ANALYSIS:
         token_model = spacy.load("ro_core_news_sm")
 
-    app.run(debug=True, port=args.PORT)
+    options = {
+        'bind': '%s:%s' % ('127.0.0.1', args.PORT),
+        'workers': 1,
+    }
+    StandaloneApplication(app, options).run()
+    #app.run(debug=True, port=args.PORT)
