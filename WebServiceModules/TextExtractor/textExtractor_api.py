@@ -4,9 +4,14 @@ import json
 import ufal.udpipe as ud
 from flask import Flask, request, jsonify
 import spacy
-import gunicorn.app.base
 
 from textExtractor_process import docx_to_conllup, allowed_file
+
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from lib.saroj.gunicorn import StandaloneApplication
+from lib.saroj.inputdata import getInputData
 
 app = Flask(__name__)
 
@@ -24,18 +29,8 @@ def convert_docx_to_conllu():
     if args.RUN_ANALYSIS and token_model is None:
         return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
 
-    if "input" not in request.values:
-        return jsonify({"status": "ERROR",
-                        "message": "Missing input parameter"})
-    try:
-        data = json.loads(request.values["input"])
-    except json.JSONDecodeError:
-        return jsonify({"status": "ERROR",
-                        "message": "Invalid JSON provided in the input parameter"})
-    if data is None or "input" not in data or "output" not in data:
-        return jsonify({"status": "ERROR",
-                        "message": "Invalid input format. Expected: {'input': '/path/to/file.docx', 'output': "
-                                   "'/path/to/file.conllup'}"})
+    status, data, error = getInputData(["input","output"])
+    if not status: return error
 
     input_file = data["input"]
     output_file = data["output"]
@@ -55,7 +50,7 @@ def convert_docx_to_conllu():
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})
 
 
-@app.route('/checkHealth', methods=['GET'])
+@app.route('/checkHealth', methods=['GET','POST'])
 def check_health():
     """
     Endpoint to check the health/readiness of the module.
@@ -68,22 +63,6 @@ def check_health():
 
     return jsonify({"status": "OK", "message": ""})
 
-
-class StandaloneApplication(gunicorn.app.base.BaseApplication):
-
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super().__init__()
-
-    def load_config(self):
-        config = {key: value for key, value in self.options.items()
-                  if key in self.cfg.settings and value is not None}
-        for key, value in config.items():
-            self.cfg.set(key.lower(), value)
-
-    def load(self):
-        return self.application
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
