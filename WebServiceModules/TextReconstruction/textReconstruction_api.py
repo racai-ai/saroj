@@ -137,9 +137,6 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
-    if args.RUN_ANALYSIS and token_model is None:
-        return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
-
     return jsonify({"status": "OK", "message": ""})
 
 
