@@ -56,7 +56,7 @@ def read_conllup(conllup_file):
     return conllup_data
 
 
-def anonymize_docx(conllup_list, input_path, output_path):
+def anonymize(conllup_list, input_path, output_path):
     # Create a unique temporary file to extract the DOCX content
     temp_file_path = tempfile.mkdtemp(dir='.')
     delta_t = 0
@@ -94,18 +94,19 @@ def anonymize_docx(conllup_list, input_path, output_path):
 
     finally:
         # Clean up the temporary directory
-        shutil.rmtree(temp_file_path, ignore_errors=True)
+        if not args.SAVE_INTERNAL_FILES:
+            shutil.rmtree(temp_file_path, ignore_errors=True)
 
 
 @app.route('/process', methods=['POST', 'GET'])
-def convert_docx_to_conllu():
+def anonymize_docx():
     """
-    Route to handle file upload and conversion from .docx to CONLL-U.
+    Route to handle file upload and anonymization from .docx to CONLLUP.
 
-    Expects a JSON object with "input" and "output" keys containing file paths.
+    Expects a JSON object with "input", "output" and "original" keys containing file paths.
 
     Returns:
-        JSON: A response containing status and message (e.g., {'status': 'OK', 'message': 'output_file.conllup'}).
+        JSON: A response containing status and message (e.g., {'status': 'OK', 'message': ''}).
     """
 
     status, data, error = get_input_data(["input", "output"])
@@ -121,7 +122,7 @@ def convert_docx_to_conllu():
     if input_file:
         try:
             conllup_data = read_conllup(input_file)
-            anonymize_docx(conllup_data, original_docx_path, output_docx_path)
+            anonymize(conllup_data, original_docx_path, output_docx_path)
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})
