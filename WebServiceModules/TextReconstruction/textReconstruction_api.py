@@ -26,7 +26,7 @@ def read_conllup(conllup_file):
                 continue
 
             # Split the line into fields
-            fields = [token.strip() for token in re.split(r'[  \t]+', line) if token.strip()]
+            fields = [token.strip() for token in re.split(r'(\t|  {2})', line) if token.strip()]
 
             # Ensure that the line contains at least 14 fields (assuming NER and ANONYMIZED are present)
             if len(fields) < 14:
