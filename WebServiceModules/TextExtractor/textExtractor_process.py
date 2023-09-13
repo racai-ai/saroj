@@ -191,18 +191,19 @@ def spacy_token_to_conllup(text, words):
                 raise Exception("End position is smaller than start position token " + token.text)
             # Get the token's attributes
             token_info = [
-                str(token_id),
-                token.text,
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                "_",
-                str(start_offset),
-                str(end_offset),
-                "_",
+                str(token_id),      # ID
+                token.text,         # FORM
+                "_",                # LEMMA
+                "_",                # UPOS
+                "_",                # XPOS
+                "_",                # FEATS
+                "_",                # HEAD
+                "_",                # DEPREL
+                "_",                # DEPS
+                "_",                # MISC
+                str(start_offset),  # START
+                str(end_offset),    # END
+                "_",                # NER
             ]
             token_id += 1
             conllup_text += "\t".join(token_info) + "\n"
