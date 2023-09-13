@@ -85,7 +85,7 @@ def anonymize(conllup_list, input_path, output_path):
             content_file.write(docx_content)
 
         # Recreate the modified DOCX file
-        with zipfile.ZipFile(output_path, "w") as new_zip_ref:
+        with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=-1) as new_zip_ref:
             for root, _, files in os.walk(temp_file_path):
                 for file in files:
                     file_path = os.path.join(root, file)
