@@ -109,7 +109,7 @@ def anonymize_docx():
         JSON: A response containing status and message (e.g., {'status': 'OK', 'message': ''}).
     """
 
-    status, data, error = get_input_data(["input", "output"])
+    status, data, error = get_input_data(["input", "output", "original"])
     if not status: return error
 
     input_file = data["input"]
