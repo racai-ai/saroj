@@ -1,8 +1,7 @@
 import argparse
-import json
 
 import ufal.udpipe as ud
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import spacy
 
 from textExtractor_process import docx_to_conllup, allowed_file
@@ -11,7 +10,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.gunicorn import StandaloneApplication
-from lib.saroj.inputdata import getInputData
+from lib.saroj.input_data import get_input_data
 
 app = Flask(__name__)
 
@@ -29,7 +28,7 @@ def convert_docx_to_conllu():
     if args.RUN_ANALYSIS and token_model is None:
         return jsonify({"status": "ERROR", "message": "UDPipe model not loaded."})
 
-    status, data, error = getInputData(["input","output"])
+    status, data, error = get_input_data(["input","output"])
     if not status: return error
 
     input_file = data["input"]
