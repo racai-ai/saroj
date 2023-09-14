@@ -73,7 +73,8 @@ csm_regex = {
                         [Bb]lv|
                         [Bb]-dul|
                         [Nn][Rr]
-                    )(?:\.\s*|\s+)|
+                    )(?:\.\s*|\s+)
+                    |
                     (?:
                         [Jj]ude[țtţ](?:ul)?|
                         [Mm]unicipiul?|

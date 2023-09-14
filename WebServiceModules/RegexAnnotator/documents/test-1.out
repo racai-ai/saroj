@@ -1,0 +1,255 @@
+# generator = UDPipe 2, https://lindat.mff.cuni.cz/services/udpipe
+# udpipe_model = romanian-rrt-ud-2.12-230717
+# udpipe_model_licence = CC BY-NC-SA
+# newdoc
+# newpar
+# sent_id = 1
+# text = Cod ECLI ECLI:RO:TBMHD:2013:013.000013 DOSAR NR.
+1	Cod	cod	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	0	root	_	TokenRange=0:3
+2	ECLI	ECLI	NOUN	Yn	_	1	nmod	_	SpacesAfter=\s\s\s\s|TokenRange=4:8
+3	ECLI:RO:TBMHD:2013:013.000013	ecli:ro:tbmhd:2013:013.000013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	4	nummod	_	SpacesAfter=\r\n|TokenRange=12:41
+4	DOSAR	DOSAR	NOUN	Np	_	1	nmod	_	TokenRange=43:48
+5	NR.	număr	NOUN	Yn	Abbr=Yes	4	flat	_	SpacesAfter=\s\s\s|TokenRange=49:52
+
+# sent_id = 2
+# text = 1.313/113/2013
+1	1.313/113/2013	1.313/113/2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	0	nummod	_	SpacesAfter=\r\n\r\n\r\n|TokenRange=55:69
+
+# newpar
+# sent_id = 3
+# text = S T A R T R E K TRIBUNALUL DEEPSPACE9 SECŢIA II CIVILĂ SENTINŢA NR.
+1	S	S	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	9	nmod	_	TokenRange=75:76
+2	T	T	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	1	nmod	_	TokenRange=77:78
+3	A	A	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	2	nmod	_	TokenRange=79:80
+4	R	R	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	2	nmod	_	SpacesAfter=\s\s|TokenRange=81:82
+5	T	T	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	2	nmod	_	TokenRange=84:85
+6	R	R	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	4	nmod	_	TokenRange=86:87
+7	E	fi	AUX	Ncms-n	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	9	cop	_	TokenRange=88:89
+8	K	K	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	9	nmod	_	SpacesAfter=\r\n|TokenRange=90:91
+9	TRIBUNALUL	tribunal	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	0	root	_	TokenRange=93:103
+10	DEEPSPACE9	DEEPSPACE9	NOUN	Np	_	9	nmod	_	SpacesAfter=\r\n|TokenRange=104:114
+11	SECŢIA	secţie	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	9	nmod	_	TokenRange=116:122
+12	II	doi	NUM	Mo-s-r	Number=Sing|NumForm=Roman|NumType=Ord	11	nummod	_	TokenRange=123:125
+13	CIVILĂ	civil	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	14	amod	_	SpacesAfter=\r\n|TokenRange=126:132
+14	SENTINŢA	SENTINŢA	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	11	nmod	_	TokenRange=134:142
+15	NR.	număr	NOUN	Yn	Abbr=Yes	14	nmod	_	TokenRange=143:146
+
+# sent_id = 4
+# text = 13/2023 Şedinţa publică de la 29 Februarie 2013 Completul compus din: Preşedinte: Dr. Jean-Luc Picard Grefier: Deanna Troi
+1	13/2023	13/2023	NUM	Mc-p-d	Number=Plur|NumForm=Digit|NumType=Card	13	parataxis	_	SpacesAfter=\r\n|TokenRange=147:154
+2	Şedinţa	şedinţă	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	0	root	_	TokenRange=156:163
+3	publică	public	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	2	amod	_	TokenRange=164:171
+4	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	7	case	_	TokenRange=172:174
+5	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	4	fixed	_	TokenRange=175:177
+6	29	29	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	7	nummod	_	TokenRange=178:180
+7	Februarie	februarie	NOUN	Ncm--n	Definite=Ind|Gender=Masc	2	nmod	_	TokenRange=181:190
+8	2013	2013	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	7	nummod	_	SpacesAfter=\r\n|TokenRange=191:195
+9	Completul	complet	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	2	nmod	_	TokenRange=197:206
+10	compus	compune	VERB	Vmp--sm	Gender=Masc|Number=Sing|VerbForm=Part	9	acl	_	TokenRange=207:213
+11	din	din	ADP	Spsa	AdpType=Prep|Case=Acc	13	case	_	SpaceAfter=No|TokenRange=214:217
+12	:	:	PUNCT	COLON	_	13	punct	_	SpacesAfter=\r\n|TokenRange=217:218
+13	Preşedinte	preşedinte	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	10	obl	_	SpaceAfter=No|TokenRange=220:230
+14	:	:	PUNCT	COLON	_	15	punct	_	TokenRange=230:231
+15	Dr.	doctor	NOUN	Yn	Abbr=Yes	13	appos	_	TokenRange=232:235
+16	Jean-Luc	Jean-luc	PROPN	Np	_	15	nmod	_	TokenRange=236:244
+17	Picard	Picard	PROPN	Np	_	16	flat	_	SpacesAfter=\r\n|TokenRange=245:251
+18	Grefier	Grefier	PROPN	Np	_	16	flat	_	SpaceAfter=No|TokenRange=253:260
+19	:	:	PUNCT	COLON	_	20	punct	_	TokenRange=260:261
+20	Deanna	Deanna	PROPN	Np	_	15	appos	_	TokenRange=262:268
+21	Troi	Troi	PROPN	Np	_	20	flat	_	SpacesAfter=\r\n\r\n|TokenRange=269:273
+
+# newpar
+# sent_id = 5
+# text = StarTrek TNG a fost cel mai bun serial S.F. din istorie.
+1	StarTrek	Startrek	PROPN	Np	_	8	nsubj	_	TokenRange=277:285
+2	TNG	TNG	PROPN	Np	_	1	flat	_	TokenRange=286:289
+3	a	avea	AUX	Va--3s	Number=Sing|Person=3	8	aux	_	TokenRange=290:291
+4	fost	fi	AUX	Vap--sm	Gender=Masc|Number=Sing|VerbForm=Part	8	cop	_	TokenRange=292:296
+5	cel	cel	DET	Tdmsr	Case=Acc,Nom|Gender=Masc|Number=Sing|PronType=Dem	7	det	_	TokenRange=297:300
+6	mai	mai	ADV	Rp	_	7	advmod	_	TokenRange=301:304
+7	bun	bun	ADJ	Afpms-n	Definite=Ind|Degree=Pos|Gender=Masc|Number=Sing	8	amod	_	TokenRange=305:308
+8	serial	serial	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	0	root	_	TokenRange=309:315
+9	S.F.	S.F.	NOUN	Yn	Abbr=Yes	8	nmod	_	TokenRange=316:320
+10	din	din	ADP	Spsa	AdpType=Prep|Case=Acc	11	case	_	TokenRange=321:324
+11	istorie	istorie	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	8	nmod	_	SpaceAfter=No|TokenRange=325:332
+12	.	.	PUNCT	PERIOD	_	8	punct	_	SpacesAfter=\r\n\r\n|TokenRange=332:333
+
+# newpar
+# sent_id = 6
+# text = PENTRU ACESTE MOTIVE, ÎN NUMELE LEGII
+1	PENTRU	pentru	ADP	Spsa	AdpType=Prep|Case=Acc	7	case	_	TokenRange=337:343
+2	ACESTE	acest	DET	Dd3fpr---e	Case=Acc,Nom|Gender=Fem|Number=Plur|Person=3|Position=Prenom|PronType=Dem	7	det	_	TokenRange=344:350
+3	MOTIVE	motiv	NOUN	Ncfp-n	Definite=Ind|Gender=Fem|Number=Plur	6	nmod	_	SpaceAfter=No|TokenRange=351:357
+4	,	,	PUNCT	COMMA	_	7	punct	_	SpacesAfter=\r\n|TokenRange=357:358
+5	ÎN	în	ADP	Spsa	AdpType=Prep|Case=Acc	7	case	_	TokenRange=360:362
+6	NUMELE	nume	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	0	root	_	TokenRange=363:369
+7	LEGII	LEGII	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	6	nmod	_	SpacesAfter=\r\n\r\n|TokenRange=370:375
+
+# newpar
+# sent_id = 7
+# text = DECIDE:
+1	DECIDE	decide	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	SpaceAfter=No|TokenRange=379:385
+2	:	:	PUNCT	COLON	_	1	punct	_	SpacesAfter=\r\n\r\n|TokenRange=385:386
+
+# newpar
+# sent_id = 8
+# text = Respinge cererea de chemare în judecată formulată de reclamantul Mersiașu P.
+1	Respinge	respinge	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	TokenRange=390:398
+2	cererea	cerere	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	1	obj	_	TokenRange=399:406
+3	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	4	case	_	TokenRange=407:409
+4	chemare	chemare	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	2	nmod	_	TokenRange=410:417
+5	în	în	ADP	Spsa	AdpType=Prep|Case=Acc	6	case	_	TokenRange=418:420
+6	judecată	judecată	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	2	nmod	_	TokenRange=421:429
+7	formulată	formula	VERB	Vmp--sf	Gender=Fem|Number=Sing|VerbForm=Part	6	acl	_	TokenRange=430:439
+8	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	9	case	_	TokenRange=440:442
+9	reclamantul	reclamant	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	7	obl:agent	_	TokenRange=443:454
+10	Mersiașu	Mersiașu	PROPN	Np	_	9	nmod	_	TokenRange=455:463
+11	P.	P.	NOUN	Yn	Abbr=Yes	10	flat	_	TokenRange=464:466
+
+# sent_id = 9
+# text = Vasilică, având CNP 1550611123456, cu domiciliul în comuna Babaciu, sat Sus pe Vârf, judeţul Bihor, în contradictoriu cu pârâtul Rahan Mihai, cu domiciliul în oraș Constanța, Bd. Tache cel Mare, nr. 1, bl. A1, sc. B, et. 10, ap. 11, judeţul Constanța, ca neîntemeiată.
+1	Vasilică	Vasilică	PROPN	Np	_	0	root	_	SpaceAfter=No|TokenRange=467:475
+2	,	,	PUNCT	COMMA	_	3	punct	_	TokenRange=475:476
+3	având	avea	VERB	Vmg	VerbForm=Ger	1	acl	_	TokenRange=477:482
+4	CNP	CNP	PROPN	Np	_	3	obj	_	TokenRange=483:486
+5	1550611123456	1550611123456	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	4	nummod	_	SpaceAfter=No|TokenRange=487:500
+6	,	,	PUNCT	COMMA	_	8	punct	_	TokenRange=500:501
+7	cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	8	case	_	TokenRange=502:504
+8	domiciliul	domiciliu	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	3	obl	_	TokenRange=505:515
+9	în	în	ADP	Spsa	AdpType=Prep|Case=Acc	10	case	_	TokenRange=516:518
+10	comuna	comună	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	8	nmod	_	TokenRange=519:525
+11	Babaciu	Babaciu	PROPN	Np	_	10	nmod	_	SpaceAfter=No|TokenRange=526:533
+12	,	,	PUNCT	COMMA	_	13	punct	_	TokenRange=533:534
+13	sat	sat	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	11	appos	_	TokenRange=535:538
+14	Sus	sus	ADV	Rgp	Degree=Pos	13	advmod	_	TokenRange=539:542
+15	pe	pe	ADP	Spsa	AdpType=Prep|Case=Acc	16	case	_	TokenRange=543:545
+16	Vârf	Vârf	PROPN	Np	_	13	nmod	_	SpaceAfter=No|TokenRange=546:550
+17	,	,	PUNCT	COMMA	_	18	punct	_	TokenRange=550:551
+18	judeţul	judeţ	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	10	appos	_	TokenRange=552:559
+19	Bihor	Bihor	PROPN	Np	_	18	nmod	_	SpaceAfter=No|TokenRange=560:565
+20	,	,	PUNCT	COMMA	_	22	punct	_	TokenRange=565:566
+21	în	în	ADP	Spsa	AdpType=Prep|Case=Acc	22	case	_	TokenRange=567:569
+22	contradictoriu	contradictoriu	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	3	obl	_	TokenRange=570:584
+23	cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	24	case	_	TokenRange=585:587
+24	pârâtul	pârât	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	22	nmod	_	TokenRange=588:595
+25	Rahan	Rahan	PROPN	Np	_	24	nmod	_	TokenRange=596:601
+26	Mihai	Mihai	PROPN	Np	_	25	flat	_	SpaceAfter=No|TokenRange=602:607
+27	,	,	PUNCT	COMMA	_	29	punct	_	TokenRange=607:608
+28	cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	29	case	_	TokenRange=609:611
+29	domiciliul	domiciliu	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	24	nmod	_	TokenRange=612:622
+30	în	în	ADP	Spsa	AdpType=Prep|Case=Acc	31	case	_	TokenRange=623:625
+31	oraș	oraș	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	29	nmod	_	TokenRange=626:630
+32	Constanța	Constanța	PROPN	Np	_	31	nmod	_	SpaceAfter=No|TokenRange=631:640
+33	,	,	PUNCT	COMMA	_	34	punct	_	TokenRange=640:641
+34	Bd.	bulevard	NOUN	Yn	Abbr=Yes	24	appos	_	TokenRange=642:645
+35	Tache	Tache	PROPN	Np	_	34	nmod	_	TokenRange=646:651
+36	cel	acela	PRON	Pd3msr	Case=Acc,Nom|Gender=Masc|Number=Sing|Person=3|PronType=Dem	37	det	_	TokenRange=652:655
+37	Mare	mare	ADJ	Afp-s-n	Definite=Ind|Degree=Pos|Number=Sing	35	flat	_	SpaceAfter=No|TokenRange=656:660
+38	,	,	PUNCT	COMMA	_	34	punct	_	TokenRange=660:661
+39	nr.	număr	NOUN	Yn	Abbr=Yes	34	nmod	_	TokenRange=662:665
+40	1	1	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	39	nummod	_	SpaceAfter=No|TokenRange=666:667
+41	,	,	PUNCT	COMMA	_	42	punct	_	TokenRange=667:668
+42	bl.	bl.	NOUN	Yn	Abbr=Yes	39	nmod	_	TokenRange=669:672
+43	A1	A1	PROPN	Np	_	42	nmod	_	SpaceAfter=No|TokenRange=673:675
+44	,	,	PUNCT	COMMA	_	45	punct	_	TokenRange=675:676
+45	sc.	sc.	NOUN	Yn	Abbr=Yes	39	conj	_	TokenRange=677:680
+46	B	B	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	45	nmod	_	SpaceAfter=No|TokenRange=681:682
+47	,	,	PUNCT	COMMA	_	48	punct	_	TokenRange=682:683
+48	et.	et.	NOUN	Yn	Abbr=Yes	39	conj	_	TokenRange=684:687
+49	10	10	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	48	nummod	_	SpaceAfter=No|TokenRange=688:690
+50	,	,	PUNCT	COMMA	_	51	punct	_	TokenRange=690:691
+51	ap	ap	NOUN	Yn	Abbr=Yes	39	conj	_	SpaceAfter=No|TokenRange=692:694
+52	.	.	PUNCT	PERIOD	_	51	punct	_	TokenRange=694:695
+53	11	11	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	51	nummod	_	SpaceAfter=No|TokenRange=696:698
+54	,	,	PUNCT	COMMA	_	55	punct	_	TokenRange=698:699
+55	judeţul	judeţ	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	39	conj	_	TokenRange=700:707
+56	Constanța	Constanța	PROPN	Np	_	55	nmod	_	SpaceAfter=No|TokenRange=708:717
+57	,	,	PUNCT	COMMA	_	59	punct	_	TokenRange=717:718
+58	ca	ca	ADP	Spsa	AdpType=Prep|Case=Acc	59	case	_	TokenRange=719:721
+59	neîntemeiată	neîntemeiat	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	55	amod	_	SpaceAfter=No|TokenRange=722:734
+60	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\r\n\r\n|TokenRange=734:735
+
+# newpar
+# sent_id = 10
+# text = Cu apel, în termen de 30 de zile de la comunicare, cale de atac ce se va depune la Tribunalul StarTrek, sub sancţiunea nulităţii.
+1	Cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	2	case	_	TokenRange=739:741
+2	apel	apel	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	14	nmod	_	SpaceAfter=No|TokenRange=742:746
+3	,	,	PUNCT	COMMA	_	2	punct	_	TokenRange=746:747
+4	în	în	ADP	Spsa	AdpType=Prep|Case=Acc	5	case	_	TokenRange=748:750
+5	termen	termen	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	14	nmod	_	TokenRange=751:757
+6	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	9	case	_	TokenRange=758:760
+7	30	30	NUM	Mc-s-d	Number=Sing|NumForm=Digit|NumType=Card	9	nummod	_	TokenRange=761:763
+8	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	7	case	_	TokenRange=764:766
+9	zile	zi	NOUN	Ncfp-n	Definite=Ind|Gender=Fem|Number=Plur	5	nmod	_	TokenRange=767:771
+10	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	12	case	_	TokenRange=772:774
+11	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	10	fixed	_	TokenRange=775:777
+12	comunicare	comunicare	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	9	nmod	_	SpaceAfter=No|TokenRange=778:788
+13	,	,	PUNCT	COMMA	_	5	punct	_	TokenRange=788:789
+14	cale	cale	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	0	root	_	TokenRange=790:794
+15	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	16	case	_	TokenRange=795:797
+16	atac	atac	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	14	nmod	_	TokenRange=798:802
+17	ce	ce	PRON	Pw3--r	Case=Acc,Nom|Person=3|PronType=Int,Rel	20	nsubj:pass	_	TokenRange=803:805
+18	se	sine	PRON	Px3--a--------w	Case=Acc|Person=3|PronType=Prs|Reflex=Yes|Strength=Weak	20	expl:pass	_	TokenRange=806:808
+19	va	vrea	AUX	Va--3s	Number=Sing|Person=3	20	aux	_	TokenRange=809:811
+20	depune	depune	VERB	Vmnp	Tense=Pres|VerbForm=Inf	14	acl	_	TokenRange=812:818
+21	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	22	case	_	TokenRange=819:821
+22	Tribunalul	tribunal	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	20	obl	_	TokenRange=822:832
+23	StarTrek	Startrek	PROPN	Np	_	22	nmod	_	SpaceAfter=No|TokenRange=833:841
+24	,	,	PUNCT	COMMA	_	26	punct	_	TokenRange=841:842
+25	sub	sub	ADP	Spsa	AdpType=Prep|Case=Acc	26	case	_	TokenRange=843:846
+26	sancţiunea	sancţiune	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	20	obl	_	TokenRange=847:857
+27	nulităţii	nulitate	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	26	nmod	_	SpaceAfter=No|TokenRange=858:867
+28	.	.	PUNCT	PERIOD	_	14	punct	_	SpacesAfter=\r\n\r\n|TokenRange=867:868
+
+# newpar
+# sent_id = 11
+# text = Pronunţată azi, 29.02.2013, prin punerea soluţiei la dispoziţia părţilor prin mijlocirea grefei instanţei.
+1	Pronunţată	pronunţat	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	0	root	_	TokenRange=872:882
+2	azi	azi	ADV	Rgp	Degree=Pos	1	advmod	_	SpaceAfter=No|TokenRange=883:886
+3	,	,	PUNCT	COMMA	_	4	punct	_	TokenRange=886:887
+4	29.02.2013	29.02.2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	1	nummod	_	SpaceAfter=No|TokenRange=888:898
+5	,	,	PUNCT	COMMA	_	7	punct	_	TokenRange=898:899
+6	prin	prin	ADP	Spsa	AdpType=Prep|Case=Acc	7	case	_	TokenRange=900:904
+7	punerea	punere	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	1	obl	_	TokenRange=905:912
+8	soluţiei	soluţie	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	7	nmod	_	TokenRange=913:921
+9	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	10	case	_	TokenRange=922:924
+10	dispoziţia	dispoziţie	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	8	nmod	_	TokenRange=925:935
+11	părţilor	parte	NOUN	Ncfpoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Plur	10	nmod	_	TokenRange=936:944
+12	prin	prin	ADP	Spsa	AdpType=Prep|Case=Acc	13	case	_	TokenRange=945:949
+13	mijlocirea	mijlocire	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	7	nmod	_	TokenRange=950:960
+14	grefei	grefă	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	13	nmod	_	TokenRange=961:967
+15	instanţei	instanţă	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	14	nmod	_	SpaceAfter=No|TokenRange=968:977
+16	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\r\n\r\n\s\s\r\n\s\s\s|TokenRange=977:978
+
+# newpar
+# sent_id = 12
+# text = PREŞEDINTE, GREFIER, Dr. Jean-Luc Picard Deanna Troi
+1	PREŞEDINTE	preşedinte	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	0	root	_	SpaceAfter=No|TokenRange=989:999
+2	,	,	PUNCT	COMMA	_	3	punct	_	SpacesAfter=\s\t\t\t\t\t\t\s\s\s\s\s|TokenRange=999:1000
+3	GREFIER	GREFIER	PROPN	Np	_	1	conj	_	SpaceAfter=No|TokenRange=1012:1019
+4	,	,	PUNCT	COMMA	_	5	punct	_	SpacesAfter=\r\n\s\s\s|TokenRange=1019:1020
+5	Dr.	Dr.	NOUN	Yn	Abbr=Yes	1	conj	_	TokenRange=1025:1028
+6	Jean-Luc	Jean-luc	PROPN	Np	_	5	flat	_	TokenRange=1029:1037
+7	Picard	Picard	PROPN	Np	_	6	flat	_	SpacesAfter=\t\t\t\s\s\s\s\s\s\s\s\s|TokenRange=1038:1044
+8	Deanna	Deanna	PROPN	Np	_	1	conj	_	TokenRange=1056:1062
+9	Troi	Troi	PROPN	Np	_	8	flat	_	SpacesAfter=\r\n\r\n\r\n\r\n|TokenRange=1063:1067
+
+# newpar
+# sent_id = 13
+# text = Red.
+1	Red	red	NOUN	Np	_	0	root	_	SpaceAfter=No|TokenRange=1075:1078
+2	.	.	PUNCT	PERIOD	_	1	punct	_	TokenRange=1078:1079
+
+# sent_id = 14
+# text = A.B.-C./Data – 29.02.2013 Tehnored.
+1	A.B.-C./Data	a.b.-c./dată	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	0	root	_	TokenRange=1080:1092
+2	–	–	PUNCT	DASH	_	1	punct	_	TokenRange=1093:1094
+3	29.02.2013	29.02.2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	1	nummod	_	SpacesAfter=\r\n|TokenRange=1095:1105
+4	Tehnored	Tehnored	PROPN	Np	_	1	nmod	_	SpaceAfter=No|TokenRange=1107:1115
+5	.	.	PUNCT	PERIOD	_	1	punct	_	TokenRange=1115:1116
+
+# sent_id = 15
+# text = X.-Y.Z. Final.
+1	X.-Y.Z.	X.-y.z.	NOUN	Yn	Abbr=Yes	0	root	_	SpacesAfter=\r\n|TokenRange=1117:1124
+2	Final	final	PROPN	Np	_	1	flat	_	SpaceAfter=No|TokenRange=1126:1131
+3	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\r\n|TokenRange=1131:1132
