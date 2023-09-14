@@ -10,6 +10,7 @@ from flask import Flask, jsonify
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data
+from lib.saroj.gunicorn import StandaloneApplication
 
 app = Flask(__name__)
 
@@ -154,4 +155,5 @@ if __name__ == '__main__':
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),
         'workers': 1,
     }
-    app.run(debug=True, port=args.PORT)
+    #app.run(debug=True, port=args.PORT)
+    StandaloneApplication(app, options).run()
