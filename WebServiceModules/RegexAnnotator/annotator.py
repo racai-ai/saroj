@@ -18,7 +18,9 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[str | list[s
 
                 if append_column:
                     # That's for NER info
-                    fields.append('_')
+                    # All tokens are 'O'utside any annotation,
+                    # to begin with
+                    fields.append('O')
                 # end if
 
                 file_lines.append(fields)

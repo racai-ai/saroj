@@ -5,7 +5,7 @@ from flask import Flask, jsonify
 from annotator import regex_annotate
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.gunicorn import StandaloneApplication
-from lib.saroj.input_data import get_input_data
+from lib.saroj.input_data import get_input_data, is_file_conllu
 
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ app = Flask(__name__)
 @app.route('/process', methods=['POST', 'GET'])
 def annotate_conllu():
     """
-    Route to handle file annotation with regular expressions from CSM.
+    Route to handle file annotation with regular expressions.
 
     Expects an `.out` input file produced by the `../TextExtractor/textExtractor_api.py` module in this repo.
 
@@ -38,6 +38,9 @@ def annotate_conllu():
     elif not os.path.isfile(input_file):
         return jsonify({'status': 'ERROR',
                         'message': 'Input file does not exist on the local storage.'})
+    elif not is_file_conllu(input_file):
+        return jsonify({'status': 'ERROR',
+                        'message': 'Input file is not a (valid) CoNLL-U file.'})
     # end if
 
     try:
@@ -71,4 +74,5 @@ if __name__ == '__main__':
     }
 
     StandaloneApplication(app, options).run()
-    # app.run(host='127.0.0.1', port=args.PORT)
+    # This is for Windows debug testing only.
+    #app.run(host='127.0.0.1', port=args.PORT)
