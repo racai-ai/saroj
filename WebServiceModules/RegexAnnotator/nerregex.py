@@ -1,8 +1,7 @@
 import re
 
-csm_addr_sep = re.compile(r'''[\s,]''')
-
-csm_address_fields = [
+ner_addr_sep = re.compile(r'''[\s,]''')
+ner_address_fields = [
     # județul
     re.compile(r'''\b(?:[Jj]ud(?:\.\s*|\s+)|[Jj]ude[țtţ](?:ul)?\s+)'''),
     # orașul
@@ -33,12 +32,8 @@ csm_address_fields = [
     # numărul
     re.compile(r'''\b(?:[Nn][rR](?:\.\s*|\s+)|[Nn]um[ăa]r(?:ul)?\s+)''')
 ]
-
-
-# NOTĂ:
-# Toate secvențele de caracatere care au făcut match și trebuie
-# anonimizate, sunt capturate în grupuri de tipul (...)
-csm_regex = {
+# NOTE: All char sequences that have to be anonymized are captured in groups (...)
+ner_regex = {
     # OK
     'CNP': re.compile(r'''
         \b
@@ -210,19 +205,34 @@ csm_regex = {
         ((?:RO)?\d{6,8}) # captura
         \b''', re.VERBOSE)
 }
+ner_label_map = {
+    'CNP': 'CNP',
+    'FIRMA': 'ORG',
+    'ADRESA': 'LOC',
+    'TELEFON': 'PHONE',
+    'DATA_NASTERII': 'DATE',
+    'HOTARARE': 'DECISION',
+    'COD_ECLI': 'ECLI',
+    'CUI': 'CUI',
+    'NUMAR_AUTO': 'AUTO',
+    'SERIE_NUMAR': 'ID',
+    'EMAIL': 'EMAIL',
+    'NUMAR_DOSAR': 'CASE',
+    'NUMAR_DOSAR_PENAL': 'CASE',
+    'TEHNOREDACTOR': 'PER'
+}
 
 
-# Regex-urile ar trebui să facă match la regiuni de text disjuncte.
-# Nu testăm acest lucru aici.
-def do_regex_ner(text: str) -> list[tuple[int, int, str]]:
-    """Ia un text la intrare și furnizează o listă de tupluri
-    (start_offset, end_offset, etichetă), pentru toate
-    entitățile recunoscute în text."""
+def do_regex_ner(text: str, label_map: bool = False) -> list[tuple[int, int, str]]:
+    """Takes an input test and returns a list of tuples of type
+    (start_offset, end_offset, etichetă), for all named entities
+    that were recognized. If `label_map is True`, rename regex labels
+    with ones that were defined."""
 
     entities = []
 
-    for ner_label in csm_regex:
-        regex = csm_regex[ner_label]
+    for ner_label in ner_regex:
+        regex = ner_regex[ner_label]
         m = regex.search(text)
 
         while m and m.lastindex:
@@ -239,15 +249,32 @@ def do_regex_ner(text: str) -> list[tuple[int, int, str]]:
         # end while
     # end for
 
+    if label_map:
+        entities2 = []
+
+        for s, e, l in entities:
+            if l in ner_label_map:
+                entities2.append((s, e, ner_label_map[l]))
+            else:
+                entities2.append((s, e, l))
+            # end if
+        # end for
+
+        entities = entities2
+    # end if
+
     return entities
 
 
-def process_address_fields(text: str, addr_start: int, addr_end: int, ner_list: list) -> None:
-    """Adaugă valorile câmpurilor la lista de match-uri."""
+def process_address_fields(
+        text: str,
+        addr_start: int, addr_end: int, ner_list: list) -> None:
+    """Parses the values of the address fields and adds
+    them to the list of recognized text spans."""
 
     end_match_indexes = []
 
-    for regex in csm_address_fields:
+    for regex in ner_address_fields:
         m = regex.search(text, pos=addr_start)
 
         if m and m.end() <= addr_end:
@@ -256,12 +283,12 @@ def process_address_fields(text: str, addr_start: int, addr_end: int, ner_list: 
     # end for
 
     end_match_indexes = sorted(end_match_indexes, key=lambda x: x[0])
-    
+
     for i in range(0, len(end_match_indexes) - 1):
         v_start = end_match_indexes[i][1]
         v_end = end_match_indexes[i + 1][0]
 
-        while csm_addr_sep.fullmatch(text[v_end - 1]):
+        while ner_addr_sep.fullmatch(text[v_end - 1]):
             v_end -= 1
         # end while
 
@@ -273,8 +300,8 @@ def process_address_fields(text: str, addr_start: int, addr_end: int, ner_list: 
     # Handle the last value
     v_start = end_match_indexes[-1][1]
     v_end = addr_end
-        
-    while csm_addr_sep.fullmatch(text[v_end - 1]):
+
+    while ner_addr_sep.fullmatch(text[v_end - 1]):
         v_end -= 1
     # end while
 

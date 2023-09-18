@@ -1,1 +1,1 @@
-from csmregex import do_regex_ner
+from nerregex import do_regex_ner

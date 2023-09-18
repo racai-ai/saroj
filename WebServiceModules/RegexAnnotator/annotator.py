@@ -1,5 +1,5 @@
 import re
-from csmregex import do_regex_ner
+from nerregex import do_regex_ner
 
 
 _int_rx = re.compile(r'^\d+\s')
@@ -125,7 +125,7 @@ def regex_annotate(input_file: str, output_file: str) -> None:
     input_lines = read_conllu_file(file=input_file)
     input_text, words, word_lines_indexes = _get_text_from_conllu(
         file_lines=input_lines)
-    annotations = do_regex_ner(text=input_text)
+    annotations = do_regex_ner(text=input_text, label_map=True)
 
     # Insert the annotations on the last column
     # '_' is the empty default
