@@ -1,5 +1,5 @@
 
-# TextExtractor  
+# TextReconstruction  
 This module extracts tokens from a .docx file.  
   
 ## Prerequisites  
