@@ -3,11 +3,10 @@ import os
 import sys
 
 from flask import Flask, jsonify
-from entityEncoding_process import read_mapping, process_conllup
+from entityEncoding_process import read_mapping, process_and_update_ner_tags, read_tokens_from_file, update_mapping
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data
-
 from lib.saroj.gunicorn import StandaloneApplication
 
 app = Flask(__name__)
@@ -37,8 +36,10 @@ def anonymize_docx():
 
     if input_path:
         try:
-            entity_mapping = read_mapping(mapping_path)
-            process_conllup(input_path, output_path, mapping_path, entity_mapping)
+            mapping = read_mapping(mapping_path)
+            tokens = read_tokens_from_file(input_path)
+            updated_mapping = update_mapping(tokens, mapping, mapping_path)
+            process_and_update_ner_tags(input_path, output_path, updated_mapping, tokens)
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})
