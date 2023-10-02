@@ -66,10 +66,11 @@ def suffix_replace(token):
         "ăi": "a",
         "ilor": "i",
         "ul": "",
+        "zii": "da"
     }
 
     for suffix, replacement in suffixes.items():
-        if token.endswith(suffix):
+        if token.endswith(suffix) and len(token) >= 4:
             name = token[:-len(suffix)] + replacement
             sfx = "_" + suffix
             return name, sfx
