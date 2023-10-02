@@ -194,6 +194,7 @@ def update_mapping(tokens, entity_mapping, map_file):
         # Check if the entity is already mapped in the entity_mapping
         if combined_string not in entity_mapping:
             # If not found in the mapping, add it to the mapping and the map file
+            previous_ner = previous_ner[2:] if "-" in previous_ner else previous_ner
             entity_mapping[combined_string] = f"#{previous_ner}{str(len(entity_mapping) + 1)}"
             with open(map_file, "a", encoding="utf-8") as mapping_file:
                 mapping_file.write(f"{combined_string}\t{entity_mapping[combined_string]}\n")
