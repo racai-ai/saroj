@@ -1,6 +1,8 @@
 import os
 import re
 
+from itertools import zip_longest
+
 VOID_NER = ["O", "_"]
 
 
@@ -228,18 +230,20 @@ def map_tokens(entity_mapping, tokens):
     current_key = ""
     current_names = []
 
-    for token, ner in tokens:
+    for (token, ner), (_, next_ner) in zip_longest(tokens, tokens[1:], fillvalue=("None", "None")):
         token, _ = suffix_replace(token)
         if ner in VOID_NER:
             entity_merge_map.extend([(token, ner, "_")])
             continue
 
         current_key += " " + token
-        current_names.append((token, ner))
+        current_names.append(token)
+        if next_ner.startswith("I-"):
+            continue
 
         if current_key.strip() in entity_mapping:
             value = entity_mapping[current_key.strip()]
-            entity_merge_map.extend([(name, org, value) for name, org in current_names])
+            entity_merge_map.append([" ".join(current_names), value])
             current_key = ""
             current_names = []
     return entity_merge_map
@@ -276,31 +280,55 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
         process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
     """
     new_ner_id = ""
+    search = []
+    acc = []
+    sfxs = []
+
     mapped_tokens = map_tokens(entity_mapping, tokens)
 
     with open(input_path, "r", encoding="utf-8") as input_file, open(output_path, "w", encoding="utf-8") as output_file:
-        for line in input_file:
-            if line.startswith("#") or line.strip() == "":
-                # Header lines, write them as-is
-                output_file.write(line)
-            else:
-                fields = [token.strip() for token in re.split(r'(\t|  {2})', line) if token.strip()]
-                token = fields[1]
-                ner_tag = fields[-1]
-                sfx = ''
+        current_line = None
 
-                # if "PER" in ner_tag or "LOC" in ner_tag:
-                token, sfx = suffix_replace(token)
-
-                if ner_tag in VOID_NER:
-                    fields.append("_")
+        for next_line in input_file:
+            if current_line is not None:
+                if current_line.startswith("#") or not current_line.strip():
+                    # Header lines, write them as-is
+                    output_file.write(current_line)
                 else:
-                    match_tpl = next((t for t in mapped_tokens if t[0] == token), None)
-                    if match_tpl is not None:
-                        _, _, new_ner_id = match_tpl
-                    if ner_tag != "_":
-                        # Update the NER column with the new NER ID
-                        fields.append(f"{new_ner_id}{sfx}")
+                    fields = [token.strip() for token in re.split(r'(\t|  {2})', current_line) if token.strip()]
+                    fields_next = [token.strip() for token in re.split(r'(\t|  {2})', next_line) if token.strip()]
 
-                # Write the updated line to the output file
-                output_file.write('\t'.join(fields) + '\n')
+                    token = fields[1]
+                    ner_tag = fields[-1]
+                    ner_tag_next = fields_next[-1] if fields_next else ""
+
+                    if ner_tag in VOID_NER:
+                        fields.append("_")
+                    else:
+                        token, sfx = suffix_replace(token)
+                        search.append(token)
+
+                        if ner_tag_next.startswith("I-"):
+                            sfxs.append(sfx)
+                            acc.append('\t'.join(fields))
+                            current_line = next_line
+                            continue
+
+                        match_tpl = next((t for t in mapped_tokens if t[0] == " ".join(search)), None)
+
+                        if match_tpl is not None:
+                            _, new_ner_id = match_tpl
+                            search.clear()
+
+                            if acc:
+                                acc[-1] += f'\t{new_ner_id}{sfxs.pop()}\n'
+                                output_file.write(acc.pop())
+
+                        if ner_tag != "_":
+                            # Update the NER column with the new NER ID
+                            fields.append(f"{new_ner_id}{sfx}")
+
+                    # Write the updated line to the output file
+                    output_file.write('\t'.join(fields) + '\n')
+
+            current_line = next_line
