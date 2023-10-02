@@ -249,6 +249,60 @@ def map_tokens(entity_mapping, tokens):
     return entity_merge_map
 
 
+def process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens, search, acc, sfxs):
+    # CHECK 1 - comment or empty line - write and continue
+    if current_line.startswith("#") or not current_line.strip():
+        # Header lines, write them as-is
+        output_file.write(current_line)
+        current_line = next_line
+        return
+
+    # GET current and next line content
+    fields = [token.strip() for token in re.split(r'(\t|  {2})', current_line) if token.strip()]
+
+    if next_line is None:
+        fields_next = []  # Empty list for None value
+    else:
+        fields_next = [token.strip() for token in re.split(r'(\t|  {2})', next_line) if token.strip()]
+
+    token = fields[1]
+    ner_tag = fields[-1]
+
+    # CHECK 2 -current NER is not invalid
+    if ner_tag in VOID_NER:
+        fields.append("_")
+        # Write the updated line to the output file
+        output_file.write('\t'.join(fields) + '\n')
+        return
+
+    ner_tag_next = fields_next[-1] if fields_next else ""
+    token, sfx = suffix_replace(token)
+    search.append(token)
+
+    # CHECK 3 - next line NER is "inside" type entity
+    if ner_tag_next.startswith("I-"):
+        sfxs.append(sfx)
+        acc.append('\t'.join(fields))
+        return
+
+    match_tpl = next((t for t in mapped_tokens if t[0] == " ".join(search)), None)
+
+    if match_tpl is not None:
+        _, new_ner_id = match_tpl
+        search.clear()
+
+        if acc:
+            acc[-1] += f'\t{new_ner_id}{sfxs.pop()}\n'
+            output_file.write(acc.pop())
+
+    if ner_tag != "_":
+        # Update the NER column with the new NER ID
+        fields.append(f"{new_ner_id}{sfx}")
+
+    # Write the updated line to the output file
+    output_file.write('\t'.join(fields) + '\n')
+
+
 def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens):
     """
     Process a CoNLL-U Plus file, updating Named Entity Recognition (NER) tags based on a given entity mapping.
@@ -280,55 +334,19 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
         process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
     """
     new_ner_id = ""
+    mapped_tokens = map_tokens(entity_mapping, tokens)
     search = []
     acc = []
     sfxs = []
-
-    mapped_tokens = map_tokens(entity_mapping, tokens)
 
     with open(input_path, "r", encoding="utf-8") as input_file, open(output_path, "w", encoding="utf-8") as output_file:
         current_line = None
 
         for next_line in input_file:
             if current_line is not None:
-                if current_line.startswith("#") or not current_line.strip():
-                    # Header lines, write them as-is
-                    output_file.write(current_line)
-                else:
-                    fields = [token.strip() for token in re.split(r'(\t|  {2})', current_line) if token.strip()]
-                    fields_next = [token.strip() for token in re.split(r'(\t|  {2})', next_line) if token.strip()]
-
-                    token = fields[1]
-                    ner_tag = fields[-1]
-                    ner_tag_next = fields_next[-1] if fields_next else ""
-
-                    if ner_tag in VOID_NER:
-                        fields.append("_")
-                    else:
-                        token, sfx = suffix_replace(token)
-                        search.append(token)
-
-                        if ner_tag_next.startswith("I-"):
-                            sfxs.append(sfx)
-                            acc.append('\t'.join(fields))
-                            current_line = next_line
-                            continue
-
-                        match_tpl = next((t for t in mapped_tokens if t[0] == " ".join(search)), None)
-
-                        if match_tpl is not None:
-                            _, new_ner_id = match_tpl
-                            search.clear()
-
-                            if acc:
-                                acc[-1] += f'\t{new_ner_id}{sfxs.pop()}\n'
-                                output_file.write(acc.pop())
-
-                        if ner_tag != "_":
-                            # Update the NER column with the new NER ID
-                            fields.append(f"{new_ner_id}{sfx}")
-
-                    # Write the updated line to the output file
-                    output_file.write('\t'.join(fields) + '\n')
-
+                process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens, search, acc, sfxs)
             current_line = next_line
+
+        # Process the last line (if any) after the loop
+        if current_line is not None:
+            process_line(current_line, None, output_file, new_ner_id, mapped_tokens, search, acc, sfxs)
