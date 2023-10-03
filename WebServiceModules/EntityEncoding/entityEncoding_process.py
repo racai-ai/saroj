@@ -1,9 +1,8 @@
 import os
-import re
-
 from itertools import zip_longest
 
-VOID_NER = ["O", "_"]
+from entityEncoding_NERProcessor import NERProcessor
+from entityEncoding_suffix import suffix_replace, VOID_NER
 
 
 def read_mapping(mapping_path):
@@ -81,45 +80,6 @@ def read_tokens_from_file(input_path):
     return tokens
 
 
-def suffix_replace(token):
-    """
-    Replace certain suffixes in a token with their corresponding replacements.
-
-    Args:
-        token (str): The token string to be processed.
-
-    Returns:
-        name (str): The token with the specified suffixes replaced.
-        sfx (str): A suffix string indicating which suffix was replaced (e.g., "_ei", "_ăi", "_ilor", or "").
-
-    Example:
-        token = "studentei"
-        name, sfx = suffix_replace(token)
-        # 'name' will be "studenta" and 'sfx' will be "_ei" because the "ei" suffix was replaced.
-
-    Notes:
-        This function checks if the input token ends with specific suffixes and replaces them with corresponding
-        replacements. If a suffix is replaced, a suffix string indicating which suffix was replaced is also returned.
-        If no replacement is performed, an empty suffix string is returned.
-
-    """
-    suffixes = {
-        "ei": "a",
-        "ăi": "a",
-        "ilor": "i",
-        "ul": "",
-        "zii": "da"
-    }
-
-    for suffix, replacement in suffixes.items():
-        if token.endswith(suffix) and len(token) >= 4:
-            name = token[:-len(suffix)] + replacement
-            sfx = "_" + suffix
-            return name, sfx
-
-    return token, ""
-
-
 def check_invalid_token_and_extract_sfx(token, ner_tag):
     """
     Checks if the token is valid and extracts suffix information.
@@ -192,10 +152,10 @@ def add_token_to_current_entity(token, ner_tag, previous_ner, current_entity_tok
 
     """
     if ner_tag.startswith("I-") and previous_ner:
-    # Condition 1: Check if it's a continuation of the current entity
+        # Condition 1: Check if it's a continuation of the current entity
         current_entity_tokens.append(token)
     elif previous_ner == ner_tag:
-    # Condition 2: Check if it's the same entity
+        # Condition 2: Check if it's the same entity
         current_entity_tokens.append(token)
     return current_entity_tokens
 
@@ -238,12 +198,12 @@ def update_mapping(tokens, entity_mapping, map_file):
     # Iterate through the tokens
     for token, ner_tag in tokens:
         token = check_invalid_token_and_extract_sfx(token, ner_tag)
-        
+
         if token is None:
             continue
 
         # Check if the current entity is None or the NER tag starts with "B-"
-        if previous_ner is None or ner_tag.startswith("B-") or previous_ner[2:] != ner_tag[2:]:
+        if ner_tag.startswith("B-") or (previous_ner and previous_ner[2:] != ner_tag[2:]):
             add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner)
             previous_ner = ner_tag
             current_entity_tokens = [token]
@@ -301,80 +261,10 @@ def map_tokens(entity_mapping, tokens):
     return entity_merge_map
 
 
-def process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens, search, acc, sfxs):
-    """
-    Process a line of text with Named Entity Recognition (NER) tags.
-
-    Args:
-        current_line (str): The current line of text to process.
-        next_line (str or None): The next line of text to check for continuation of NER tags.
-        output_file (file object): The file object to write the processed line to.
-        new_ner_id (str): The new NER ID to assign to NER tags.
-        mapped_tokens (list of tuples): A list of token mappings.
-        search (list): A list to store tokens for matching.
-        acc (list): A list to accumulate lines with the same NER tags.
-        sfxs (list): A list to accumulate suffixes for matching tokens.
-
-    Returns:
-        None
-
-    The function processes each line of text, updates NER tags, and writes the result to the output file.
-    It handles various checks and modifications based on the current and next lines and the provided parameters.
-
-    """
-    # CHECK 1 - comment or empty line - write and continue
-    if current_line.startswith("#") or not current_line.strip():
-        # Header lines, write them as-is
-        output_file.write(current_line)
-        current_line = next_line
-        return
-
-    # GET current and next line content
-    fields = [token.strip() for token in re.split(r'(\t|  {2})', current_line) if token.strip()]
-
-    if next_line is None:
-        fields_next = []  # Empty list for None value
-    else:
-        fields_next = [token.strip() for token in re.split(r'(\t|  {2})', next_line) if token.strip()]
-
-    token = fields[1]
-    ner_tag = fields[-1]
-
-    # CHECK 2 -current NER is not invalid
-    if ner_tag in VOID_NER:
-        fields.append("_")
-        # Write the updated line to the output file
-        output_file.write('\t'.join(fields) + '\n')
-        return
-
-    ner_tag_next = fields_next[-1] if fields_next else ""
-    token, sfx = suffix_replace(token)
-    search.append(token)
-
-    # CHECK 3 - next line NER is "inside" type entity
-    if ner_tag_next.startswith("I-"):
-        sfxs.append(sfx)
-        acc.append('\t'.join(fields))
-        return
-
-    match_tpl = next((t for t in mapped_tokens if t[0] == " ".join(search)), None)
-
-    if match_tpl is not None:
-        _, new_ner_id = match_tpl
-        search.clear()
-
-        if acc:
-            for acc_item, sfx in zip(acc, sfxs):
-                acc_item += f'\t{new_ner_id}{sfx}\n'
-                output_file.write(acc_item)
-            acc.clear()
-
-    if ner_tag != "_":
-        # Update the NER column with the new NER ID
-        fields.append(f"{new_ner_id}{sfx}")
-
-    # Write the updated line to the output file
-    output_file.write('\t'.join(fields) + '\n')
+def process_line(current_line, next_line, ner_processor):
+    current_line = ner_processor.process_comment_or_empty_line(current_line)
+    if current_line is not None:
+        ner_processor.process_valid_line(current_line, next_line)
 
 
 def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens):
@@ -409,18 +299,16 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
     """
     new_ner_id = ""
     mapped_tokens = map_tokens(entity_mapping, tokens)
-    search = []
-    acc = []
-    sfxs = []
 
     with open(input_path, "r", encoding="utf-8") as input_file, open(output_path, "w", encoding="utf-8") as output_file:
+        ner_processor = NERProcessor(output_file, new_ner_id, mapped_tokens)
         current_line = None
 
         for next_line in input_file:
             if current_line is not None:
-                process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens, search, acc, sfxs)
+                process_line(current_line, next_line, ner_processor)
             current_line = next_line
 
         # Process the last line (if any) after the loop
         if current_line is not None:
-            process_line(current_line, None, output_file, new_ner_id, mapped_tokens, search, acc, sfxs)
+            process_line(current_line, next_line, ner_processor)
