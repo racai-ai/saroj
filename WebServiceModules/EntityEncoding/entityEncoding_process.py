@@ -41,45 +41,6 @@ def read_mapping(mapping_path):
     return entity_mapping
 
 
-def suffix_replace(token):
-    """
-    Replace certain suffixes in a token with their corresponding replacements.
-
-    Args:
-        token (str): The token string to be processed.
-
-    Returns:
-        name (str): The token with the specified suffixes replaced.
-        sfx (str): A suffix string indicating which suffix was replaced (e.g., "_ei", "_ăi", "_ilor", or "").
-
-    Example:
-        token = "studentei"
-        name, sfx = suffix_replace(token)
-        # 'name' will be "studenta" and 'sfx' will be "_ei" because the "ei" suffix was replaced.
-
-    Notes:
-        This function checks if the input token ends with specific suffixes and replaces them with corresponding
-        replacements. If a suffix is replaced, a suffix string indicating which suffix was replaced is also returned.
-        If no replacement is performed, an empty suffix string is returned.
-
-    """
-    suffixes = {
-        "ei": "a",
-        "ăi": "a",
-        "ilor": "i",
-        "ul": "",
-        "zii": "da"
-    }
-
-    for suffix, replacement in suffixes.items():
-        if token.endswith(suffix) and len(token) >= 4:
-            name = token[:-len(suffix)] + replacement
-            sfx = "_" + suffix
-            return name, sfx
-
-    return token, ""
-
-
 def read_tokens_from_file(input_path):
     """
     Read tokens and their Named Entity Recognition (NER) tags from a CoNLL-U Plus file.
@@ -120,6 +81,125 @@ def read_tokens_from_file(input_path):
     return tokens
 
 
+def suffix_replace(token):
+    """
+    Replace certain suffixes in a token with their corresponding replacements.
+
+    Args:
+        token (str): The token string to be processed.
+
+    Returns:
+        name (str): The token with the specified suffixes replaced.
+        sfx (str): A suffix string indicating which suffix was replaced (e.g., "_ei", "_ăi", "_ilor", or "").
+
+    Example:
+        token = "studentei"
+        name, sfx = suffix_replace(token)
+        # 'name' will be "studenta" and 'sfx' will be "_ei" because the "ei" suffix was replaced.
+
+    Notes:
+        This function checks if the input token ends with specific suffixes and replaces them with corresponding
+        replacements. If a suffix is replaced, a suffix string indicating which suffix was replaced is also returned.
+        If no replacement is performed, an empty suffix string is returned.
+
+    """
+    suffixes = {
+        "ei": "a",
+        "ăi": "a",
+        "ilor": "i",
+        "ul": "",
+        "zii": "da"
+    }
+
+    for suffix, replacement in suffixes.items():
+        if token.endswith(suffix) and len(token) >= 4:
+            name = token[:-len(suffix)] + replacement
+            sfx = "_" + suffix
+            return name, sfx
+
+    return token, ""
+
+
+def check_invalid_token_and_extract_sfx(token, ner_tag):
+    """
+    Checks if the token is valid and extracts suffix information.
+
+    This function checks if the token is not in VOID_NER and removes any suffix
+    information using the `suffix_replace` function. It returns the processed
+    token if valid, or None if the token is considered invalid.
+
+    Args:
+        token (str): The token to be checked and processed.
+        ner_tag (str): The NER tag associated with the token.
+
+    Returns:
+        str or None: The processed token if valid, or None if the token is invalid.
+
+    """
+    token, _ = suffix_replace(token)
+    return token if ner_tag not in VOID_NER else None
+
+
+def add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner):
+    """
+    Add an entity to the mapping and map file.
+
+    If it's a new entity (not found in `entity_mapping`), this function adds
+    it to the mapping dictionary with a unique identifier and appends the
+    mapping information to the specified map file.
+
+    Args:
+        current_entity_tokens (list): List of tokens belonging to the current entity.
+        entity_mapping (dict): A dictionary storing entity mappings.
+        map_file (str): The path to the map file for storing mappings.
+        previous_ner (str): The NER tag of the previous entity.
+    Returns:
+        None
+
+    """
+    # If it's a new entity, add the previous entity (if any) to the map
+    if current_entity_tokens:
+        combined_string = " ".join(current_entity_tokens)
+
+        # Check if the entity is already mapped in the entity_mapping
+        if combined_string not in entity_mapping:
+            # If not found in the mapping, add it to the mapping and the map file
+            previous_ner = previous_ner[2:] if "-" in previous_ner else previous_ner
+            entity_mapping[combined_string] = f"#{previous_ner}{str(len(entity_mapping) + 1)}"
+            # entity_mapping[combined_string] = previous_ner
+            with open(map_file, "a", encoding="utf-8") as mapping_file:
+                mapping_file.write(f"{combined_string}\t{entity_mapping[combined_string]}\n")
+
+
+def add_token_to_current_entity(token, ner_tag, previous_ner, current_entity_tokens):
+    """
+    Add a token to the current entity if it satisfies specified conditions.
+
+    This function appends a token to the list of tokens belonging to the current
+    entity if it meets one of the following conditions:
+    1. It is a continuation of the current entity (ner_tag starts with 'I-') and there
+       is a previous NER tag.
+    2. It belongs to the same entity as the previous token (previous_ner == ner_tag).
+
+    Args:
+        token (str): The token to be added to the current entity.
+        ner_tag (str): The NER tag associated with the token.
+        previous_ner (str): The NER tag of the previous entity.
+        current_entity_tokens (list): List of tokens belonging to the current entity.
+
+    Returns:
+        list: The updated list of tokens belonging to the current entity.
+
+    """
+    if ner_tag.startswith("I-") and previous_ner:
+    # Condition 1: Check if it's a continuation of the current entity
+        current_entity_tokens.append(token)
+    elif previous_ner == ner_tag:
+    # Condition 2: Check if it's the same entity
+        current_entity_tokens.append(token)
+    return current_entity_tokens
+
+
 def update_mapping(tokens, entity_mapping, map_file):
     """
     Update an entity mapping based on tokens with Named Entity Recognition (NER) tags and write the mapping to a map file.
@@ -157,49 +237,21 @@ def update_mapping(tokens, entity_mapping, map_file):
 
     # Iterate through the tokens
     for token, ner_tag in tokens:
-        token, _ = suffix_replace(token)
-        # Check if the NER tag is not "_" or "O" (indicating no tag)
-        if ner_tag not in VOID_NER:
-            # Check if the current entity is None or the NER tag starts with "B-"
-            if previous_ner is None or ner_tag.startswith("B-") or previous_ner[2:] != ner_tag[2:]:
-                # If it's a new entity, add the previous entity (if any) to the map
-                if current_entity_tokens:
-                    combined_string = " ".join(current_entity_tokens)
-
-                    # Check if the entity is already mapped in the entity_mapping
-                    if combined_string not in entity_mapping:
-                        #     ner_tag = entity_mapping[combined_string]
-                        # else:
-                        # If not found in the mapping, add it to the mapping and the map file
-                        previous_ner = previous_ner[2:] if "-" in previous_ner else previous_ner
-                        entity_mapping[combined_string] = f"#{previous_ner}{str(len(entity_mapping) + 1)}"
-                        # entity_mapping[combined_string] = previous_ner
-                        with open(map_file, "a", encoding="utf-8") as mapping_file:
-                            mapping_file.write(f"{combined_string}\t{entity_mapping[combined_string]}\n")
-
-                # Start a new entity
-                previous_ner = ner_tag
-                current_entity_tokens = [token]
-            elif ner_tag.startswith("I-") and previous_ner:
-                # Add the token to the current entity
-                current_entity_tokens.append(token)
-            elif previous_ner == ner_tag:
-                current_entity_tokens.append(token)
-
-        else:
+        token = check_invalid_token_and_extract_sfx(token, ner_tag)
+        
+        if token is None:
             continue
 
-    # Process the last entity (if any)
-    if current_entity_tokens:
-        combined_string = " ".join(current_entity_tokens)
+        # Check if the current entity is None or the NER tag starts with "B-"
+        if previous_ner is None or ner_tag.startswith("B-") or previous_ner[2:] != ner_tag[2:]:
+            add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner)
+            previous_ner = ner_tag
+            current_entity_tokens = [token]
 
-        # Check if the entity is already mapped in the entity_mapping
-        if combined_string not in entity_mapping:
-            # If not found in the mapping, add it to the mapping and the map file
-            previous_ner = previous_ner[2:] if "-" in previous_ner else previous_ner
-            entity_mapping[combined_string] = f"#{previous_ner}{str(len(entity_mapping) + 1)}"
-            with open(map_file, "a", encoding="utf-8") as mapping_file:
-                mapping_file.write(f"{combined_string}\t{entity_mapping[combined_string]}\n")
+        else:
+            current_entity_tokens = add_token_to_current_entity(token, ner_tag, previous_ner, current_entity_tokens)
+    # Process the last entity  
+    add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner)
 
     # Return the updated entity_mapping
     return entity_mapping
