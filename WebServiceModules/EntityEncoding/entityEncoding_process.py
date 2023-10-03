@@ -292,8 +292,10 @@ def process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens
         search.clear()
 
         if acc:
-            acc[-1] += f'\t{new_ner_id}{sfxs.pop()}\n'
-            output_file.write(acc.pop())
+            for acc_item, sfx in zip(acc, sfxs):
+                acc_item += f'\t{new_ner_id}{sfx}\n'
+                output_file.write(acc_item)
+            acc.clear()
 
     if ner_tag != "_":
         # Update the NER column with the new NER ID
