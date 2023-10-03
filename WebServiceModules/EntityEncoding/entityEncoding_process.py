@@ -217,8 +217,8 @@ def map_tokens(entity_mapping, tokens):
             is the original NER tag associated with the token.
 
     Returns:
-        entity_merge_map (list): A list of tuples, each containing the token, original NER tag, and the new NER ID assigned
-            based on the entity mapping.
+        entity_merge_map (list): A list of tuples, each containing the token, and the new NER ID assigned based on the
+        entity mapping.
 
     Notes:
         This function maps tokens to their new NER IDs based on the provided entity mapping. It merges consecutive tokens
@@ -250,6 +250,26 @@ def map_tokens(entity_mapping, tokens):
 
 
 def process_line(current_line, next_line, output_file, new_ner_id, mapped_tokens, search, acc, sfxs):
+    """
+    Process a line of text with Named Entity Recognition (NER) tags.
+
+    Args:
+        current_line (str): The current line of text to process.
+        next_line (str or None): The next line of text to check for continuation of NER tags.
+        output_file (file object): The file object to write the processed line to.
+        new_ner_id (str): The new NER ID to assign to NER tags.
+        mapped_tokens (list of tuples): A list of token mappings.
+        search (list): A list to store tokens for matching.
+        acc (list): A list to accumulate lines with the same NER tags.
+        sfxs (list): A list to accumulate suffixes for matching tokens.
+
+    Returns:
+        None
+
+    The function processes each line of text, updates NER tags, and writes the result to the output file.
+    It handles various checks and modifications based on the current and next lines and the provided parameters.
+
+    """
     # CHECK 1 - comment or empty line - write and continue
     if current_line.startswith("#") or not current_line.strip():
         # Header lines, write them as-is
@@ -313,8 +333,8 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
         input_path (str): The path to the input CoNLL-U Plus file to be processed.
         output_path (str): The path to the output file where the processed data will be saved.
         entity_mapping (dict): A dictionary that maps tokens to new NER IDs. The keys are token strings, and the values
-            are tuples (entity_type, entity_id, new_ner_id), where entity_type is the entity type (e.g., 'PER' for person),
-            entity_id is the unique identifier for the entity, and new_ner_id is the new NER ID to be assigned to the token.
+            are tuples (entity_type, new_ner_id), where entity_type is the entity type (e.g., 'PER' for person), and
+            new_ner_id is the new NER ID to be assigned to the token.
         tokens (list): A list of tokens used for mapping, typically generated from CoNLL-U Plus file.
 
     Returns:
