@@ -1,5 +1,3 @@
-import re
-
 from entityEncoding_suffix import suffix_replace, VOID_NER
 
 
@@ -12,10 +10,6 @@ class NERProcessor:
         self.acc = []
         self.sfxs = []
 
-    @staticmethod
-    def split_line(line):
-        return [token.strip() for token in re.split(r'(\t|  {2})', line) if token.strip()]
-
     def process_comment_or_empty_line(self, current_line):
         if current_line.startswith("#") or not current_line.strip():
             self.output_file.write(current_line)
@@ -24,8 +18,8 @@ class NERProcessor:
             return current_line
 
     def process_valid_line(self, current_line, next_line):
-        fields = self.split_line(current_line)
-        fields_next = self.split_line(next_line) if next_line is not None else []
+        fields = current_line.strip().split("\t")
+        fields_next = next_line.strip().split("\t") if next_line is not None else []
 
         token, ner_tag = fields[1], fields[-1]
         ner_tag_next = fields_next[-1] if fields_next else ""

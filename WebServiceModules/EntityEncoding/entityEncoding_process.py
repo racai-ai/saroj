@@ -72,7 +72,7 @@ def read_tokens_from_file(input_path):
                 continue
 
             # Split the line by tab to get columns
-            columns = line.split("\t")
+            columns = line.strip().split("\t")
             token = columns[1]
             ner_tag = columns[-1]
             tokens.append((token, ner_tag))
