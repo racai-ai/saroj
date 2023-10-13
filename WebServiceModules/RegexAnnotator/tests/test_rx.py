@@ -112,3 +112,8 @@ def test_adresa2():
     assert (89, 91, 'ADRESA') in results
     assert (97, 98, 'ADRESA') in results
     assert (105, 107, 'ADRESA') in results
+
+def test_iban():
+    input_text = "Societatea SC Bubu S.R.L, cont bancar RO49AAAA1B31007593840000, cu sediul în ..."
+    results = do_regex_ner(text=input_text)
+    assert (38, 62, 'IBAN') in results

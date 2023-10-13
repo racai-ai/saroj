@@ -242,7 +242,7 @@
 
 # sent_id = 14
 # text = A.B.-C./Data – 29.02.2013 Tehnored.
-1	A.B.-C./Data	a.b.-c./dată	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	0	root	_	TokenRange=1080:1092	PER
+1	A.B.-C./Data	a.b.-c./dată	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	0	root	_	TokenRange=1080:1092	INITIALS
 2	–	–	PUNCT	DASH	_	1	punct	_	TokenRange=1093:1094	O
 3	29.02.2013	29.02.2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	1	nummod	_	SpacesAfter=\r\n|TokenRange=1095:1105	O
 4	Tehnored	Tehnored	PROPN	Np	_	1	nmod	_	SpaceAfter=No|TokenRange=1107:1115	O
@@ -250,6 +250,6 @@
 
 # sent_id = 15
 # text = X.-Y.Z. Final.
-1	X.-Y.Z.	X.-y.z.	NOUN	Yn	Abbr=Yes	0	root	_	SpacesAfter=\r\n|TokenRange=1117:1124	PER
+1	X.-Y.Z.	X.-y.z.	NOUN	Yn	Abbr=Yes	0	root	_	SpacesAfter=\r\n|TokenRange=1117:1124	INITIALS
 2	Final	final	PROPN	Np	_	1	flat	_	SpaceAfter=No|TokenRange=1126:1131	O
 3	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\r\n|TokenRange=1131:1132	O

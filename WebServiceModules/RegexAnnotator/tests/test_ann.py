@@ -30,5 +30,5 @@ def test_one():
     assert out_lines[162][-1] == 'LOC'
     assert out_lines[162][-1] == 'LOC'
     assert out_lines[165][-1] == 'LOC'
-    assert out_lines[244][-1] == 'PER'
-    assert out_lines[252][-1] == 'PER'
+    assert out_lines[244][-1] == 'INITIALS'
+    assert out_lines[252][-1] == 'INITIALS'

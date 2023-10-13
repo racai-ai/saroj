@@ -203,7 +203,13 @@ ner_regex = {
         \b
         [cC].?\s?[uU].?\s?[iI].?\s+
         ((?:RO)?\d{6,8}) # captura
-        \b''', re.VERBOSE)
+        \b''', re.VERBOSE),
+    'IBAN': re.compile(r'''
+        \b
+        (?:cont(?:\sbancar)?|(?:cod\s)?IBAN)\s
+        (RO[0-9A-Z]{22}) # captura, IBAN-ul are 24 de caractere în România
+        \b
+        ''', re.VERBOSE)
 }
 ner_label_map = {
     'CNP': 'CNP',
@@ -219,7 +225,8 @@ ner_label_map = {
     'EMAIL': 'EMAIL',
     'NUMAR_DOSAR': 'CASE',
     'NUMAR_DOSAR_PENAL': 'CASE',
-    'TEHNOREDACTOR': 'PER'
+    'TEHNOREDACTOR': 'INITIALS',
+    'IBAN': 'IBAN'
 }
 
 
