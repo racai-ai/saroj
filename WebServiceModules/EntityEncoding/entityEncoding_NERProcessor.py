@@ -46,6 +46,7 @@ class NERProcessor:
                 if self.acc:
                     self.update_accumulated_entities()
                     self.acc.clear()
+                    self.sfxs.clear()
 
             if ner_tag != "_":
                 fields.append(f"{self.new_ner_id}{sfx}")
