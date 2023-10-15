@@ -4,12 +4,12 @@ import shutil
 import tempfile
 from collections import defaultdict
 
-from lib.saroj.suffix_process import suffix_replace
+from lib.saroj.suffix_process import suffix_replace, VOID_NER
 
-VOID_NER = ["O", "_"]
 old_rep = None
 used = defaultdict(list)
 count_i = 0
+
 NOT_FOUND = "XXX"
 
 
