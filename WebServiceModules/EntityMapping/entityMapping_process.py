@@ -20,11 +20,11 @@ def read_replacement_dictionary(dictionary_file):
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 2:
-                ner_id_and_potential_suffix, replacement = columns
+                ner, replacement = columns
                 # Check if ner_id_and_potential_suffix exists in the dictionary
-                if ner_id_and_potential_suffix not in replacement_dict:
-                    replacement_dict[ner_id_and_potential_suffix] = []
-                replacement_dict[ner_id_and_potential_suffix].append(replacement)
+                if ner not in replacement_dict:
+                    replacement_dict[ner] = []
+                replacement_dict[ner].append(replacement)
     return replacement_dict
 
 
@@ -44,6 +44,7 @@ def update_mapping_file(mapping_file, entity, replacement):
 
     # Replace the original file with the temporary file
     shutil.move(temp_file, mapping_file)
+
 
 def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
     """
@@ -93,14 +94,16 @@ def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potenti
     # Check if replacement contains more than one token
     if len(replacement.split(" ")) > 1:
         # Construct and return the appropriate token based on conditions
-        return replacement.split(" ")[0] + suffix if not replacement.endswith("a") else replacement.split(" ")[0][
-                                                                                        :-1] + suffix
+        return replacement.split(" ")[0] + suffix \
+            if not replacement.split(" ")[0].endswith("a") \
+            else replacement.split(" ")[0][:-1] + suffix
 
     # Check if ner_id_and_potential_suffix contains underscores and "XXX" is not in replacement
     if "_" in ner_id_and_potential_suffix and NOT_FOUND not in replacement:
         # Construct and return the appropriate token based on conditions
-        return replacement.split(" ")[0] + suffix if not replacement.endswith("a") else replacement.split(" ")[0][
-                                                                                        :-1] + suffix
+        return replacement.split(" ")[0] + suffix \
+            if not replacement.endswith("a") \
+            else replacement.split(" ")[0][:-1] + suffix
 
     # If none of the above conditions were met, return the second token or the full replacement
     return replacement.split(" ")[1] if len(replacement.split(" ")) > 1 else replacement
@@ -139,7 +142,8 @@ def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file, replacement
 
     # Update the mapping file and replacement dictionary
     update_mapping_file(mapping_file, ner_id_and_potential_suffix, rep)
-    replacement_dict[ner] = [value for value in replacement_dict[ner] if not re.search(replacement, value)]
+    replacement_dict[ner] = [value for value in replacement_dict[ner]
+                             if not re.search(old_rep + " " + replacement, value)]
 
     return rep
 
