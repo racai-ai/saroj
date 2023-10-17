@@ -1,6 +1,6 @@
 
-# TextReconstruction  
-This module extracts tokens from a .docx file.  
+# Entity Encoder  
+This module encodes entities from a .conllup file.  
   
 ## Prerequisites  
   
@@ -18,10 +18,9 @@ pip install -r requirements.txt
 ## How to Run  
 Run the script:  
 ```  
-python textReconstruction_api.py PORT [--SAVE_INTERNAL_FILES]  
+python entityEncoding_api.py PORT 
 ```  
 * _PORT_ (required): The port number to listen for incoming API requests.  
-* _--SAVE_INTERNAL_FILES_ or -s (optional): Include this flag to save internal files, which can be useful for debugging. By default, this option is disabled.  
   
 ## Usage  
 Once the API is running, you can interact with the following endpoints:  
@@ -32,8 +31,8 @@ Once the API is running, you can interact with the following endpoints:
 POST http://localhost:PORT/process
 ```
   
-This endpoint allows you to submit a POST request with a JSON payload containing the .docx file, coNLLU-P file and output path
-text you want to anonymize. The API will return OK message or errors if exceptions are encountered.  
+This endpoint allows you to submit a POST request with a JSON payload containing the coNLLU-P file, the mapping file (.map) and output path (.conllup)
+ you want to encode. The API will return OK message or errors if exceptions are encountered.  
   
 ### Check Health Endpoint:  
   
@@ -45,9 +44,9 @@ This endpoint is used to check the health status of the API. It will return a re
 ## Example  
 Run the following command to start the API on port 5000:  
 ```  
-python textReconstruction_api.py 5000  
+python entityEncoding_api.py 5000  
 ```  
 Send a POST using CURL:  
 ```  
-curl  POST -F "input={\"input\":\"../../input.conllup\",\"original\":\"../../text.docx\" \"output\":\"text_anon.docx\"}" http://localhost:5000/process  
+curl  POST -F "input={\"input\":\"../../input.conllup\",\"mapping\":\"../../ent.map\" \"output\":\"output.conllup\"}" http://localhost:5000/process  
 ```
