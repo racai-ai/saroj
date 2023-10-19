@@ -111,7 +111,7 @@ class TestSearchMappingFile(unittest.TestCase):
 
 
 class TestProcessAlreadyMappedReplacement(unittest.TestCase):
-
+    @patch('entityMapping_process.counter_inst', 0)
     def test_process_already_mapped_replacement_empty_replacement(self):
         replacement = ""
         ner_inst = "I-PER"
@@ -119,13 +119,15 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertIsNone(result)
 
+    @patch('entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_single_token(self):
         replacement = "John"
         ner_inst = "I-PER"
         ner_id_and_potential_suffix = "B-PER"
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
-        self.assertIsNone(result)
+        self.assertEqual("_", result)
 
+    @patch('entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_suffix_present(self):
         replacement = "Maria"
         ner_inst = "B-PER"
@@ -133,6 +135,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Mariei")
 
+    @patch('entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_suffix_not_present(self):
         replacement = "Maria"
         ner_inst = "B-PER"
@@ -140,6 +143,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Maria")
 
+    @patch('entityMapping_process.counter_inst', 2)
     def test_process_already_mapped_replacement_multiple_tokens(self):
         replacement = "Adina Ionescu"
         ner_inst = "B-PER"
@@ -147,23 +151,60 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Adinei")
 
+    @patch('entityMapping_process.counter_inst', 1)
+    def test_process_already_mapped_replacement_multiple_tokens_singlere_replacement(self):
+        replacement = "Adina Ionescu"
+        ner_inst = "B-PER"
+        ner_id_and_potential_suffix = "#PER_ei"
+        result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
+        self.assertEqual(result, "Adinei Ionescu")
+
+    @patch('entityMapping_process.counter_inst', 2)
+    def test_process_already_mapped_replacement_four_tokens(self):
+        replacement = "Adina Ionescu Papadag Bengescu"
+        ner_inst = "I-PER"
+        ner_id_and_potential_suffix = "#PER"
+        result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
+        self.assertEqual(result, "Papadag")
+
+    @patch('entityMapping_process.counter_inst', 0)
+    def test_none_replacement(self):
+        # Test when replacement is None
+        result = process_already_mapped_replacement(None, "I-PER", "#PER1_ei")
+        self.assertIsNone(result)
+
+    @patch('entityMapping_process.counter_inst', 1)
+    def test_single_token(self):
+        # Test when ner_inst starts with "I-" and replacement has a single token
+        result = process_already_mapped_replacement("Maria", "I-PER", "#PER1_ei")
+        self.assertEqual(result, "_")
+
+    @patch('entityMapping_process.counter_inst', 1)
+    def test_suffix_without_underscore(self):
+        # Test when ner_id_and_potential_suffix does not contain underscores and "XXX" is not in replacement
+        result = process_already_mapped_replacement("Sara Adamescu", "B-PER", "#PER2")
+        self.assertEqual(result, "Sara Adamescu")
+
+    @patch('entityMapping_process.counter_inst', 1)
+    def test_condition_not_met(self):
+        # Test when none of the conditions are met
+        result = process_already_mapped_replacement("Maria", "B-LOC", "#LOC1")
+        self.assertEqual(result, "Maria")
+
 
 class TestProcessEntityInstI(unittest.TestCase):
 
-    @patch('entityMapping_process.used', {"PER": ["Victor Ionescu"]})
     @patch('entityMapping_process.update_mapping_file')
-    @patch('entityMapping_process.count_i', 1)
-    @patch('entityMapping_process.old_rep', "Victor")
-    def test_process_entity_inst_I(self, mock_update_mapping_file, ):
+    @patch('entityMapping_process.counter_inst', 1)
+    @patch('entityMapping_process.old_rep', "Victor Ionescu Popescu")
+    def test_process_entity_inst_I(self, mock_update_mapping_file):
         ner_id_and_potential_suffix = "#PER1"
         mapping_file = "mocked_file_path.txt"
-        replacement_dict = {"PER": ["Grigore Ureche", "Maria Ionescu"]}
 
-        result = process_entity_inst_I(ner_id_and_potential_suffix, mapping_file, replacement_dict)
+        result = process_entity_inst_I(ner_id_and_potential_suffix, mapping_file)
 
-        self.assertEqual("Ionescu", result)
-        mock_update_mapping_file.assert_called_with(mapping_file, ner_id_and_potential_suffix, "Ionescu")
-        self.assertEqual(replacement_dict, {"PER": ["Grigore Ureche", "Maria Ionescu"]})
+        self.assertEqual("Popescu", result)
+        mock_update_mapping_file.assert_called_with(mapping_file, ner_id_and_potential_suffix, "Popescu")
 
 
 class TestProcessFemaleEntity(unittest.TestCase):
@@ -171,25 +212,26 @@ class TestProcessFemaleEntity(unittest.TestCase):
     @patch('entityMapping_process.get_ner', return_value="PER")
     @patch('entityMapping_process.update_mapping_file')
     @patch('entityMapping_process.hashtag_ner', return_value="#PER5")
+    @patch('entityMapping_process.counter_inst', 1)
     def test_process_female_entity(self, mock_hashtag_ner, mock_update_mapping_file, mock_get_ner):
         # Define test data and initial dictionaries
         lemma = "Alina"
         ner_id_and_potential_suffix = "#PER5_ei"
-        replacement_dict = {"PER": ["Maria Smith", "Maria Johnson", "Sara Adams"]}
+        replacement_dict = {"PER": ["Maria Stancu", "Sara Adams"]}
         mapping_file = "mocked_file_path.txt"
 
         # Run the function under test
         result = process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, mapping_file)
 
         # Assertions
-        self.assertEqual("Mariei", result)
+        self.assertEqual("Mariei Stancu", result)
         mock_hashtag_ner.assert_called_with(ner_id_and_potential_suffix)
-        mock_update_mapping_file.assert_called_with(mapping_file, "#PER5", "Mariei")
+        mock_update_mapping_file.assert_called_with(mapping_file, "#PER5", "Maria Stancu")
 
-    @patch('entityMapping_process.get_ner', return_value="PER")
     @patch('entityMapping_process.update_mapping_file')
     @patch('entityMapping_process.hashtag_ner', return_value="#PER88")
-    def test_process_female_entity_suffix_missing(self, mock_hashtag_ner, mock_update_mapping_file, mock_get_ner, ):
+    @patch('entityMapping_process.counter_inst', 1)
+    def test_process_female_entity_suffix_missing(self, mock_hashtag_ner, mock_update_mapping_file):
         # Test when ner_id_and_potential_suffix does not contain a suffix
         lemma = "Mara"
         ner_id_and_potential_suffix = "#PER88"
@@ -198,20 +240,17 @@ class TestProcessFemaleEntity(unittest.TestCase):
 
         result = process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, mapping_file)
 
-        expected_result = "Amanda"
+        expected_result = "Amanda Smith"
         self.assertEqual(result, expected_result)
         mock_hashtag_ner.assert_called_with(ner_id_and_potential_suffix)
         mock_update_mapping_file.assert_called_with(mapping_file, "#PER88", expected_result)
 
-    @patch('entityMapping_process.get_ner', return_value="PER")
     @patch('entityMapping_process.update_mapping_file')
     @patch('entityMapping_process.hashtag_ner', return_value="#PER2")
-    def test_process_female_entity_no_matching_replacement(self, mock_hashtag_ner, mock_update_mapping_file,
-                                                           mock_get_ner):
-        mock_randint = patch('random.randint')
-        randint_mock = mock_randint.start()
-        randint_mock.side_effect = [3]  # Returns values in the range [1, 3]
-
+    @patch('entityMapping_process.counter_inst', 1)
+    @patch('random.choice', return_value="Victor Smith")
+    def test_process_female_entity_no_matching_replacement(self, mock_choice, mock_hashtag_ner,
+                                                           mock_update_mapping_file):
         # Test when there's no matching replacement in the dictionary
         lemma = "Alina"
         ner_id_and_potential_suffix = "#PER2"
@@ -219,9 +258,9 @@ class TestProcessFemaleEntity(unittest.TestCase):
         mapping_file = "mocked_file_path.txt"
 
         result = process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, mapping_file)
-        mock_randint.stop()
-        expected_result = "XXX"
-        self.assertEqual(result, expected_result)
+
+        expected_result = "Victor Smith"
+        self.assertEqual(expected_result, result)
         mock_hashtag_ner.assert_called_with(ner_id_and_potential_suffix)
         mock_update_mapping_file.assert_called_with(mapping_file, "#PER2", expected_result)
 
