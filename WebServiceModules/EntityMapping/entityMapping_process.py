@@ -62,7 +62,7 @@ def count_instances_in_dict(input_dict):
 # Function to read the replacement dictionary from a file
 def read_replacement_dictionary(dictionary_file):
     replacement_dict = {}
-    with open(dictionary_file, 'r') as file:
+    with open(dictionary_file, 'r', encoding="utf-8") as file:
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 2:
@@ -76,7 +76,7 @@ def read_replacement_dictionary(dictionary_file):
 
 def update_mapping_file(mapping_file, entity, replacement):
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
-        with open(mapping_file, 'r') as file:
+        with open(mapping_file, 'r', encoding="utf-8") as file:
             for line in file:
                 columns = line.strip().split('\t')
                 if len(columns) >= 2:
@@ -104,7 +104,7 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
          str: The replacement value found in the mapping file, or None if not found.
      """
     replacement = None  # Default replacement if not found
-    with open(mapping_file, 'r') as file:
+    with open(mapping_file, 'r', encoding="utf-8") as file:
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 3 and columns[1] == ner_id_and_potential_suffix:

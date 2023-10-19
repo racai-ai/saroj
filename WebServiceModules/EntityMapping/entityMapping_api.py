@@ -4,7 +4,7 @@ import sys
 
 from flask import Flask, jsonify
 
-from entityMapping_process import read_replacement_dictionary, anonymize_entities
+from entityMapping_process import read_replacement_dictionary, anonymize_entities, count_instances_in_dict
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data
@@ -57,7 +57,14 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
-    return jsonify({"status": "OK", "message": ""})
+    if not os.path.exists(args.DICTIONARY):
+        return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' does not exist."})
+
+    replacement_dict = read_replacement_dictionary(args.DICTIONARY)
+    if not replacement_dict:
+        return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' is empty."})
+    else:
+        return jsonify({"status": "OK", "message": count_instances_in_dict(replacement_dict)})
 
 
 if __name__ == '__main__':
@@ -65,10 +72,6 @@ if __name__ == '__main__':
     parser.add_argument('PORT', type=int, help='Port to listen for requests')
     parser.add_argument('--DICTIONARY', '-d', type=str, help='path for dictionary, mandatory ')
     args = parser.parse_args()
-
-    if not os.path.exists(args.DICTIONARY):
-        print(f"Replacement dictionary file '{args.DICTIONARY}' does not exist.")
-        exit(1)
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),
