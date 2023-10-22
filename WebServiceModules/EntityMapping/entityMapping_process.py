@@ -20,12 +20,27 @@ NER_ID = 1
 FORM = 1
 
 
-
-def get_random_X():
-    return 'X' * random.randint(3, 10)
-
-
 def count_inst_entities(filename):
+    """
+    Count instances of NER entities in a file and return a list of instance counts.
+
+    Args:
+        filename (str): The path to a file containing NER entity annotations.
+
+    Returns:
+        list: A list of integer values representing the instance counts for each NER entity.
+
+    The function reads the content of the specified `filename`, which is assumed to contain
+    NER entity annotations. It counts the instances of NER entities and returns a list of
+    integer values, each representing the instance count for a specific entity.
+
+    Note:
+    - The input file is expected to have NER annotations, typically in a tab-separated format.
+    - The function accounts for both 'B-' (begin) and 'I-' (inside) entity labels.
+    - The result list contains instance counts for each entity in the order they appear in the file.
+    - Entities labeled as 'O' (outside) are not counted.
+    - If the file is empty or does not contain relevant content, an empty list is returned.
+    """
     result = []
     current_value = 0
 
@@ -51,6 +66,23 @@ def count_inst_entities(filename):
 
 
 def count_instances_in_dict(input_dict):
+    """
+    Count the number of instances for each key in a dictionary.
+
+    Args:
+        input_dict (dict): A dictionary where keys are identifiers and values are lists of instances.
+
+    Returns:
+        str: A string containing a count for each key in the input dictionary.
+
+    The function takes an input dictionary where keys are identifiers and values are lists of instances.
+    It counts the number of instances for each key and returns a string with the key-value pairs.
+
+    Note:
+    - The input dictionary should have keys as identifiers and values as lists of instances.
+    - The function ensures that keys are treated as strings.
+    - The returned string contains key-value pairs in the format "key:count," separated by a comma and space.
+    """
     instance_count = {}
 
     for key, values in input_dict.items():
@@ -70,8 +102,25 @@ def count_instances_in_dict(input_dict):
     return result
 
 
-# Function to read the replacement dictionary from a file
 def read_replacement_dictionary(dictionary_file):
+    """
+    Read and parse a replacement dictionary from a text file.
+
+    Args:
+        dictionary_file (str): The path to the dictionary file.
+
+    Returns:
+        dict: A replacement dictionary where keys are NER identifiers and values are lists of replacements.
+
+    The function reads the content of the specified `dictionary_file`, assuming it is a tab-separated text file
+    with two columns: NER identifiers (keys) and their corresponding replacements (values).
+
+    It constructs and returns a replacement dictionary where NER identifiers are mapped to lists of possible replacements.
+
+    Note:
+    - The function expects the dictionary file to have exactly two columns per line.
+    - If an NER identifier already exists in the dictionary, the replacement is appended to its list.
+    """
     replacement_dict = {}
     with open(dictionary_file, 'r', encoding="utf-8") as file:
         for line in file:
@@ -86,6 +135,24 @@ def read_replacement_dictionary(dictionary_file):
 
 
 def update_mapping_file(mapping_file, entity, replacement):
+    """
+    Update a mapping file with a new replacement for a specified entity.
+
+    Args:
+        mapping_file (str): The path to the mapping file to be updated.
+        entity (str): The identifier of the entity to be replaced.
+        replacement (str): The replacement to be added for the specified entity.
+
+    The function reads the content of the given `mapping_file` and locates the line containing
+    the specified `entity` identifier. It then adds the `replacement` for that entity.
+
+    The updated content is written to a temporary file. After processing is complete, the original
+    mapping file is replaced with the temporary file, ensuring the mapping is updated.
+
+    Note:
+    - The mapping file is expected to be a tab-separated text file with at least three columns.
+    - The 'entity' and 'replacement' parameters should match the appropriate columns in the file.
+    """
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
         with open(mapping_file, 'r', encoding="utf-8") as file:
             for line in file:
@@ -125,6 +192,23 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
 
 
 def filter_neutral_valid_replacements(replacements):
+    """
+    Filter and select valid replacements from a list of replacements based on specific criteria.
+
+    Args:
+        replacements (list of str): A list of replacement candidates.
+
+    Returns:
+        str: A valid replacement selected based on the specified criteria or a randomly chosen replacement.
+
+    The function filters the input `replacements` list by two criteria:
+    1. Each replacement must have its first token not ending with 'a'.
+    2. Each replacement must consist of exactly `counter_inst` tokens.
+
+    If valid replacements are found, one of them is randomly chosen and returned.
+    If no valid replacements are found, a random replacement from the original list is returned.
+    If the original list of replacements is empty, a random value is generated using get_random_X().
+    """
     filtered_replacements = [replacement for replacement in replacements
                              if not replacement.split()[FIRST_TOKEN].endswith('a')]
 
@@ -135,6 +219,10 @@ def filter_neutral_valid_replacements(replacements):
         return random.choice(valid_replacements)
 
     return random.choice(replacements) if replacements else get_random_X()
+
+
+def get_random_X():
+    return 'X' * random.randint(3, 10)
 
 
 def hashtag_ner(ner_id_and_potential_suffix):
@@ -157,6 +245,17 @@ def write_output_columns(output_f, columns):
 
 
 def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
+    """
+    Process a replacement by applying a suffix based on NER identifier and potential suffix.
+
+    Args:
+        replacement (str): The original replacement.
+        ner_id_and_potential_suffix (str): The NER identifier and potential suffix.
+
+    Returns:
+        str: The processed replacement with the applied suffix.
+    """
+
     def apply_suffix(token, sfx):
         return token + sfx if not token.endswith("a") else token[:LAST_TOKEN] + sfx
 
@@ -362,16 +461,22 @@ def preprocess_line(line):
 
 def anonymize_entities(input_file, output_file, mapping_file, replacement_dict):
     """
-    Anonymize entities in the input file and write the result to the output file.
+    Anonymize NER entities in an input file and write the result to an output file.
 
     Args:
-        input_file (str): The input file path.
-        output_file (str): The output file path.
-        mapping_file (str): The mapping file path.
-        replacement_dict (dict): A dictionary of replacements.
+        input_file (str): The path to the input file containing NER entities.
+        output_file (str): The path to the output file where anonymized content will be written.
+        mapping_file (str): The path to the file containing entity-to-replacement mappings.
+        replacement_dict (dict): A dictionary of replacement options for entities.
 
-    Returns:
-        None
+    The function reads the content of the specified `input_file`, processes NER entities, and replaces them with anonymized
+    content based on the provided `mapping_file` and `replacement_dict`.
+    The resulting content is written to the `output_file`.
+
+    Note:
+    - The input file is expected to contain NER entities that need anonymization.
+    - The `mapping_file` contains predefined entity-to-replacement mappings.
+    - The `replacement_dict` is a dictionary of replacement options for entities not found already in the mapping file.
     """
     global counter_inst
     counter_inst_list = count_inst_entities(input_file)
