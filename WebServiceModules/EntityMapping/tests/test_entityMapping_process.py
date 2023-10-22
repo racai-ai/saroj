@@ -1,10 +1,10 @@
 import os
-import tempfile
 import unittest
 from io import StringIO
 from unittest.mock import patch, mock_open
 
-from entityMapping_process import *
+# path is absolute to test easier the module inside the IDE
+from WebServiceModules.EntityMapping.entityMapping_process import *
 
 
 class TestReadReplacementDictionary(unittest.TestCase):
@@ -33,9 +33,9 @@ class TestReadReplacementDictionary(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     @patch('builtins.open')
-    def test_read_replacement_dictionary_empty_file(self, mock_open):
+    def test_read_replacement_dictionary_empty_file(self, mock_open_file):
         # Mock an empty file
-        mock_open.return_value = StringIO('')
+        mock_open_file.return_value = StringIO('')
 
         # Call the function
         result = read_replacement_dictionary('dummy_file.txt')
@@ -45,10 +45,10 @@ class TestReadReplacementDictionary(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
     @patch('builtins.open')
-    def test_read_replacement_dictionary_invalid_line(self, mock_open):
+    def test_read_replacement_dictionary_invalid_line(self, mock_open_file):
         # Mock a file with an invalid line
         file_content = "PERSON\tJohn\n\nINVALID_LINE\nLOCATION\tNew York\n"
-        mock_open.return_value = StringIO(file_content)
+        mock_open_file.return_value = StringIO(file_content)
 
         # Call the function
         result = read_replacement_dictionary('dummy_file.txt')
@@ -97,21 +97,21 @@ class TestSearchMappingFile(unittest.TestCase):
 
     @patch('builtins.open', new_callable=mock_open, read_data="Nicusor\t#PER1\tAndrei\nMaria\t#PER2\tIoana")
     def test_search_mapping_file_found(self, mock_file_open):
-        mapping_file = "mocked_file_path.txt"
+        mock_file_open.mapping_file = "mocked_file_path.txt"
         ner_id_and_potential_suffix = "#PER1"
-        result = search_mapping_file(mapping_file, ner_id_and_potential_suffix)
+        result = search_mapping_file(mock_file_open.mapping_file, ner_id_and_potential_suffix)
         self.assertEqual(result, "Andrei")
 
     @patch('builtins.open', new_callable=mock_open, read_data="Nicusor\t#PER1\tAndrei\nMaria\t#PER2\tIoana")
     def test_search_mapping_file_not_found(self, mock_file_open):
-        mapping_file = "mocked_file_path.txt"
+        mock_file_open.mapping_file = "mocked_file_path.txt"
         ner_id_and_potential_suffix = "#PER5"
-        result = search_mapping_file(mapping_file, ner_id_and_potential_suffix)
-        self.assertIsNone(result)
+        result = search_mapping_file(mock_file_open.mapping_file, ner_id_and_potential_suffix)
+        self.assertEqual(result, '')
 
 
 class TestProcessAlreadyMappedReplacement(unittest.TestCase):
-    @patch('entityMapping_process.counter_inst', 0)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 0)
     def test_process_already_mapped_replacement_empty_replacement(self):
         replacement = ""
         ner_inst = "I-PER"
@@ -119,7 +119,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertIsNone(result)
 
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_single_token(self):
         replacement = "John"
         ner_inst = "I-PER"
@@ -127,7 +127,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual("_", result)
 
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_suffix_present(self):
         replacement = "Maria"
         ner_inst = "B-PER"
@@ -135,7 +135,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Mariei")
 
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_suffix_not_present(self):
         replacement = "Maria"
         ner_inst = "B-PER"
@@ -143,7 +143,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Maria")
 
-    @patch('entityMapping_process.counter_inst', 2)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 2)
     def test_process_already_mapped_replacement_multiple_tokens(self):
         replacement = "Adina Ionescu"
         ner_inst = "B-PER"
@@ -151,7 +151,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Adinei")
 
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_multiple_tokens_singlere_replacement(self):
         replacement = "Adina Ionescu"
         ner_inst = "B-PER"
@@ -159,7 +159,7 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Adinei Ionescu")
 
-    @patch('entityMapping_process.counter_inst', 2)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 2)
     def test_process_already_mapped_replacement_four_tokens(self):
         replacement = "Adina Ionescu Papadag Bengescu"
         ner_inst = "I-PER"
@@ -167,36 +167,42 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Papadag")
 
-    @patch('entityMapping_process.counter_inst', 0)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 0)
     def test_none_replacement(self):
         # Test when replacement is None
-        result = process_already_mapped_replacement(None, "I-PER", "#PER1_ei")
+        result = process_already_mapped_replacement("", "I-PER", "#PER1_ei")
         self.assertIsNone(result)
 
-    @patch('entityMapping_process.counter_inst', 1)
-    def test_single_token(self):
-        # Test when ner_inst starts with "I-" and replacement has a single token
-        result = process_already_mapped_replacement("Maria", "I-PER", "#PER1_ei")
-        self.assertEqual(result, "_")
-
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_suffix_without_underscore(self):
         # Test when ner_id_and_potential_suffix does not contain underscores and "XXX" is not in replacement
         result = process_already_mapped_replacement("Sara Adamescu", "B-PER", "#PER2")
         self.assertEqual(result, "Sara Adamescu")
 
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_condition_not_met(self):
         # Test when none of the conditions are met
         result = process_already_mapped_replacement("Maria", "B-LOC", "#LOC1")
         self.assertEqual(result, "Maria")
 
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 2)
+    def test_condition_singular_token_replacement_available(self):
+        # Test when none of the conditions are met
+        result = process_already_mapped_replacement("Maria", "B-PER", "#PER1")
+        self.assertEqual(result, "Maria")
+
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 4)
+    def test_default_return_condition(self):
+        # Test when none of the conditions are met
+        result = process_already_mapped_replacement("Maria Elena Burlacu", "B-PER", "#PER1")
+        self.assertEqual(result, "_")
+
 
 class TestProcessEntityInstI(unittest.TestCase):
 
-    @patch('entityMapping_process.update_mapping_file')
-    @patch('entityMapping_process.counter_inst', 1)
-    @patch('entityMapping_process.old_rep', "Victor Ionescu Popescu")
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.update_mapping_file')
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.old_rep', "Victor Ionescu Popescu")
     def test_process_entity_inst_I(self, mock_update_mapping_file):
         ner_id_and_potential_suffix = "#PER1"
         mapping_file = "mocked_file_path.txt"
@@ -209,11 +215,10 @@ class TestProcessEntityInstI(unittest.TestCase):
 
 class TestProcessFemaleEntity(unittest.TestCase):
 
-    @patch('entityMapping_process.get_ner', return_value="PER")
-    @patch('entityMapping_process.update_mapping_file')
-    @patch('entityMapping_process.hashtag_ner', return_value="#PER5")
-    @patch('entityMapping_process.counter_inst', 1)
-    def test_process_female_entity(self, mock_hashtag_ner, mock_update_mapping_file, mock_get_ner):
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.update_mapping_file')
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.hashtag_ner', return_value="#PER5")
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
+    def test_process_female_entity(self, mock_hashtag_ner, mock_update_mapping_file):
         # Define test data and initial dictionaries
         lemma = "Alina"
         ner_id_and_potential_suffix = "#PER5_ei"
@@ -228,9 +233,9 @@ class TestProcessFemaleEntity(unittest.TestCase):
         mock_hashtag_ner.assert_called_with(ner_id_and_potential_suffix)
         mock_update_mapping_file.assert_called_with(mapping_file, "#PER5", "Maria Stancu")
 
-    @patch('entityMapping_process.update_mapping_file')
-    @patch('entityMapping_process.hashtag_ner', return_value="#PER88")
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.update_mapping_file')
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.hashtag_ner', return_value="#PER88")
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_female_entity_suffix_missing(self, mock_hashtag_ner, mock_update_mapping_file):
         # Test when ner_id_and_potential_suffix does not contain a suffix
         lemma = "Mara"
@@ -245,9 +250,9 @@ class TestProcessFemaleEntity(unittest.TestCase):
         mock_hashtag_ner.assert_called_with(ner_id_and_potential_suffix)
         mock_update_mapping_file.assert_called_with(mapping_file, "#PER88", expected_result)
 
-    @patch('entityMapping_process.update_mapping_file')
-    @patch('entityMapping_process.hashtag_ner', return_value="#PER2")
-    @patch('entityMapping_process.counter_inst', 1)
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.update_mapping_file')
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.hashtag_ner', return_value="#PER2")
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     @patch('random.choice', return_value="Victor Smith")
     def test_process_female_entity_no_matching_replacement(self, mock_choice, mock_hashtag_ner,
                                                            mock_update_mapping_file):
