@@ -162,11 +162,11 @@ def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potenti
     def has_suffix():
         return "_" in ner_id_and_potential_suffix and NOT_FOUND not in replacement
 
-    def apply_suffix(token, suffix):
-        return token + suffix if not token.endswith("a") else token[:-1] + suffix
+    def apply_suffix(token, sfx):
+        return token + sfx if not token.endswith("a") else token[:-1] + sfx
 
-    def apply_first_token_suffix(suffix):
-        return apply_suffix(replacement_tokens[0], suffix)
+    def apply_first_token_suffix(sfx):
+        return apply_suffix(replacement_tokens[0], sfx)
 
     def handle_single_token_with_suffix():
         return apply_suffix(replacement, suffix)
