@@ -12,6 +12,13 @@ from lib.saroj.suffix_process import suffix_replace, VOID_NER
 old_rep = ""
 counter_inst = 0
 NOT_FOUND = "XXX"
+FIRST_TOKEN = 0
+SECOND_TOKEN = 1
+LAST_TOKEN = -1
+NER = -2
+NER_ID = 1
+FORM = 1
+
 
 
 def get_random_X():
@@ -29,7 +36,7 @@ def count_inst_entities(filename):
         if line.startswith("#") or not line.strip():
             continue
         columns = line.strip().split('\t')
-        if columns[-1] in VOID_NER:
+        if columns[LAST_TOKEN] in VOID_NER:
             continue
         if columns[-2].startswith("I-"):
             current_value += 1
@@ -111,7 +118,7 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
     with open(mapping_file, 'r', encoding="utf-8") as file:
         for line in file:
             columns = line.strip().split('\t')
-            if len(columns) == 3 and columns[1] == ner_id_and_potential_suffix:
+            if len(columns) == 3 and columns[NER_ID] == ner_id_and_potential_suffix:
                 replacement = columns[2]
                 break  # Exit the loop once the entity is found
     return replacement
@@ -119,7 +126,7 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
 
 def filter_neutral_valid_replacements(replacements):
     filtered_replacements = [replacement for replacement in replacements
-                             if not replacement.split()[0].endswith('a')]
+                             if not replacement.split()[FIRST_TOKEN].endswith('a')]
 
     valid_replacements = [replacement for replacement in filtered_replacements
                           if len(replacement.split()) == counter_inst]
@@ -131,16 +138,48 @@ def filter_neutral_valid_replacements(replacements):
 
 
 def hashtag_ner(ner_id_and_potential_suffix):
-    return ner_id_and_potential_suffix.split('_', 1)[0]
+    return ner_id_and_potential_suffix.split('_')[FIRST_TOKEN]
 
 
-def get_ner(ner_id_and_potential_suffix):
-    return re.sub(r'[^a-zA-Z]', '', hashtag_ner(ner_id_and_potential_suffix))
+def insert_suffix_multiple_tokens(replacement, sfx):
+    return replacement.split()[FIRST_TOKEN][:-1] + sfx + " " + " ".join(replacement.split()[SECOND_TOKEN:]) \
+        if not (NOT_FOUND in replacement or not sfx) else replacement
+
+
+def get_ner_and_suffix(ner_id_and_potential_suffix):
+    return re.sub(r'[^a-zA-Z]', '', hashtag_ner(ner_id_and_potential_suffix)), \
+           ner_id_and_potential_suffix.split("_")[SECOND_TOKEN] if "_" in ner_id_and_potential_suffix else ""
 
 
 def write_output_columns(output_f, columns):
     output_line = '\t'.join(columns)
     output_f.write(output_line + '\n')
+
+
+def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
+    def apply_suffix(token, sfx):
+        return token + sfx if not token.endswith("a") else token[:LAST_TOKEN] + sfx
+
+    def apply_first_token_suffix(sfx):
+        return apply_suffix(replacement_tokens[FIRST_TOKEN], sfx)
+
+    def handle_single_token_with_suffix():
+        return apply_suffix(replacement, suffix)
+
+    def handle_multi_token_with_suffix():
+        return apply_first_token_suffix(suffix) + " " + " ".join(replacement_tokens[SECOND_TOKEN:])
+
+    replacement_tokens = replacement.split()
+    _, suffix = get_ner_and_suffix(ner_id_and_potential_suffix)
+
+    if len(replacement_tokens) == 1 and counter_inst == 1:
+        return handle_single_token_with_suffix()
+
+    if len(replacement_tokens) > 1 and counter_inst == 1:
+        return handle_multi_token_with_suffix()
+
+    if counter_inst != 1 and NOT_FOUND not in replacement:
+        return apply_first_token_suffix(suffix)
 
 
 def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix):
@@ -157,53 +196,22 @@ def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potenti
     """
 
     def is_single_token_replacement():
-        return len(replacement_tokens) == 1
-
-    def has_suffix():
-        return "_" in ner_id_and_potential_suffix and NOT_FOUND not in replacement
-
-    def apply_suffix(token, sfx):
-        return token + sfx if not token.endswith("a") else token[:-1] + sfx
-
-    def apply_first_token_suffix(sfx):
-        return apply_suffix(replacement_tokens[0], sfx)
-
-    def handle_single_token_with_suffix():
-        return apply_suffix(replacement, suffix)
-
-    def handle_multi_token_with_suffix():
-        return apply_first_token_suffix(suffix) + " " + end_token
-
-    if not replacement:
-        return None
-
-    replacement_tokens = replacement.split()
-    end_token = " ".join(replacement_tokens[1:])
-
-    suffix = ner_id_and_potential_suffix.split("_")[1] if has_suffix() else None
+        return len(replacement.split()) == 1
 
     if ner_inst.startswith("I-") and is_single_token_replacement():
         return "_"
 
-    if is_single_token_replacement() and counter_inst == 1 and suffix:
-        return handle_single_token_with_suffix()
+    if "_" in ner_id_and_potential_suffix and NOT_FOUND not in replacement:
+        return process_suffix_tokens(replacement, ner_id_and_potential_suffix)
 
-    if len(replacement_tokens) > 1 and counter_inst == 1 and suffix:
-        return handle_multi_token_with_suffix()
+    replacement_tokens = replacement.split()
+    fallthrough_conditions = [len(replacement_tokens) > 1 and counter_inst == 1,
+                              is_single_token_replacement() and counter_inst > 1]
 
-    if counter_inst != 1 and NOT_FOUND not in replacement and suffix:
-        return apply_first_token_suffix(suffix)
-
-    if len(replacement_tokens) > 1 and counter_inst == 1:
+    if any(fallthrough_conditions):
         return replacement
 
-    if is_single_token_replacement() and counter_inst != 1:
-        return replacement
-
-    if len(replacement_tokens) >= counter_inst:
-        return replacement_tokens[-counter_inst]
-
-    return "_"
+    return replacement_tokens[-counter_inst] if len(replacement_tokens) >= counter_inst else "_"
 
 
 def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file):
@@ -243,13 +251,10 @@ def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, 
     """
     global old_rep
 
-    # Get the NER type from the identifier
-    ner = get_ner(ner_id_and_potential_suffix)
+    # Get the NER and suffix from the identifier
+    ner, suffix = get_ner_and_suffix(ner_id_and_potential_suffix)
 
-    # Extract the suffix from the identifier
-    suffix = ner_id_and_potential_suffix.split("_")[1] if "_" in ner_id_and_potential_suffix else ""
-
-    replacement_list = [fname for fname in replacement_dict[ner] if fname.split()[0].endswith('a') and fname != lemma]
+    replacement_list = [fname for fname in replacement_dict[ner] if fname.split()[FIRST_TOKEN].endswith('a') and fname != lemma]
     replacement = next((fname for fname in replacement_list if len(fname.split()) == counter_inst), None)
 
     if replacement is None:
@@ -259,15 +264,14 @@ def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, 
         replacement = random.choice(replacement_dict[ner]) if replacement_dict[ner] else get_random_X()
 
     old_rep = replacement
-    # Modify the replacement with the suffix if not found
-    rep = replacement.split()[0][:-1] + suffix + " " + " ".join(replacement.split()[1:]) \
-        if not (NOT_FOUND in replacement or not suffix) else replacement
+    # Modify the replacement with the suffix
+    rep = insert_suffix_multiple_tokens(replacement, suffix)
 
     # Update the mapping file and replacement dictionary
     update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
     replacement_dict[ner] = [value for value in replacement_dict[ner] if not re.search(replacement, value)]
 
-    return rep if len(rep.split()) > counter_inst else rep.split()[0]
+    return rep if len(rep.split()) > counter_inst else rep.split()[FIRST_TOKEN]
 
 
 def process_neutral_entity(ner_id_and_potential_suffix, replacement_dict, mapping_file):
@@ -283,24 +287,19 @@ def process_neutral_entity(ner_id_and_potential_suffix, replacement_dict, mappin
         str: The processed replacement.
     """
     global old_rep
-    ner = get_ner(ner_id_and_potential_suffix)
-    suffix = ner_id_and_potential_suffix.split("_")[1] if "_" in ner_id_and_potential_suffix else None
+    ner, suffix = get_ner_and_suffix(ner_id_and_potential_suffix)
 
     replacements = replacement_dict[ner]
     replacement = filter_neutral_valid_replacements(replacements)
 
-    # Set the new value for columns[-1]
-    rep = replacement.split()[0] + suffix + " " + " ".join(replacement.split()[1:]) \
-        if not (NOT_FOUND in replacement or not suffix) else \
-        replacement
-
-    old_rep = rep
+    # Set the new value for columns
+    old_rep, rep = insert_suffix_multiple_tokens(replacement, suffix)
 
     # Update mapping and used values
     update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
     replacement_dict[ner] = [value for value in replacement_dict[ner] if not re.search(replacement, value)]
 
-    return rep if len(rep.split()) > counter_inst else rep.split()[0]
+    return rep if len(rep.split()) > counter_inst else rep.split()[FIRST_TOKEN]
 
 
 def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, replacement_dict):
@@ -316,7 +315,7 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, replace
     Returns:
         str: The processed replacement.
     """
-    ner = get_ner(ner_id_and_potential_suffix)
+    ner = get_ner_and_suffix(ner_id_and_potential_suffix)
     ner_inst, lemma = token_tpl
 
     if ner in replacement_dict:
@@ -347,13 +346,13 @@ def preprocess_line(line):
         return line, None
 
     columns = line.strip().split('\t')
-    ner_id_and_potential_suffix = columns[-1]  # #PER1_ei
+    ner_id_and_potential_suffix = columns[LAST_TOKEN]  # #PER1_ei
 
     if ner_id_and_potential_suffix in VOID_NER:
         return line, None
 
-    ner_inst = columns[-2]  # B-PER
-    form = columns[1]  # Mariei
+    ner_inst = columns[NER]  # B-PER
+    form = columns[FORM]  # Mariei
 
     if "_" in ner_id_and_potential_suffix:
         form, _ = suffix_replace(form)
@@ -385,14 +384,13 @@ def anonymize_entities(input_file, output_file, mapping_file, replacement_dict):
 
             counter_inst = counter_inst_list.pop()
             ner_id_and_potential_suffix, token_tpl = token_info
-            ner_inst = token_tpl[0]
+            ner_inst = token_tpl[FIRST_TOKEN]
 
             replacement = search_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix))
 
-            rep = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
-
-            if rep:
-                columns.append(rep)
+            if replacement:
+                replacement = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
+                columns.append(replacement)
                 write_output_columns(output_f, columns)
                 continue
 

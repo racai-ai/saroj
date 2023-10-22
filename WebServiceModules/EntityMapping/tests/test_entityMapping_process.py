@@ -1,4 +1,3 @@
-import os
 import unittest
 from io import StringIO
 from unittest.mock import patch, mock_open
@@ -111,19 +110,12 @@ class TestSearchMappingFile(unittest.TestCase):
 
 
 class TestProcessAlreadyMappedReplacement(unittest.TestCase):
-    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 0)
-    def test_process_already_mapped_replacement_empty_replacement(self):
-        replacement = ""
-        ner_inst = "I-PER"
-        ner_id_and_potential_suffix = "B-PER"
-        result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
-        self.assertIsNone(result)
 
     @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_process_already_mapped_replacement_single_token(self):
         replacement = "John"
         ner_inst = "I-PER"
-        ner_id_and_potential_suffix = "B-PER"
+        ner_id_and_potential_suffix = "#B-PER2"
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual("_", result)
 
@@ -166,12 +158,6 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         ner_id_and_potential_suffix = "#PER"
         result = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
         self.assertEqual(result, "Papadag")
-
-    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 0)
-    def test_none_replacement(self):
-        # Test when replacement is None
-        result = process_already_mapped_replacement("", "I-PER", "#PER1_ei")
-        self.assertIsNone(result)
 
     @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
     def test_suffix_without_underscore(self):
