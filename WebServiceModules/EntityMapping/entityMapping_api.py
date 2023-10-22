@@ -36,6 +36,8 @@ def anonymize_docx():
 
     if input_file:
         try:
+            if not args.DICTIONARY:
+                return jsonify({"status": "OK", "message": f"The dictionary file is missing."})
             # Read the replacement dictionary
             replacement_dict = read_replacement_dictionary(args.DICTIONARY)
 
@@ -57,6 +59,9 @@ def check_health():
     Returns:
         JSON: A response indicating the status of the module (e.g., {'status': 'OK', 'message': ''}).
     """
+    if not args.DICTIONARY:
+        return jsonify({"status": "OK", "message": f"The dictionary file is missing."})
+
     if not os.path.exists(args.DICTIONARY):
         return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' does not exist."})
 
