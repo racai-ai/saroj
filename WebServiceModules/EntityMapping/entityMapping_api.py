@@ -1,10 +1,8 @@
 import argparse
-import os
-import sys
 
 from flask import Flask, jsonify
 
-from entityMapping_process import read_replacement_dictionary, anonymize_entities, count_instances_in_dict
+from entityMapping_process import *
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data
