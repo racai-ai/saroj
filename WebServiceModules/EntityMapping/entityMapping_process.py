@@ -1,7 +1,11 @@
+import os
 import random
 import re
 import shutil
+import sys
 import tempfile
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from lib.saroj.suffix_process import suffix_replace, VOID_NER
 
