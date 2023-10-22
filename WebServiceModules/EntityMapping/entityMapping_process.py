@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from lib.saroj.suffix_process import suffix_replace, VOID_NER
 
-old_rep = None
+old_rep = ""
 counter_inst = 0
 NOT_FOUND = "XXX"
 
@@ -105,9 +105,9 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
          ner_id_and_potential_suffix (str): The NER identifier and potential suffix to look up.
 
      Returns:
-         str: The replacement value found in the mapping file, or None if not found.
+         str: The replacement value found in the mapping file, or '' if not found.
      """
-    replacement = None  # Default replacement if not found
+    replacement = ""  # Default replacement if not found
     with open(mapping_file, 'r', encoding="utf-8") as file:
         for line in file:
             columns = line.strip().split('\t')
