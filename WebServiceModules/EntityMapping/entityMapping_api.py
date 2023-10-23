@@ -4,7 +4,7 @@ from entityMapping_process import *
 from entityMapping_config import args
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from lib.saroj.input_data import get_input_data
+from lib.saroj.input_data import get_input_data, is_file_conllu
 from lib.saroj.gunicorn import StandaloneApplication
 
 app = Flask(__name__)
@@ -47,15 +47,18 @@ def anonymize_conllup():
     output_file = data["output"]
     mapping_file = data["mapping"]
 
+    replacement_dict = {}
+
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
+    if not is_file_conllu(input_file):
+        return jsonify({"status": "ERROR", "message": "Input file is not conllup"})
 
     if input_file:
         try:
-            if not args.DICTIONARY:
-                return jsonify({"status": "OK", "message": f"The dictionary file is missing."})
             # Read the replacement dictionary
-            replacement_dict = read_replacement_dictionary(args.DICTIONARY)
+            if args.DICTIONARY:
+                replacement_dict = read_replacement_dictionary(args.DICTIONARY)
 
             # Anonymize entities in the input file and write to the output file
             anonymize_entities(input_file, output_file, mapping_file, replacement_dict)
@@ -86,12 +89,13 @@ def check_health():
     If any of the checks fail, an appropriate error message is included in the response.
     """
     if not args.DICTIONARY:
-        return jsonify({"status": "OK", "message": f"The dictionary file is missing."})
+        return jsonify({"status": "OK", "message": f"The dictionary file parameter is missing."})
 
     if not os.path.exists(args.DICTIONARY):
         return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' does not exist."})
 
     replacement_dict = read_replacement_dictionary(args.DICTIONARY)
+
     if not replacement_dict:
         return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' is empty."})
     else:
