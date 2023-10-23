@@ -1,8 +1,7 @@
-import argparse
-
 from flask import Flask, jsonify
 
 from entityMapping_process import *
+from entityMapping_config import args
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data
@@ -100,10 +99,6 @@ def check_health():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('PORT', type=int, help='Port to listen for requests')
-    parser.add_argument('--DICTIONARY', '-d', type=str, help='path for dictionary, mandatory ')
-    args = parser.parse_args()
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),

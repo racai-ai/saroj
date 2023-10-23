@@ -3,13 +3,15 @@ import re
 import shutil
 import tempfile
 
-NOT_FOUND = "XXX"
+from entityMapping_config import args
+
+NOT_FOUND = args.REPLACEMENT * 3
 FIRST_TOKEN = 0
 SECOND_TOKEN = 1
 
 
 def get_random_X():
-    return 'X' * random.randint(3, 10)
+    return args.REPLACEMENT * random.randint(3, 10)
 
 
 def hashtag_ner(ner_id_and_potential_suffix):
