@@ -259,7 +259,7 @@ def process_neutral_entity(ner_id_and_potential_suffix, replacement_dict, mappin
     replacement = filter_neutral_valid_replacements(replacements)
 
     # Set the new value for columns
-    old_rep, rep = insert_suffix_multiple_tokens(replacement, suffix)
+    old_rep = rep = insert_suffix_multiple_tokens(replacement, suffix)
 
     # Update mapping and used values
     update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
@@ -281,7 +281,7 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, replace
     Returns:
         str: The processed replacement.
     """
-    ner = get_ner_and_suffix(ner_id_and_potential_suffix)
+    ner, _ = get_ner_and_suffix(ner_id_and_potential_suffix)
     ner_inst, lemma = token_tpl
 
     if ner in replacement_dict:
