@@ -183,6 +183,13 @@ class TestProcessAlreadyMappedReplacement(unittest.TestCase):
         result = process_already_mapped_replacement("Maria Elena Burlacu", "B-PER", "#PER1")
         self.assertEqual(result, "_")
 
+    @patch('WebServiceModules.EntityMapping.entityMapping_process.counter_inst', 1)
+    def test_conditional_double_token_for_I_inst(self):
+        # Test when none of the conditions are met
+        result = process_already_mapped_replacement("Persoana 2", "I-PER", "#PER1")
+        self.assertEqual(result, "2")
+
+
 
 class TestProcessEntityInstI(unittest.TestCase):
 

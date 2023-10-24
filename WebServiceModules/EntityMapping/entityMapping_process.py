@@ -148,6 +148,13 @@ def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
         return apply_first_token_suffix(suffix)
 
 
+def already_mapped_I_inst(replacement):
+    if len(replacement.split()) == 1:
+        return "_"
+    else:
+        return replacement.split()[-counter_inst]
+
+
 def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix):
     """
     Process a replacement based on NER instance and potential suffix.
@@ -161,18 +168,15 @@ def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potenti
         str: The processed replacement.
     """
 
-    def is_single_token_replacement():
-        return len(replacement.split()) == 1
-
-    if ner_inst.startswith("I-") and is_single_token_replacement():
-        return "_"
+    if ner_inst.startswith("I-"):
+        return already_mapped_I_inst(replacement)
 
     if "_" in ner_id_and_potential_suffix and NOT_FOUND not in replacement:
         return process_suffix_tokens(replacement, ner_id_and_potential_suffix)
 
     replacement_tokens = replacement.split()
     fallthrough_conditions = [len(replacement_tokens) > 1 and counter_inst == 1,
-                              is_single_token_replacement() and counter_inst > 1]
+                              len(replacement.split()) == 1 and counter_inst > 1]
 
     if any(fallthrough_conditions):
         return replacement
