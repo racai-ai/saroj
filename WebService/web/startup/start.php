@@ -15,12 +15,16 @@ foreach($config['modules'] as $mod){
 
 echo "All modules started\n";
 
-echo "Creating folders\n";
+echo "Creating folders and setting access rights\n";
 @mkdir($TASK_DIR);
 @mkdir($TASK_DIR_NEW);
 @mkdir($TASK_DIR_OLD);
 @mkdir($TASK_DIR_RUN);
 @mkdir($MAP_DIR);
+shell_exec("chown www-data:www-data ${TASK_DIR_NEW}");
+shell_exec("chown www-data:www-data ${TASK_DIR_OLD}");
+shell_exec("chown www-data:www-data ${TASK_DIR_RUN}");
+shell_exec("chown www-data:www-data ${MAP_DIR}");
 echo "Done\n";
 
 function checkTasks(){

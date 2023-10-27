@@ -7,7 +7,7 @@ $config=get_config();
 $message="";
 $status="OK";
 foreach($config['anonymization'] as $mod){
-	$data=file_get_contents("http://127.0.0.1:".$mod['port']."/check_health");
+	$data=file_get_contents("http://127.0.0.1:".$mod['port']."/checkHealth");
 	$data=@json_decode($data,true);
 	if(!is_array($data) || !isset($data['status']) || !isset($data['message'])){
 		$status="ERROR"; 
