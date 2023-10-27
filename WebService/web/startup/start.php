@@ -10,7 +10,7 @@ echo "Starting modules\n";
 
 foreach($config['modules'] as $mod){
 	echo "   Running [$mod]\n";
-	exec(sprintf("%s &", $mod));
+	shell_exec(sprintf("/bin/bash -c \"%s\" >/dev/null 2>&1 &", $mod));
 }
 
 echo "All modules started\n";
@@ -24,6 +24,8 @@ echo "Creating folders\n";
 echo "Done\n";
 
 function checkTasks(){
+        global $TASK_DIR_NEW, $TASK_DIR_OLD;
+
 	$dh = opendir($TASK_DIR_NEW);
 	while (($file = readdir($dh)) !== false) {
 		$pathNew="${TASK_DIR_NEW}${file}";

@@ -1,0 +1,16 @@
+{
+
+"version":"1.0-test",
+
+"modules":[
+    "source /venv/bin/activate ; cd /modules/TextExtractor ; python textExtractor_api.py --RUN_ANALYSIS --SAVE_INTERNAL_FILES --udpipe_model /data/udpipe.model.ud 8001 2>&1 | /usr/bin/rotatelogs -l /var/log/8001-%Y-%m-%d.log 86400"
+],
+
+"anonymization":[
+    {"port":8001,"args":[
+        {"key":"input", "value":"DOCX"},
+        {"key":"output", "value":"TOKENIZED"}
+    ]}
+]
+
+}
