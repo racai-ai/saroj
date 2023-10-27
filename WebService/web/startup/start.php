@@ -67,7 +67,7 @@ function runTask($pathNew, $pathDone){
 	file_put_contents($pathNew,json_encode($task));
 	
 	$pathDocx="${TASK_DIR_RUN}input.docx";
-	file_put_contents($pathDocx,$task['document']);
+	file_put_contents($pathDocx,base64_decode($task['document']));
 
 	$pathOutput="${TASK_DIR_RUN}output.docx";
 	
