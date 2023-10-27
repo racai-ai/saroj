@@ -4,7 +4,7 @@ require_once "lib/lib.php";
 
 $in=get_input(["id"]);
 
-$pathDone="${TASK_DIR_OLD}${in['id']}";
+$pathDone="${TASK_DIR_DONE}${in['id']}";
 $pathNew="${TASK_DIR_NEW}${in['id']}";
 
 $task=false;
