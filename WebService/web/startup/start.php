@@ -94,12 +94,13 @@ function runTask($pathNew, $pathDone){
 		}
 		
 		$result=file_get_contents("http://127.0.0.1:$port/process?input=".urlencode(json_encode($stepData)));
+                echo "Result on port $port: $result\n";
 		if($result===false){
 			$task['status']="ERROR";
 			$task['message']="No answer on port $port";
 			break;
 		}
-		$result=json_decode($result);
+		$result=json_decode($result,true);
 		if(!is_array($result) || !isset($result['status'])){
 			$task['status']="ERROR";
 			$task['message']="Invalid JSON on port $port";

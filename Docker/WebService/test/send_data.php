@@ -15,7 +15,7 @@ function sendData($url,$data){
         CURLOPT_POSTFIELDS => $fields_string,
         CURLOPT_SSL_VERIFYHOST => 0,
         CURLOPT_SSL_VERIFYPEER => 0,
-        CURLOPT_VERBOSE => true
+        //CURLOPT_VERBOSE => true
     ));
     
     
