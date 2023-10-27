@@ -93,7 +93,7 @@ function runTask($pathNew, $pathDone){
 			$stepData[$key]=$data[$value];
 		}
 		
-		$result=file_get_contents("http://127.0.0.1:$port/process?input=".url_encode(json_encode($stepData)));
+		$result=file_get_contents("http://127.0.0.1:$port/process?input=".urlencode(json_encode($stepData)));
 		if($result===false){
 			$task['status']="ERROR";
 			$task['message']="No answer on port $port";
