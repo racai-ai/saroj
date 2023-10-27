@@ -1,4 +1,4 @@
 #!/bin/sh
 
-docker exec -it sarojdummy-run bash
+docker exec -it saroj-run bash
 
