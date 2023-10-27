@@ -3,13 +3,40 @@
 "version":"1.0-test",
 
 "modules":[
-    "source /venv/bin/activate ; cd /modules/TextExtractor ; python textExtractor_api.py --RUN_ANALYSIS --SAVE_INTERNAL_FILES --udpipe_model /data/udpipe.model.ud 8001 2>&1 | /usr/bin/rotatelogs -l /var/log/8001-%Y-%m-%d.log 86400"
+    "source /venv/bin/activate ; cd /modules/TextExtractor ; python textExtractor_api.py --RUN_ANALYSIS --SAVE_INTERNAL_FILES --udpipe_model /data/udpipe.model.ud 8001 2>&1 | /usr/bin/rotatelogs -l /var/log/8001-%Y-%m-%d.log 86400",
+    "source /venv/bin/activate ; cd /modules/RegexAnnotator ; python annotator_api.py 8002 2>&1 | /usr/bin/rotatelogs -l /var/log/8002-%Y-%m-%d.log 86400",
+    "source /venv/bin/activate ; cd /modules/EntityEncoding ; python entityEncoding_api.py 8006 2>&1 | /usr/bin/rotatelogs -l /var/log/8006-%Y-%m-%d.log 86400",
+    "source /venv/bin/activate ; cd /modules/EntityMapping ; python entityMapping_api.py --REPLACEMENT \"#\" --DICTIONARY /data/replacement.dic 8007 2>&1 | /usr/bin/rotatelogs -l /var/log/8007-%Y-%m-%d.log 86400",
+    "source /venv/bin/activate ; cd /modules/TextReconstruction ; python textReconstruction_api.py 8008 2>&1 | /usr/bin/rotatelogs -l /var/log/8008-%Y-%m-%d.log 86400"
 ],
 
 "anonymization":[
     {"port":8001,"args":[
         {"key":"input", "value":"DOCX"},
-        {"key":"output", "value":"TOKENIZED"}
+        {"key":"output", "value":"1_TOKENIZED"}
+    ]},
+
+    {"port":8002,"args":[
+        {"key":"input", "value":"1_TOKENIZED"},
+        {"key":"output", "value":"2_REGEX"}
+    ]},
+
+    {"port":8006,"args":[
+        {"key":"input", "value":"2_REGEX"},
+        {"key":"output", "value":"6_ENCODING"},
+        {"key":"mapping", "value":"CASEMAP"}
+    ]},
+
+    {"port":8007,"args":[
+        {"key":"input", "value":"6_ENCODING"},
+        {"key":"output", "value":"7_MAPPING"},
+        {"key":"mapping", "value":"CASEMAP"}
+    ]},
+
+    {"port":8008,"args":[
+        {"key":"input", "value":"7_MAPPING"},
+        {"key":"output", "value":"OUTPUT"},
+        {"key":"original", "value":"DOCX"}
     ]}
 ]
 
