@@ -34,7 +34,7 @@ function checkTasks(){
 	while (($file = readdir($dh)) !== false) {
 		$pathNew="${TASK_DIR_NEW}${file}";
 		$pathDone="${TASK_DIR_DONE}${file}";
-		if(is_file($pathNew) && endsWith($pathNew,".task")){
+		if(is_file($pathNew)){// && endsWith($pathNew,".task")){
 			echo "Running task $file\n";
 			
 			runTask($pathNew, $pathDone);
