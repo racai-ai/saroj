@@ -10,7 +10,7 @@ echo "Starting modules\n";
 
 foreach($config['modules'] as $mod){
 	echo "   Running [$mod]\n";
-	shell_exec(sprintf("/bin/bash -c \"%s\" >/dev/null 2>&1 &", escapeshellarg($mod)));
+	shell_exec(sprintf("/bin/bash -c %s >/dev/null 2>&1 &", escapeshellarg($mod)));
 }
 
 echo "All modules started\n";
