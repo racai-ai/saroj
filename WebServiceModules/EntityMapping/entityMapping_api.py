@@ -5,6 +5,7 @@ from entityMapping_config import args
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data, is_file_conllu
+from lib.saroj.dictionary_helper import read_replacement_dictionary, count_instances_in_dict
 from lib.saroj.gunicorn import StandaloneApplication
 
 app = Flask(__name__)
