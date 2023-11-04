@@ -1,5 +1,28 @@
+from collections import Counter
+
+
 def is_orthogonal(files):
     return all(len(file) == len(files[0]) for file in files)
+
+
+def most_frequent_item(lst):
+    if not lst:
+        return None  # Return None for an empty list
+
+    # Count the occurrences of each item in the list
+    item_counts = Counter(lst)
+
+    # Find the maximum frequency
+    max_frequency = max(item_counts.values())
+
+    # Find all items with the maximum frequency
+    most_frequent_items = [item for item, count in item_counts.items() if count == max_frequency]
+
+    # If there's only one most frequent item, return it; otherwise, return None
+    if len(most_frequent_items) == 1:
+        return most_frequent_items[0]
+    else:
+        return None
 
 
 # Function to read CoNLL-U Plus file
@@ -90,7 +113,28 @@ def intersect_algorithm(files):
 
 # Function to perform MAJORITY algorithm
 def majority_algorithm(files):
-    pass
+    if not is_orthogonal(files):
+        raise ValueError("Input files do not have the same number of sentences.")
+    result_data = []
+    body = False
+    for line in zip(*files):
+
+        ner = [sublist[-1].split('-')[-1] for sublist in line]
+        mfi = most_frequent_item(ner)
+
+        if mfi is None:
+            result_data.append(line[0])
+            body = False
+        elif mfi == "O":
+            result_data.append(line[0][:-1] + ["O"])
+            body = False
+        elif body:
+            result_data.append(line[0][:-1] + ["I-" + str(mfi)])
+        else:
+            result_data.append(line[0][:-1] + ["B-" + str(mfi)])
+            body = True
+
+    return result_data
 
 
 # Function to write CoNLL-U Plus file
