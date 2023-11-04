@@ -43,8 +43,7 @@ def diff_algorithm(files):
         ner = [sublist[-1] for sublist in line]
         if ner[0] in ner[1:]:
             result_data.append(line[0][:-1] + ["O"])
-            if ner[0].startswith('B-'):
-                body = True
+            body = True if ner[0].startswith('B-') else False
         else:
             if body:
                 result_data.append(line[0][:-1] + ["B-" + ner[0][2:]])
@@ -60,8 +59,10 @@ def add_algorithm(files):
     result_data = []
     body = False
     previous_ner = ''
+
     for line in zip(*files):
         ner = set([sublist[-1].split('-')[-1] for sublist in line])
+        
         for i in ner:
             if i != 'O' and (not body or previous_ner != i):
                 result_data.append(line[0][:-1] + ["B-" + str(i)])
@@ -83,25 +84,22 @@ def add_algorithm(files):
 def intersect_algorithm(files):
     result_data = []
     body = False
+
     for line in zip(*files):
-        ner = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
-        for i in ner:
-            if "O" == line[0][-1].split('-')[-1]:
-                result_data.append(line[0][:-1] + ["O"])
-                body = False
-                break
-            elif i == line[0][-1].split('-')[-1] and body:
-                result_data.append(line[0][:-1] + ["I-" + str(i)])
-                body = True
-                break
-            elif i == line[0][-1].split('-')[-1] and not body:
-                result_data.append(line[0][:-1] + ["B-" + str(i)])
-                body = True
-                break
-            elif len(ner) == 1:
-                result_data.append(line[0][:-1] + ["O"])
-                body = False
-                break
+        ner_set = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
+        current_label = line[0][-1].split('-')[-1]
+
+        if current_label == "O":
+            result_data.append(line[0][:-1] + ["O"])
+            body = False
+        elif 1 == len(ner_set) and "O" in ner_set:
+            result_data.append(line[0][:-1] + ["O"])
+            body = False
+        elif body and current_label in ner_set:
+            result_data.append(line[0][:-1] + ["I-" + current_label])
+        else:
+            result_data.append(line[0][:-1] + ["B-" + current_label])
+            body = True
 
     return result_data
 
@@ -118,7 +116,7 @@ def majority_algorithm(files):
         if mfi is None:
             result_data.append(line[0])
             body = False
-        elif mfi == "O":
+        elif "O" == mfi:
             result_data.append(line[0][:-1] + ["O"])
             body = False
         elif body:
@@ -140,13 +138,13 @@ def write_conll_file(file_path, data):
 def vote(algo, input_files, output_file):
     files = [read_conll_file(file) for file in input_files]
     check_orthogonality(files)
-    if algo == "DIFF":
+    if "DIFF" == algo:
         result = diff_algorithm(files)
-    elif algo == "ADD":
+    elif "ADD" == algo:
         result = add_algorithm(files)
-    elif algo == "INTERSECT":
+    elif "INTERSECT" == algo:
         result = intersect_algorithm(files)
-    elif algo == "MAJORITY":
+    elif "MAJORITY" == algo:
         result = majority_algorithm(files)
     else:
         return
