@@ -1,3 +1,7 @@
+def is_orthogonal(files):
+    return all(len(file) == len(files[0]) for file in files)
+
+
 # Function to read CoNLL-U Plus file
 def read_conll_file(file_path):
     data = []
@@ -9,7 +13,7 @@ def read_conll_file(file_path):
 
 
 def diff_algorithm(files):
-    if not all(len(file) == len(files[0]) for file in files):
+    if not is_orthogonal(files):
         raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
@@ -31,7 +35,7 @@ def diff_algorithm(files):
 
 # Function to perform ADD algorithm
 def add_algorithm(files):
-    if not all(len(file) == len(files[0]) for file in files):
+    if not is_orthogonal(files):
         raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
@@ -57,7 +61,31 @@ def add_algorithm(files):
 
 # Function to perform INTERSECT algorithm
 def intersect_algorithm(files):
-    pass
+    if not is_orthogonal(files):
+        raise ValueError("Input files do not have the same number of sentences.")
+    result_data = []
+    body = False
+    for line in zip(*files):
+        ner = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
+        for i in ner:
+            if "O" == line[0][-1].split('-')[-1]:
+                result_data.append(line[0][:-1] + ["O"])
+                body = False
+                break
+            elif i == line[0][-1].split('-')[-1] and body:
+                result_data.append(line[0][:-1] + ["I-" + str(i)])
+                body = True
+                break
+            elif i == line[0][-1].split('-')[-1] and not body:
+                result_data.append(line[0][:-1] + ["B-" + str(i)])
+                body = True
+                break
+            elif len(ner) == 1:
+                result_data.append(line[0][:-1] + ["O"])
+                body = False
+                break
+
+    return result_data
 
 
 # Function to perform MAJORITY algorithm
