@@ -1,8 +1,9 @@
 from collections import Counter
 
 
-def is_orthogonal(files):
-    return all(len(file) == len(files[0]) for file in files)
+def check_orthogonality(files):
+    if not all(len(file) == len(files[0]) for file in files):
+        raise ValueError("Input files do not have the same number of sentences.")
 
 
 def most_frequent_item(lst):
@@ -36,8 +37,6 @@ def read_conll_file(file_path):
 
 
 def diff_algorithm(files):
-    if not is_orthogonal(files):
-        raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
     for line in zip(*files):
@@ -58,8 +57,6 @@ def diff_algorithm(files):
 
 # Function to perform ADD algorithm
 def add_algorithm(files):
-    if not is_orthogonal(files):
-        raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
     previous_ner = ''
@@ -84,8 +81,6 @@ def add_algorithm(files):
 
 # Function to perform INTERSECT algorithm
 def intersect_algorithm(files):
-    if not is_orthogonal(files):
-        raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
     for line in zip(*files):
@@ -113,8 +108,6 @@ def intersect_algorithm(files):
 
 # Function to perform MAJORITY algorithm
 def majority_algorithm(files):
-    if not is_orthogonal(files):
-        raise ValueError("Input files do not have the same number of sentences.")
     result_data = []
     body = False
     for line in zip(*files):
@@ -145,14 +138,16 @@ def write_conll_file(file_path, data):
 
 
 def vote(algo, input_files, output_file):
+    files = [read_conll_file(file) for file in input_files]
+    check_orthogonality(files)
     if algo == "DIFF":
-        result = diff_algorithm([read_conll_file(file) for file in input_files])
+        result = diff_algorithm(files)
     elif algo == "ADD":
-        result = add_algorithm([read_conll_file(file) for file in input_files])
+        result = add_algorithm(files)
     elif algo == "INTERSECT":
-        result = intersect_algorithm([read_conll_file(file) for file in input_files])
+        result = intersect_algorithm(files)
     elif algo == "MAJORITY":
-        result = majority_algorithm([read_conll_file(file) for file in input_files])
+        result = majority_algorithm(files)
     else:
         return
 
