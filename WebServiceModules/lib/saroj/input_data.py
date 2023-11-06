@@ -2,7 +2,6 @@ import re
 import json
 from flask import request, jsonify
 
-
 _token_id_rx = re.compile(r'\d+')
 
 
@@ -38,48 +37,50 @@ def is_file_conllu(input_file: str) -> bool:
     number_of_fields = 0
     previous_id = 0
 
-    with open(file=input_file, mode='r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
+    try:
+        with open(file=input_file, mode='r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
 
-            if line and not line.startswith('#'):
-                parts = line.split()
+                if line and not line.startswith('#'):
+                    parts = line.split()
 
-                if number_of_fields == 0:
-                    number_of_fields = len(parts)
-                elif number_of_fields != len(parts):
-                    # A line with a different number of fields.
-                    # CoNLL-U isn't valid.
-                    return False
-                # end if
+                    if number_of_fields == 0:
+                        number_of_fields = len(parts)
+                    elif number_of_fields != len(parts):
+                        # A line with a different number of fields.
+                        # CoNLL-U isn't valid.
+                        return False
+                    # end if
 
-                if _token_id_rx.fullmatch(parts[0]):
-                    tid = int(parts[0])
-                    
-                    if previous_id == 0:
-                        if tid != 1:
-                            # First ID in the sentence is not 1
+                    if _token_id_rx.fullmatch(parts[0]):
+                        tid = int(parts[0])
+
+                        if previous_id == 0:
+                            if tid != 1:
+                                # First ID in the sentence is not 1
+                                # CoNLL-U isn't valid.
+                                return False
+                            else:
+                                previous_id = 1
+                            # end if
+                        elif previous_id + 1 != tid:
+                            # IDs are not consecutive.
                             # CoNLL-U isn't valid.
                             return False
                         else:
-                            previous_id = 1
+                            previous_id = tid
                         # end if
-                    elif previous_id + 1 != tid:
-                        # IDs are not consecutive.
+                    else:
+                        # There is no ID as the first token of the line
                         # CoNLL-U isn't valid.
                         return False
-                    else:
-                        previous_id = tid
                     # end if
                 else:
-                    # There is no ID as the first token of the line
-                    # CoNLL-U isn't valid.
-                    return False
+                    previous_id = 0
                 # end if
-            else:
-                previous_id = 0
-            # end if
-        # end for
-    # end with
-
+            # end for
+        # end with
+    except FileNotFoundError:
+        print(f'The file at {input_file} does not exist.')
     return True
