@@ -38,7 +38,7 @@ def is_file_conllu(input_file: str) -> bool:
     previous_id = 0
 
     try:
-        with open(file=input_file, mode='r', encoding='utf-8') as f:
+        with open(file=input_file, mode='r', encoding='utf-8', errors="ignore") as f:
             for line in f:
                 line = line.strip()
 
