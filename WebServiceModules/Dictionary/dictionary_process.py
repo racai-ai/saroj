@@ -4,7 +4,7 @@ import itertools
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from WebServiceModules.lib.saroj.suffix_process import suffix_replace
+from lib.saroj.suffix_process import suffix_replace
 
 NOT_FOUND = '\tO\n'
 
