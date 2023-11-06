@@ -47,8 +47,6 @@ def anonymize_conllup():
     input_file = data["input"]
     output_file = data["output"]
 
-    dictionary = {}
-
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
     if not is_file_conllu(input_file):
@@ -57,9 +55,7 @@ def anonymize_conllup():
     if input_file:
         try:
             # Read the replacement dictionary
-            if args.DICTIONARY:
-                dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
-
+            dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
             assign_ner(input_file, output_file, dictionary, max_count)
 
             return jsonify({"status": "OK", "message": ""})
