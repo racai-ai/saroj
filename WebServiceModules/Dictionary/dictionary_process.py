@@ -145,6 +145,8 @@ def assign_ner(input_file, output_file, dictionary, max_count):
         current_entities.clear()
         lines.clear()
 
+    low_dict = {key.lower(): value for key, value in dictionary.items()}
+
     with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
         current_entities = []
         lines = []
@@ -155,20 +157,20 @@ def assign_ner(input_file, output_file, dictionary, max_count):
                 reset_entities()
                 continue
             token, _ = suffix_replace(line.strip().split('\t')[1])
-            current_entities.append(token)
+            current_entities.append(token.lower())
 
             permutations = [' '.join(p) for length in range(len(current_entities), 1, -1)
                             for p in itertools.permutations(current_entities, length)]
 
-            matching_permutations = [permuted_key for permuted_key in permutations if permuted_key in dictionary]
+            matching_permutations = [permuted_key for permuted_key in permutations if permuted_key in low_dict]
 
-            if process_word_entities(dictionary, matching_permutations, lines, outfile):
+            if process_word_entities(low_dict, matching_permutations, lines, outfile):
                 reset_entities()
                 continue
 
             entity_key = ' '.join(current_entities)
-            if any(entity_key.split()[i] in dictionary for i in range(len(current_entities))):
-                process_single_word_entity(entity_key, dictionary, lines, outfile)
+            if any(entity_key.split()[i].lower() in low_dict for i in range(len(current_entities))):
+                process_single_word_entity(entity_key, low_dict, lines, outfile)
                 reset_entities()
 
             elif len(current_entities) == max_count:
