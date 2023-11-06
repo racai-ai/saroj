@@ -200,10 +200,12 @@ def update_mapping(tokens, entity_mapping, map_file):
         token = check_invalid_token_and_extract_sfx(token, ner_tag)
 
         if token is None:
+            add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner)
+            previous_ner = None
             continue
 
         # Check if the current entity is None or the NER tag starts with "B-"
-        if ner_tag.startswith("B-") or (previous_ner and previous_ner[2:] != ner_tag[2:]):
+        if previous_ner is None or ner_tag.startswith("B-") or previous_ner[2:] != ner_tag[2:]:
             add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous_ner)
             previous_ner = ner_tag
             current_entity_tokens = [token]
