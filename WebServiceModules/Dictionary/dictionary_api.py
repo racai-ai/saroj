@@ -1,7 +1,8 @@
 from flask import Flask, jsonify
 
-from entityMapping_process import *
-from entityMapping_config import args
+
+from dictionary_process import *
+from dictionary_config import args
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.input_data import get_input_data, is_file_conllu
@@ -16,7 +17,7 @@ def anonymize_conllup():
     """
     Route to handle file upload, anonymization, and conversion to CONLLUP format.
 
-    Expects a JSON object with "input," "output," and "mapping" keys containing file paths.
+    Expects a JSON object with "input", and "output" keys containing file paths.
 
     Returns:
         JSON: A response containing status and message, indicating the success or failure of the operation.
@@ -30,25 +31,21 @@ def anonymize_conllup():
     Input JSON format:
     - "input": Path to the file to be processed.
     - "output": Path to save the output file with anonymized content in the CONLLUP format.
-    - "mapping": Path to the mapping file containing entity-to-replacement mappings.
 
     Upon successful execution, the response includes a 'status' of 'OK' and an empty message.
     In case of errors or exceptions during processing, the response contains an error message indicating the problem.
 
     Note:
-    - The function relies on the presence of "input," "output," and "mapping" keys in the JSON object.
+    - The function relies on the presence of "input" and "output" keys in the JSON object.
     - The "args.DICTIONARY" attribute is expected to specify the dictionary file path.
     - Exceptions occurring during the process are caught and result in an "ERROR" status with an error message.
     """
 
-    status, data, error = get_input_data(["input", "output", "mapping"])
+    status, data, error = get_input_data(["input", "output"])
     if not status: return error
 
     input_file = data["input"]
     output_file = data["output"]
-    mapping_file = data["mapping"]
-
-    replacement_dict = {}
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
@@ -58,11 +55,8 @@ def anonymize_conllup():
     if input_file:
         try:
             # Read the replacement dictionary
-            if args.DICTIONARY:
-                replacement_dict = read_replacement_dictionary(args.DICTIONARY)
-
-            # Anonymize entities in the input file and write to the output file
-            anonymize_entities(input_file, output_file, mapping_file, replacement_dict)
+            dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
+            assign_ner(input_file, output_file, dictionary, max_count)
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
