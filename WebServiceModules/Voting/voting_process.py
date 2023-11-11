@@ -140,10 +140,10 @@ def majority_algorithm(files):
             continue
         if mfi is None:
             result_data.append(line[0])
-            body = False
+            body = True if line[0][-1].startswith('B-') else False
         elif "O" == mfi:
             result_data.append(line[0][:-1] + ["O"])
-            body = False
+            body = True if line[0][-1].startswith('B-') else False
         elif body:
             result_data.append(line[0][:-1] + ["I-" + str(mfi)])
         else:
