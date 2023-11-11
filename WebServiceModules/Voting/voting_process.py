@@ -1,6 +1,14 @@
 from collections import Counter
 
 
+def is_empty(data):
+    return not data or all(not any(lin[0] for lin in line) for line in data)
+
+
+def startswith_hashtag(data):
+    return any(str(lin[0]).startswith("#") for line in data for lin in line)
+
+
 def check_orthogonality(files):
     if not all(len(file) == len(files[0]) for file in files):
         raise ValueError("Input files do not have the same number of sentences.")
@@ -41,6 +49,10 @@ def diff_algorithm(files):
     body = False
     for line in zip(*files):
         ner = [sublist[-1] for sublist in line]
+        if is_empty(line[0]) or startswith_hashtag(line[0]):
+            result_data.append(line[0])
+            body = False
+            continue
         if ner[0] in ner[1:]:
             result_data.append(line[0][:-1] + ["O"])
             body = True if ner[0].startswith('B-') else False
@@ -63,6 +75,10 @@ def add_algorithm(files):
     for line in zip(*files):
         ner = set([sublist[-1].split('-')[-1] for sublist in line])
         
+        if is_empty(line[0]) or startswith_hashtag(line[0]):
+            result_data.append(line[0])
+            body = False
+            continue
         for i in ner:
             if i != 'O' and (not body or previous_ner != i):
                 result_data.append(line[0][:-1] + ["B-" + str(i)])
@@ -88,7 +104,11 @@ def intersect_algorithm(files):
     for line in zip(*files):
         ner_set = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
         current_label = line[0][-1].split('-')[-1]
-
+        
+        if is_empty(line[0]) or startswith_hashtag(line[0]):
+            result_data.append(line[0])
+            body = False
+            continue
         if current_label == "O":
             result_data.append(line[0][:-1] + ["O"])
             body = False
@@ -112,7 +132,11 @@ def majority_algorithm(files):
 
         ner = [sublist[-1].split('-')[-1] for sublist in line]
         mfi = most_frequent_item(ner)
-
+        
+        if is_empty(line[0]) or startswith_hashtag(line[0]):
+            result_data.append(line[0])
+            body = False
+            continue
         if mfi is None:
             result_data.append(line[0])
             body = False
