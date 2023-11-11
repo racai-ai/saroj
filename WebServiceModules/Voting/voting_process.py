@@ -53,7 +53,7 @@ def diff_algorithm(files):
             result_data.append(line[0])
             body = False
             continue
-        if ner[0] in ner[1:]:
+        if any(ner[0][2:] in item[2:] for item in ner[1:]):
             result_data.append(line[0][:-1] + ["O"])
             body = True if ner[0].startswith('B-') else False
         else:
