@@ -100,7 +100,7 @@ def add_algorithm(files):
 def intersect_algorithm(files):
     result_data = []
     body = False
-
+    old_label = ''
     for line in zip(*files):
         ner_set = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
         current_label = line[0][-1].split('-')[-1]
@@ -115,11 +115,12 @@ def intersect_algorithm(files):
         elif 1 == len(ner_set) and "O" in ner_set:
             result_data.append(line[0][:-1] + ["O"])
             body = False
-        elif body and current_label in ner_set:
+        elif body and current_label in old_label:
             result_data.append(line[0][:-1] + ["I-" + current_label])
         else:
             result_data.append(line[0][:-1] + ["B-" + current_label])
             body = True
+        old_label = current_label
 
     return result_data
 
