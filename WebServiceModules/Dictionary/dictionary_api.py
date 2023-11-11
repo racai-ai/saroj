@@ -55,8 +55,7 @@ def anonymize_conllup():
     if input_file:
         try:
             # Read the replacement dictionary
-            dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
-            assign_ner(input_file, output_file, dictionary, max_count)
+            assign_ner(input_file, output_file, low_dict, max_count)
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
@@ -103,5 +102,8 @@ if __name__ == '__main__':
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),
         'workers': 1,
     }
+    dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
+    low_dict = {key.lower(): value for key, value in dictionary.items()}
+
     #app.run(debug=True, port=args.PORT)
     StandaloneApplication(app, options).run()
