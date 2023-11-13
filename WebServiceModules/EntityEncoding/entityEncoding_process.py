@@ -35,7 +35,7 @@ def read_mapping(mapping_path):
     # Load existing mapping data into memory
     with open(mapping_path, "r", encoding="utf-8") as mapping_file:
         for line in mapping_file:
-            token, ner_id = line.strip().split('\t')
+            token, ner_id, *extra = line.strip().split('\t')
             entity_mapping[token] = ner_id
     return entity_mapping
 
