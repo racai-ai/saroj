@@ -81,7 +81,7 @@ def udpipe_token_to_conllup(token_list, words):
         The `token_list` parameter should be a list of dictionaries, where each dictionary represents a token and its
         associated metadata. The function converts this list of tokens to CONLL-U format, where each line corresponds to
         a token, and the columns represent the token attributes (ID, FORM, LEMMA, UPOS, XPOS, FEATS, HEAD, DEPREL,
-        DEPS, MISC, START, END, NER).
+        DEPS, MISC, START, END).
     """
 
     conllup_text = ""
@@ -123,7 +123,6 @@ def udpipe_token_to_conllup(token_list, words):
                 dict_to_string(token["misc"]),
                 str(start_offset),
                 str(end_offset),
-                "_",  # NER
             ]
             conllup_text += "\t".join(token_info) + "\n"
 
@@ -203,7 +202,6 @@ def spacy_token_to_conllup(text, words):
                 "_",                # MISC
                 str(start_offset),  # START
                 str(end_offset),    # END
-                "_",                # NER
             ]
             token_id += 1
             conllup_text += "\t".join(token_info) + "\n"
