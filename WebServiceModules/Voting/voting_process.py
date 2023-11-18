@@ -24,11 +24,14 @@ def most_frequent_item(lst):
     # Find the maximum frequency
     max_frequency = max(item_counts.values())
 
+    threshold = round(len(lst)/2)
     # Find all items with the maximum frequency
-    most_frequent_items = [item for item, count in item_counts.items() if count == max_frequency]
+    most_frequent_items = [item for item, count in item_counts.items() if count == max_frequency and count >= threshold]
 
     # If there's only one most frequent item, return it; otherwise, return None
-    if len(most_frequent_items) == 1:
+    if len(most_frequent_items) > 1:
+        return [item for item in most_frequent_items if item != "O"][0]
+    elif len(most_frequent_items) == 1:
         return most_frequent_items[0]
     else:
         return None
@@ -129,6 +132,7 @@ def intersect_algorithm(files):
 def majority_algorithm(files):
     result_data = []
     body = False
+    old_mfi = ""
     for line in zip(*files):
 
         ner = [sublist[-1].split('-')[-1] for sublist in line]
@@ -138,17 +142,16 @@ def majority_algorithm(files):
             result_data.append(line[0])
             body = False
             continue
-        if mfi is None:
-            result_data.append(line[0])
-            body = True if line[0][-1].startswith('B-') else False
-        elif "O" == mfi:
+
+        if "O" == mfi or mfi is None:
             result_data.append(line[0][:-1] + ["O"])
             body = True if line[0][-1].startswith('B-') else False
-        elif body:
+        elif body and old_mfi == mfi:
             result_data.append(line[0][:-1] + ["I-" + str(mfi)])
         else:
             result_data.append(line[0][:-1] + ["B-" + str(mfi)])
             body = True
+        old_mfi = mfi
 
     return result_data
 
