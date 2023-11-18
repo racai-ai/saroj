@@ -105,20 +105,17 @@ def intersect_algorithm(files):
     body = False
     old_label = ''
     for line in zip(*files):
-        ner_set = set([sublist[-1].split('-')[-1] for sublist in line[1:]])
-        current_label = line[0][-1].split('-')[-1]
-        
+        ner_set = set([sublist[-1].split('-')[-1] for sublist in line])
+
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
             body = False
             continue
-        if current_label == "O":
+        current_label = line[0][-1].split('-')[-1]
+        if len(ner_set) > 1:
             result_data.append(line[0][:-1] + ["O"])
             body = False
-        elif 1 == len(ner_set) and "O" in ner_set:
-            result_data.append(line[0][:-1] + ["O"])
-            body = False
-        elif body and current_label in old_label:
+        elif len(ner_set) == 1 and body and current_label in old_label:
             result_data.append(line[0][:-1] + ["I-" + current_label])
         else:
             result_data.append(line[0][:-1] + ["B-" + current_label])
