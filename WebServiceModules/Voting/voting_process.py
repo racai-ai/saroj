@@ -14,6 +14,15 @@ def check_orthogonality(files):
         raise ValueError("Input files do not have the same number of sentences.")
 
 
+def replace_underscore_and_empty(input_collection):
+    if isinstance(input_collection, list):
+        return ['O' if element == '_' else element for element in input_collection]
+    elif isinstance(input_collection, set):
+        return {'O' if element == '_' else element for element in input_collection}
+    else:
+        raise ValueError("Input must be a list or a set")
+
+
 def most_frequent_item(lst):
     if not lst:
         return None  # Return None for an empty list
@@ -51,7 +60,8 @@ def diff_algorithm(files):
     result_data = []
     body = False
     for line in zip(*files):
-        ner = [sublist[-1] for sublist in line]
+        ner = replace_underscore_and_empty([sublist[-1] for sublist in line])
+
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
             body = False
@@ -76,7 +86,7 @@ def add_algorithm(files):
     previous_ner = ''
 
     for line in zip(*files):
-        ner = set([sublist[-1].split('-')[-1] for sublist in line])
+        ner = replace_underscore_and_empty(set([sublist[-1].split('-')[-1] for sublist in line]))
         
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
@@ -105,14 +115,14 @@ def intersect_algorithm(files):
     body = False
     old_label = ''
     for line in zip(*files):
-        ner_set = set([sublist[-1].split('-')[-1] for sublist in line])
+        ner_set = replace_underscore_and_empty(set([sublist[-1].split('-')[-1] for sublist in line]))
 
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
             body = False
             continue
-        current_label = line[0][-1].split('-')[-1]
-        if len(ner_set) > 1:
+        current_label = replace_underscore_and_empty(line[0][-1].split('-'))[-1]
+        if len(ner_set) > 1 or current_label == "O":
             result_data.append(line[0][:-1] + ["O"])
             body = False
         elif len(ner_set) == 1 and body and current_label in old_label:
@@ -132,7 +142,7 @@ def majority_algorithm(files):
     old_mfi = ""
     for line in zip(*files):
 
-        ner = [sublist[-1].split('-')[-1] for sublist in line]
+        ner = replace_underscore_and_empty([sublist[-1].split('-')[-1] for sublist in line])
         mfi = most_frequent_item(ner)
         
         if is_empty(line[0]) or startswith_hashtag(line[0]):
