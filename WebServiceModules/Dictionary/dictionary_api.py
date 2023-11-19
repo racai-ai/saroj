@@ -55,7 +55,7 @@ def anonymize_conllup():
     if input_file:
         try:
             # Read the replacement dictionary
-            assign_ner(input_file, output_file, low_dict, max_count)
+            assign_ner(input_file, output_file, trie_root, max_count)
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
@@ -86,14 +86,15 @@ def check_health():
         return jsonify({"status": "OK", "message": f"The dictionary file parameter is missing."})
 
     if not os.path.exists(args.DICTIONARY):
-        return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' does not exist."})
+        return jsonify({"status": "OK", "message": f"Dictionary file '{args.DICTIONARY}' does not exist."})
 
     replacement_dict = read_replacement_dictionary(args.DICTIONARY)
 
     if not replacement_dict:
-        return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' is empty."})
+        return jsonify({"status": "OK", "message": f"Dictionary file '{args.DICTIONARY}' is empty."})
     else:
-        return jsonify({"status": "OK", "message": count_instances_in_dict(replacement_dict)})
+        return jsonify({"status": "OK", "message": f"max_count = {max_count} containing "
+                                                   f"{count_instances_in_dict(replacement_dict)}"})
 
 
 if __name__ == '__main__':
@@ -103,7 +104,11 @@ if __name__ == '__main__':
         'workers': 1,
     }
     dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
-    low_dict = {key.lower(): value for key, value in dictionary.items()}
+    trie_root = TrieNode()
+    for key, value in dictionary.items():
+        words = sorted(key.lower().split(), key=custom_sort)
+        add_to_trie(trie_root, words, value)
+    del dictionary
 
     #app.run(debug=True, port=args.PORT)
     StandaloneApplication(app, options).run()
