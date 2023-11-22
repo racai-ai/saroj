@@ -1,6 +1,5 @@
 import os
 import sys
-from itertools import islice
 import io
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -62,14 +61,16 @@ def custom_sort(item):
 def test_subsequences(tokens, trie_root):
     results = ()
 
-    cleaned_tokens = [token for token in tokens if token != "-" ]
+    cleaned_tokens = [token for token in tokens if token != "-"]
+    sorted_tokens = sorted(cleaned_tokens, key=custom_sort)
     for position in range(len(cleaned_tokens), 0, -1):
-        subsequence = list(islice(cleaned_tokens, position))
-        sorted_subsequence = sorted(subsequence, key=custom_sort)
-        found, ner = find_in_trie(trie_root, sorted_subsequence)
+        found, ner = find_in_trie(trie_root, sorted_tokens)
 
         if found:
-            results = (' '.join(subsequence), ner)
+            results = (' '.join(cleaned_tokens), ner)
+            break
+        remove_token = cleaned_tokens.pop()
+        sorted_tokens.remove(remove_token)
 
     return results
 
@@ -168,7 +169,8 @@ def assign_ner(input_file, output_file, trie_root, max_count):
         if len(current_entities) >= max_count:
             process_and_write(output_buffer, current_line, current_entities, trie_root)
     
-    current_entities.popleft()
+    if len(current_entities) >= max_count:
+        current_entities.popleft()
     while current_entities:
         process_and_write(output_buffer, current_line, current_entities, trie_root)
         current_entities.popleft()
