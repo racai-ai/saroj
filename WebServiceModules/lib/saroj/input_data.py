@@ -84,3 +84,10 @@ def is_file_conllu(input_file: str) -> bool:
     except FileNotFoundError:
         print(f'The file at {input_file} does not exist.')
     return True
+
+
+def are_files_conllu(input_files):
+    for file_path in input_files:
+        if not is_file_conllu(file_path):
+            return False
+    return True
