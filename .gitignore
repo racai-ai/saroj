@@ -1,4 +1,12 @@
-WebServiceModules/RegexAnnotator/.vscode/launch.json
 __pycache__
 WebServiceModules/RegexAnnotator/documents/anonimizat-manual-1.out
 WebServiceModules/RegexAnnotator/documents/anonimizat-manual-1.txt
+WebServiceModules/RegexAnnotator/.vscode/launch.json
+WebServiceModules/BERTAnnotator/.vscode/launch.json
+!WebServiceModules/BERTAnnotator/data/README.txt
+WebServiceModules/BERTAnnotator/data/*/
+!WebServiceModules/BERTAnnotator/model/README.txt
+WebServiceModules/BERTAnnotator/model/finetuned
+WebServiceModules/BERTAnnotator/model/ner_addon.pt
+WebServiceModules/BERTAnnotator/model/ner_labels.txt
+WebServiceModules/BERTAnnotator/model/vocab.txt

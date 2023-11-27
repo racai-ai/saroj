@@ -1,5 +1,6 @@
 import os
-from annotator import regex_annotate, read_conllu_file
+from annotator import RegExAnnotator
+from lib.saroj.conllu_utils import read_conllu_file
 
 def test_one():
     in_file = os.path.join('documents', 'test-1.out')
@@ -9,8 +10,10 @@ def test_one():
         os.remove(out_file)
     # end if
 
-    regex_annotate(input_file=in_file, output_file=out_file)
+    ann = RegExAnnotator(input_file=in_file)
+    ann.annotate(output_file=out_file)
     out_lines = read_conllu_file(file=out_file, append_column=False)
+
     assert out_lines[9][-1] == 'ECLI'
     assert out_lines[38][-1] == 'DECISION'
     assert out_lines[114][-1] == 'CNP'
