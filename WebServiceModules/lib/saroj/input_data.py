@@ -1,6 +1,6 @@
-import re
 import json
 from flask import request, jsonify
+from conllu_utils import is_file_conllu
 
 
 def get_input_data(expected_values):
@@ -24,3 +24,9 @@ def get_input_data(expected_values):
 
     return True, data, None
 
+
+def are_files_conllu(input_files):
+    for file_path in input_files:
+        if not is_file_conllu(file_path):
+            return False
+    return True
