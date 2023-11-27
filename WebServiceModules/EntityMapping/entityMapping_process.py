@@ -355,7 +355,7 @@ def anonymize_entities(input_file, output_file, mapping_file, replacement_dict):
         for line in input_f:
             columns, token_info = preprocess_line(line)
             if token_info is None:
-                output_f.write(line)
+                output_f.write(f"{line.strip()}\t_\n")
                 continue
 
             counter_inst = counter_inst_list.pop()

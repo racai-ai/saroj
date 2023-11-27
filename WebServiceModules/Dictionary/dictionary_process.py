@@ -1,8 +1,11 @@
 import os
 import sys
-import itertools
+import io
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from collections import deque
+
+from Trie import *
 
 from lib.saroj.suffix_process import suffix_replace
 
@@ -43,61 +46,75 @@ def load_dictionary_with_max_token_count(dictionary_path):
     return dictionary, max_token_count
 
 
-def process_word_entities(dictionary, current_entities, lines, outfile):
-    """
-    Process a list of lines containing words and their associated entities, given a dictionary
-    mapping entity names to their types. This function identifies and tags entities within the
-    input lines and writes the tagged lines to the output file.
-
-    Args:
-        dictionary (dict): A dictionary mapping entity names to their types.
-        current_entities (list): A list of words representing the current entity to be processed.
-        lines (list): A list of lines containing words and their associated entities.
-        outfile (file): The output file where the tagged lines will be written.
-
-    Returns:
-        bool: A boolean value indicating whether any entities were found and processed in the input.
-             True if entities were found, False otherwise.
-    """
-    found = False
-    if current_entities:
-        found = True
-        entity_key = ' '.join(current_entities)
-
-        current_entity_tags = [f"{'B' if i == 0 else 'I'}-{dictionary[entity_key]}" for i, _ in
-                               enumerate(entity_key.split())]
-        for _ in lines[:-len(current_entity_tags)]:
-            outfile.write(lines.pop(0).strip() + NOT_FOUND)
-        for line, tag in zip(lines, current_entity_tags):
-            outfile.write(line.strip() + '\t' + tag + '\n')
-    return found
-
-
-def process_single_word_entity(entity_key, dictionary, lines, outfile):
-    """
-    Process a single-word entity and tag it using a given dictionary. This function appends
-    the tagged entity to the output file while preserving the input lines.
-
-    Args:
-        entity_key (str): The single-word entity to be processed.
-        dictionary (dict): A dictionary mapping entity names to their types.
-        lines (list): A list of lines containing words and their associated entities.
-        outfile (file): The output file where the tagged lines will be written.
-
-    Returns:
-        None
-    """
-    for line in lines[:-1]:
-        outfile.write(line.strip() + NOT_FOUND)
-    matching_value = [dictionary.get(entity, "") for entity in entity_key.split() if entity in dictionary]
-    outfile.write(lines[-1].strip() + '\t' + "B-"+matching_value[0] + '\n')
-
-
 def check_invalid_line(line):
     return True if line.startswith("#") or not line.strip() else False
 
 
-def assign_ner(input_file, output_file, dictionary, max_count):
+def custom_sort(item):
+    # Define a function to determine the sorting key for each item
+    if item.isalpha():
+        return 0, item  # Alpha characters come first
+    else:
+        return 1, item  # Non-alpha characters come next
+
+
+def test_subsequences(tokens, trie_root):
+    results = ()
+
+    cleaned_tokens = [token for token in tokens if token != "-"]
+    sorted_tokens = sorted(cleaned_tokens, key=custom_sort)
+    for position in range(len(cleaned_tokens), 0, -1):
+        found, ner = find_in_trie(trie_root, sorted_tokens)
+
+        if found:
+            results = (' '.join(cleaned_tokens), ner)
+            break
+        remove_token = cleaned_tokens.pop()
+        sorted_tokens.remove(remove_token)
+
+    return results
+
+
+def parse_text_document(input_file):
+    output = []
+
+    with open(input_file, 'r', encoding='utf-8') as file:
+        for line in file:
+            # Assuming the lines are separated by tabs
+            line_data = line.strip().split('\t')
+            value_to_store = (line_data[1], line) if not check_invalid_line(line) else ("", line)
+            output.append(value_to_store)
+
+    return output
+
+
+def process_and_write_entities(output_buffer, current_line, r,current_entities):
+    subsequence_words = r[0].split()
+    ner = [r[1]] * len(subsequence_words)  # Ensure ner is repeated for each word
+    current_entity_tags = [f"{'B' if i == 0 else 'I'}-{label}" for i, (word, label) in
+                           enumerate(zip(subsequence_words, ner))]
+
+    for tag in current_entity_tags:
+        output_buffer.write(current_line.popleft().strip() + '\t' + tag + '\n')
+        current_entities.popleft()
+
+
+def process_and_write(output_buffer, current_line, current_entities, trie_root):
+    r = test_subsequences(current_entities, trie_root)
+    if r:
+        process_and_write_entities(output_buffer, current_line, r, current_entities)
+    else:
+        handle_not_found(output_buffer, current_line, current_entities)
+
+
+def handle_not_found(output_buffer, current_line, current_entities):
+    if current_entities[0] != "":
+        output_buffer.write(current_line.popleft().strip() + NOT_FOUND)
+    else:
+        output_buffer.write(current_line.popleft())
+
+
+def assign_ner(input_file, output_file, trie_root, max_count):
     """
     Process an input file, assigning Named Entity Recognition (NER) tags to entities based on a given dictionary.
 
@@ -105,8 +122,7 @@ def assign_ner(input_file, output_file, dictionary, max_count):
         input_file (str): The path to the input file containing lines to be processed.
             This file should have lines in the format "word<TAB>tag" where "word" is a token, and "tag" is the entity type.
         output_file (str): The path to the output file where tagged lines will be written.
-        dictionary (dict): A dictionary mapping entity names to their types.
-            This dictionary is used to determine the entity type for identified entities.
+        trie_root (TrieNode): The root of the trie data structure for efficient substring matching.
         max_count (int): The maximum number of tokens allowed in a single entity name.
             Entities with more tokens than this limit will be split or truncated.
 
@@ -140,37 +156,26 @@ def assign_ner(input_file, output_file, dictionary, max_count):
 
 
     """
+    output_buffer = io.StringIO()
+    lines = parse_text_document(input_file)
+    current_entities = deque(maxlen=max_count)
+    current_line = deque(maxlen=max_count)
 
-    def reset_entities():
-        current_entities.clear()
-        lines.clear()
+    for line in lines:
+        token, _ = suffix_replace(line[0].lower())
+        current_entities.append(token)
+        current_line.append(line[1])
 
-    with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
-        current_entities = []
-        lines = []
-        for line in infile:
-            lines.append(line)
-            if check_invalid_line(line):
-                outfile.writelines(line.strip() + NOT_FOUND if not check_invalid_line(line) else line for line in lines)
-                reset_entities()
-                continue
-            token, _ = suffix_replace(line.strip().split('\t')[1])
-            current_entities.append(token.lower())
+        if len(current_entities) >= max_count:
+            process_and_write(output_buffer, current_line, current_entities, trie_root)
+    
+    if len(current_entities) >= max_count:
+        current_entities.popleft()
+    while current_entities:
+        process_and_write(output_buffer, current_line, current_entities, trie_root)
+        current_entities.popleft()
 
-            permutations = [' '.join(p) for length in range(len(current_entities), 1, -1)
-                            for p in itertools.permutations(current_entities, length)]
-
-            matching_permutations = [permuted_key for permuted_key in permutations if permuted_key in dictionary]
-
-            if process_word_entities(dictionary, matching_permutations, lines, outfile):
-                reset_entities()
-                continue
-
-            entity_key = ' '.join(current_entities)
-            if any(entity_key.split()[i].lower() in dictionary for i in range(len(current_entities))):
-                process_single_word_entity(entity_key, dictionary, lines, outfile)
-                reset_entities()
-
-            elif len(current_entities) == max_count:
-                outfile.write(lines.pop(0).strip() + NOT_FOUND) if len(lines) > 1 else None
-                current_entities.pop(0)
+    # Write the final output
+    output_buffer.seek(0)
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        outfile.write(output_buffer.read())
