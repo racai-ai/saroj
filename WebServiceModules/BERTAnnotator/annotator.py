@@ -9,7 +9,8 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 from brat import read_txt_ann_folder, produce_ner_labels
-from ro_wordpiece import RoBertPreTrainedTokenizer
+# This is the Romanian WordPiece new PyPI package, at version 1.0.0
+from rwpt import load_ro_pretrained_tokenizer
 from transformers import AutoModel, BatchEncoding
 from sklearn.metrics import classification_report
 from lib.saroj.conllu_utils import CoNLLUFileAnnotator
@@ -67,8 +68,8 @@ class BERTEntityTagger(object):
         """Takes the BERT model input sequence length `seq_len`."""
 
         self._model_max_length = seq_len
-        self._tokenizer = RoBertPreTrainedTokenizer.from_pretrained(
-            self._get_vocab_file(), model_max_length=self._model_max_length)
+        self._tokenizer = \
+            load_ro_pretrained_tokenizer(max_sequence_len=self._model_max_length)
 
     def _tokenize_with_offsets(self, text: str) -> list[tuple[int, int, int]]:
         """Assume that tokenizer does not insert/delete characters!
