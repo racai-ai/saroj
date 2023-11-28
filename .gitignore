@@ -10,3 +10,4 @@ WebServiceModules/BERTAnnotator/model/finetuned
 WebServiceModules/BERTAnnotator/model/ner_addon.pt
 WebServiceModules/BERTAnnotator/model/ner_labels.txt
 WebServiceModules/BERTAnnotator/model/vocab.txt
+WebServiceModules/BERTAnnotator/model/abbrev.txt
