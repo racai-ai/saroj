@@ -38,7 +38,7 @@ def read_conllup(conllup_file):
                 "START": fields[10],
                 "END": fields[11],
                 "NER": fields[12],
-                "ANONYMIZED": fields[-1]  # always last column
+                "ANONYMIZED": fields[13]
             }
 
             # Append the token's dictionary to the list
