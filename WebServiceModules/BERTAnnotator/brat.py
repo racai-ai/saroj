@@ -2,6 +2,7 @@ import sys
 import re
 import os
 from pathlib import Path
+from config import conf_with_sentence_splitting
 
 # If the .txt files have \r\n, have this set to `True`
 _with_crlf = True
@@ -50,7 +51,12 @@ def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> 
     # For each paragraph line
     for p_line in txt_lines:
         p_line = _crlf_rx.sub('', p_line)
-        s_lines = line_sentence_split(abbreviations, p_line)
+
+        if conf_with_sentence_splitting:
+            s_lines = line_sentence_split(abbreviations, p_line)
+        else:
+            s_lines = [p_line]
+        # end if
 
         assert ''.join(s_lines) == p_line
 

@@ -9,11 +9,13 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 from brat import read_txt_ann_folder, produce_ner_labels
-# This is the Romanian WordPiece new PyPI package, at version 1.0.0
+# This is the Romanian WordPiece new PyPI package, at version 1.0.2
 from rwpt import load_ro_pretrained_tokenizer
 from transformers import AutoModel, BatchEncoding
 from sklearn.metrics import classification_report
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.conllu_utils import CoNLLUFileAnnotator
+from config import conf_with_sentence_splitting
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -410,8 +412,14 @@ class BERTEntityTagger(object):
         """Main method of this class: takes the input `text` and returns
         a list of (start_offset, end_offset, label) tuples."""
         text_tokens_offsets = self._tokenize_with_offsets(text)
-        sentence_tokens_offsets = \
-            self._split_sentences(offsets=text_tokens_offsets, text=text)
+
+        if conf_with_sentence_splitting:
+            sentence_tokens_offsets = \
+                self._split_sentences(offsets=text_tokens_offsets, text=text)
+        else:
+            sentence_tokens_offsets = [text_tokens_offsets]
+        # end if
+        
         annotations = []
 
         for tokens_offsets in sentence_tokens_offsets:
@@ -693,4 +701,4 @@ if __name__ == '__main__':
 
     nann.train(
         train_folders=input_folders,
-        bert_checkpoint=bert_checkpoint_folder, epochs=5)
+        bert_checkpoint=bert_checkpoint_folder, epochs=10)
