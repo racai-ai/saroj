@@ -1,6 +1,6 @@
 import json
 from flask import request, jsonify
-from conllu_utils import is_file_conllu
+from .conllu_utils import is_file_conllu
 
 
 def get_input_data(expected_values):
