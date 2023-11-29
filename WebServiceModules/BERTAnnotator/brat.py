@@ -36,7 +36,7 @@ def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> 
                     offs_parts = offsets.split()
 
                     if len(offs_parts) == 3:
-                        label, start_off, end_off = offsets.split()
+                        label, start_off, end_off = offs_parts
                         start_off = int(start_off)
                         end_off = int(end_off)
                         ann_offsets.append((label, start_off, end_off, entity))
