@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from flask import Flask, jsonify
-from annotator import RegExAnnotator
+from annotator import NeuralAnnotator, BERTEntityTagger
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.gunicorn import StandaloneApplication
 from lib.saroj.input_data import get_input_data
@@ -10,6 +10,8 @@ from lib.saroj.conllu_utils import is_file_conllu
 
 
 app = Flask(__name__)
+tagger = BERTEntityTagger(seq_len=256)
+tagger.load()
 
 
 @app.route('/process', methods=['POST', 'GET'])
@@ -45,7 +47,7 @@ def annotate_conllu():
     # end if
 
     try:
-        ann = RegExAnnotator(input_file)
+        ann = NeuralAnnotator(input_file, tagger)
         ann.annotate(output_file)
         return jsonify({'status': 'OK', 'message': output_file})
     except Exception as e:

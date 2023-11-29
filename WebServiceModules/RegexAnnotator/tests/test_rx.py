@@ -1,5 +1,4 @@
-from . import do_regex_ner
-
+from nerregex import do_regex_ner
 
 def test_cnp():
     input_text = "... numitul Georgică Blatistul, C.N.P. 1891208175432, domiciliat în ..."
