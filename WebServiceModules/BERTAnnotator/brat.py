@@ -26,20 +26,28 @@ def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> 
         
         for line in f:
             line_count += 1
-            parts = line.strip().split('\t')
+            line_parts = line.strip().split('\t')
+            example_added = False
 
-            if len(parts) == 3:
-                tid, offsets, entity = parts
+            if len(line_parts) == 3:
+                tid, offsets, entity = line_parts
 
                 if tid and offsets and entity:
-                    label, start_off, end_off = offsets.split()
-                    start_off = int(start_off)
-                    end_off = int(end_off)
-                    ann_offsets.append((label, start_off, end_off, entity))
+                    offs_parts = offsets.split()
+
+                    if len(offs_parts) == 3:
+                        label, start_off, end_off = offsets.split()
+                        start_off = int(start_off)
+                        end_off = int(end_off)
+                        ann_offsets.append((label, start_off, end_off, entity))
+                        example_added = True
+                    # end if
                 # end if
-            else:
+            # end if
+
+            if not example_added:
                 print(f'Problem with example @ line [{line_count}] in .ann file [{ann_file}]',
-                      file=sys.stderr, flush=True)
+                    file=sys.stderr, flush=True)
             # end if
         # end for
     # end with
