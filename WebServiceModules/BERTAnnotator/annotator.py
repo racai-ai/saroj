@@ -701,4 +701,4 @@ if __name__ == '__main__':
 
     nann.train(
         train_folders=input_folders,
-        bert_checkpoint=bert_checkpoint_folder, epochs=10)
+        bert_checkpoint=bert_checkpoint_folder, epochs=5)
