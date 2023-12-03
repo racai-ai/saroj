@@ -28,3 +28,16 @@ DOC_R1, DOC_R2, 10 epoci, no sentence splitting
    macro avg       0.70      0.69      0.69     17316
 weighted avg       0.92      0.91      0.91     17316
 
+Bigger data set, 5 epochs, no sentence splitting
+              precision    recall  f1-score   support
+
+       B-LOC       0.95      0.85      0.90      1314
+       I-LOC       0.94      0.96      0.95     12601
+       B-ORG       0.90      0.82      0.86      1044
+       I-ORG       0.92      0.88      0.90      2835
+       B-PER       0.98      0.96      0.97     22529
+       I-PER       0.98      0.97      0.98     44340
+
+   micro avg       0.95      0.95      0.95    122543
+   macro avg       0.79      0.78      0.78    122543
+weighted avg       0.95      0.95      0.95    122543
