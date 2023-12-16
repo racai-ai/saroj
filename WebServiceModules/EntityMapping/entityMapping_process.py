@@ -309,45 +309,62 @@ def preprocess_line(line):
     return columns, (ner_id_and_potential_suffix, (ner_inst, form))
 
 
-def anonymize_entities(input_file, output_file, mapping_file, replacement_dict):
+def anonymize_entities(input_file, output_file, mapping_file, dicts):
     """
-    Anonymize NER entities in an input file and write the result to an output file.
+    Anonymize Named Entity Recognition (NER) entities in an input file and write the result to an output file.
 
     Args:
         input_file (str): The path to the input file containing NER entities.
         output_file (str): The path to the output file where anonymized content will be written.
         mapping_file (str): The path to the file containing entity-to-replacement mappings.
-        replacement_dict (dict): A dictionary of replacement options for entities.
+        dicts (dict): A dictionary containing additional configuration and replacement options.
 
-    The function reads the content of the specified `input_file`, processes NER entities,
-    and replaces them with anonymized content based on the provided `mapping_file` and `replacement_dict`.
+    This function reads the content of the specified `input_file`, processes NER entities,
+    and replaces them with anonymized content based on the provided `mapping_file` and `dicts`.
     The resulting content is written to the `output_file`.
+
+    The `dicts` parameter is expected to be a dictionary containing two keys: 'config' and 'replacement'.
+    'config' is a dictionary that maps NER types to their configurations, and 'replacement' is a dictionary
+    that maps NER entities to their replacements.
 
     Note:
     - The input file is expected to contain NER entities that need anonymization.
     - The `mapping_file` contains predefined entity-to-replacement mappings.
-    - The `replacement_dict` is a dictionary of replacement options for entities not found already in the mapping file.
+    - The `dicts['replacement']` is a dictionary of replacement options for entities not found already in the mapping file.
     """
     global counter_inst
+    # Count the instances of each entity in the input file
     counter_inst_list = count_inst_entities(input_file)
+
+    # Open the input and output files
     with open(input_file, 'r', encoding="utf-8") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
+        # Process each line in the input file
         for line in input_f:
+            # Preprocess the line to extract the columns and token information
             columns, token_info = preprocess_line(line)
+
+            # If there is no token information, write the line to the output file as is
             if token_info is None:
                 output_f.write(line)
                 continue
 
+            # Get the next counter instance from the list
             counter_inst = counter_inst_list.pop()
+
+            # Extract the NER ID and potential suffix, and the NER instance from the token information
             ner_id_and_potential_suffix, token_tpl = token_info
             ner_inst = token_tpl[FIRST_TOKEN]
+            ner = token_tpl[SECOND_TOKEN]
 
+            # Search for a replacement for the NER ID in the mapping file
             replacement = search_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix))
 
-            if replacement:
-                replacement = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix)
-                columns.append(replacement)
-                write_output_columns(output_f, columns)
-                continue
+            # If a replacement was found, process it and write it to the output file
+            if replacement and not extra_initials:
+                replacement = process_already_mapped_replacement(replacement, ner_inst, dicts["config"].get(ner),
+                                                                 ner_id_and_potential_suffix)
+            else:
+                replacement = process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts)
 
-            columns.append(process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, replacement_dict))
+            columns.append(replacement)
             write_output_columns(output_f, columns)
