@@ -60,27 +60,6 @@ def count_inst_entities(filename):
     return result
 
 
-def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
-    """
-     Search for a replacement in a mapping file based on a given NER identifier and potential suffix.
-
-     Args:
-         mapping_file (str): The path to the mapping file.
-         ner_id_and_potential_suffix (str): The NER identifier and potential suffix to look up.
-
-     Returns:
-         str: The replacement value found in the mapping file, or '' if not found.
-     """
-    replacement = ""  # Default replacement if not found
-    with open(mapping_file, 'r', encoding="utf-8") as file:
-        for line in file:
-            columns = line.strip().split('\t')
-            if len(columns) == 3 and columns[NER_ID] == ner_id_and_potential_suffix:
-                replacement = columns[2]
-                break  # Exit the loop once the entity is found
-    return replacement
-
-
 def filter_neutral_valid_replacements(replacements):
     """
     Filter and select valid replacements from a list of replacements based on specific criteria.
