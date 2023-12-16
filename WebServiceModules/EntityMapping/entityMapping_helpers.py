@@ -1,6 +1,7 @@
 import random
 import re
 import shutil
+import string
 import tempfile
 
 from entityMapping_config import args
@@ -8,6 +9,13 @@ from entityMapping_config import args
 NOT_FOUND = args.REPLACEMENT * 3
 FIRST_TOKEN = 0
 SECOND_TOKEN = 1
+NER_ID = 1
+
+# Global counters for each entity type
+counters = {}
+
+# Global mappings for initials
+initials_mappings = {}
 
 
 def get_random_X():
@@ -25,7 +33,7 @@ def insert_suffix_multiple_tokens(replacement, sfx):
 
 def get_ner_and_suffix(ner_id_and_potential_suffix):
     return re.sub(r'[^a-zA-Z]', '', hashtag_ner(ner_id_and_potential_suffix)), \
-           ner_id_and_potential_suffix.split("_")[SECOND_TOKEN] if "_" in ner_id_and_potential_suffix else ""
+        ner_id_and_potential_suffix.split("_")[SECOND_TOKEN] if "_" in ner_id_and_potential_suffix else ""
 
 
 def write_output_columns(output_f, columns):
@@ -51,8 +59,11 @@ def update_mapping_file(mapping_file, entity, replacement):
     Note:
     - The mapping file is expected to be a tab-separated text file with at least three columns.
     - The 'entity' and 'replacement' parameters should match the appropriate columns in the file.
+
+    Returns:
+        None
     """
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding="utf-8") as temp:
         with open(mapping_file, 'r', encoding="utf-8") as file:
             for line in file:
                 columns = line.strip().split('\t')
@@ -69,6 +80,27 @@ def update_mapping_file(mapping_file, entity, replacement):
     shutil.move(temp_file, mapping_file)
 
 
+def handle_character(ner_inst, replacement):
+    # Generate a random number of replacement characters
+    replacement = ''.join(random.choice(replacement or args.REPLACEMENT) for _ in range(random.randint(3, 10)))
+    return replacement
+
+
+def handle_initials(ner_inst, name):
+    # Split name into words and map each word to a random initial, reusing existing mappings
+    words = name.split()
+    available_chars = list(string.ascii_uppercase)
+    for existing in initials_mappings.values():
+        if existing in available_chars:
+            available_chars.remove(existing)
+    initials = [initials_mappings.setdefault(word, random.choice(available_chars)) for word in words]
+    return ''.join(initials)
+
+
+def handle_counter(ner_inst, extra_info):
+    # Increment the counter for ner_inst and return a string containing the starting word and the counter
+    counters[ner_inst] = counters.get(ner_inst, 0) + 1
+    return f'{extra_info} {counters[ner_inst]}'
 
 
 def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
