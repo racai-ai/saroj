@@ -60,9 +60,11 @@ def anonymize_conllup():
             # Read the replacement dictionary
             if args.DICTIONARY:
                 replacement_dict = read_replacement_dictionary(args.DICTIONARY)
-
+            if args.CONFIG:
+                config_dict = read_config_file(args.CONFIG)
             # Anonymize entities in the input file and write to the output file
-            anonymize_entities(input_file, output_file, mapping_file, replacement_dict)
+            dicts = {"replacement":replacement_dict,"config": config_dict}
+            anonymize_entities(input_file, output_file, mapping_file, dicts)
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:

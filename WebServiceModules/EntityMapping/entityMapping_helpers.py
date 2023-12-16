@@ -67,3 +67,31 @@ def update_mapping_file(mapping_file, entity, replacement):
 
     # Replace the original file with the temporary file
     shutil.move(temp_file, mapping_file)
+
+
+def read_config_file(file_path):
+    """
+    Reads a configuration file and returns a dictionary containing the configuration settings.
+
+    Args:
+        file_path (str): The path to the configuration file.
+
+    Returns:
+        dict: A dictionary containing the configuration settings. The keys are the configuration keys, and the values
+              are dictionaries with the following structure:
+              {
+                  'type': str,  # The type of the configuration value
+                  'extra_info': str  # Additional information about the configuration value (optional)
+              }
+    """
+    config_dict = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            line = line.strip()  # Remove leading/trailing whitespace
+            if line:  # Skip empty lines
+                key, type = line.split("\t")  # Split on the first space
+                extra_info = ''  # Default value for extra_info
+                if ':' in type:  # If a colon is present in the value
+                    type, extra_info = type.split(':', 1)  # Split on the first colon
+                config_dict[key] = {'type': type, 'extra_info': extra_info}
+    return config_dict
