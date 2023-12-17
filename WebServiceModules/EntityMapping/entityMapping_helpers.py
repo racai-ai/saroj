@@ -1,3 +1,4 @@
+from collections import defaultdict
 import random
 import re
 import shutil
@@ -86,15 +87,37 @@ def handle_character(ner_inst, replacement):
     return replacement
 
 
-def handle_initials(ner_inst, name):
+def parse_mapping_file(mapping_file):
+    mapping_dict = defaultdict(list)
+    with open(mapping_file, 'r') as f:
+        for line in f:
+            parts = line.strip().split('\t')
+            entity = ''.join(filter(str.isalpha, parts[1]))
+            initials = parts[2] if len(parts) > 2 else None
+            mapping_dict[entity].append(initials)
+    return mapping_dict
+
+
+def handle_initials(ner_inst, name, mapping_file, config_dict):
     # Split name into words and map each word to a random initial, reusing existing mappings
     words = name.split()
-    available_chars = list(string.ascii_uppercase)
-    for existing in initials_mappings.values():
-        if existing in available_chars:
-            available_chars.remove(existing)
-    initials = [initials_mappings.setdefault(word, random.choice(available_chars)) for word in words]
-    return ''.join(initials)
+    available_chars = set(string.ascii_uppercase)
+
+    # Parse the mapping file
+    mapping_dict = parse_mapping_file(mapping_file)
+
+    # Remove used initials from available_chars
+    used_initials = [initial for entity, initials_list in mapping_dict.items() 
+                     if entity in config_dict and config_dict[entity]['type'] == 'initials' 
+                     for initials in initials_list if initials is not None for initial in initials.split()]
+    available_chars = list(filter(lambda initial: initial not in used_initials, available_chars))
+
+    # Map each word to a random initial from the remaining available_chars
+    initials = [initials_mappings.setdefault(word, random.choice(list(available_chars))) for word in words
+                if available_chars]
+
+    initials = get_random_X() if not initials else ' '.join(initials)
+    return initials
 
 
 def handle_counter(ner_inst, extra_info):

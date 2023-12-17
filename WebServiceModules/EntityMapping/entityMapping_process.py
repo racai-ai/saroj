@@ -315,7 +315,7 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts):
         update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
 
     elif ner_config and ner_config['type'] == "initials":
-        replacement = case_func(ner, lemma)
+        replacement = case_func(ner, lemma, mapping_file, config_dict)
         extra_initials = counter_inst != 1
         update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
     else:
