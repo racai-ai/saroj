@@ -42,13 +42,14 @@ def anonymize_conllup():
     """
 
     status, data, error = get_input_data(["input", "output", "mapping"])
-    if not status: return error
+    if not status:
+        return error
 
     input_file = data["input"]
     output_file = data["output"]
     mapping_file = data["mapping"]
-
     replacement_dict = {}
+    config_dict = {}
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
@@ -63,7 +64,7 @@ def anonymize_conllup():
             if args.CONFIG:
                 config_dict = read_config_file(args.CONFIG)
             # Anonymize entities in the input file and write to the output file
-            dicts = {"replacement":replacement_dict,"config": config_dict}
+            dicts = {"replacement": replacement_dict, "config": config_dict}
             anonymize_entities(input_file, output_file, mapping_file, dicts)
 
             return jsonify({"status": "OK", "message": ""})
@@ -96,6 +97,12 @@ def check_health():
 
     if not os.path.exists(args.DICTIONARY):
         return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' does not exist."})
+
+    if not args.CONFIG:
+        return jsonify({"status": "OK", "message": f"The config file parameter is missing."})
+
+    if not os.path.exists(args.CONFIG):
+        return jsonify({"status": "OK", "message": f"Replacement config file '{args.CONFIG}' does not exist."})
 
     replacement_dict = read_replacement_dictionary(args.DICTIONARY)
 
