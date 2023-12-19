@@ -168,7 +168,10 @@ def read_config_file(file_path):
         for line in file:
             line = line.strip()  # Remove leading/trailing whitespace
             if line:  # Skip empty lines
-                key, type = line.split("\t")  # Split on the first space
+                parts = line.split("\t")  # Split on the first space
+                if len(parts) < 2:  # Skip lines without a tab
+                    continue
+                key, type = parts[0], parts[1]
                 extra_info = ''  # Default value for extra_info
                 if ':' in type:  # If a colon is present in the value
                     type, extra_info = type.split(':', 1)  # Split on the first colon
