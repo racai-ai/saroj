@@ -48,8 +48,6 @@ def anonymize_conllup():
     input_file = data["input"]
     output_file = data["output"]
     mapping_file = data["mapping"]
-    replacement_dict = {}
-    config_dict = {}
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
@@ -58,11 +56,6 @@ def anonymize_conllup():
 
     if input_file:
         try:
-            # Read the replacement dictionary
-            if args.DICTIONARY:
-                replacement_dict = read_replacement_dictionary(args.DICTIONARY)
-            if args.CONFIG:
-                config_dict = read_config_file(args.CONFIG)
             # Anonymize entities in the input file and write to the output file
             dicts = {"replacement": replacement_dict, "config": config_dict}
             anonymize_entities(input_file, output_file, mapping_file, dicts)
@@ -104,19 +97,34 @@ def check_health():
     if not os.path.exists(args.CONFIG):
         return jsonify({"status": "OK", "message": f"Replacement config file '{args.CONFIG}' does not exist."})
 
-    replacement_dict = read_replacement_dictionary(args.DICTIONARY)
-
     if not replacement_dict:
         return jsonify({"status": "OK", "message": f"Replacement dictionary file '{args.DICTIONARY}' is empty."})
     else:
-        return jsonify({"status": "OK", "message": count_instances_in_dict(replacement_dict)})
-
-
+        return jsonify({
+            "status": "OK", 
+            "message": {
+                "replacement_dict": {
+                    "count": count_instances_in_dict(replacement_dict)
+                },
+                "config_dict": {
+                    "data": config_dict,
+                }
+            }
+        })
+    
+    
 if __name__ == '__main__':
 
     options = {
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),
         'workers': 1,
     }
+
+    # Read the replacement dictionary
+    if args.DICTIONARY:
+        replacement_dict = read_replacement_dictionary(args.DICTIONARY)
+    if args.CONFIG:
+        config_dict = read_config_file(args.CONFIG)
+
     #app.run(debug=True, port=args.PORT)
     StandaloneApplication(app, options).run()
