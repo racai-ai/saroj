@@ -172,5 +172,5 @@ def read_config_file(file_path):
                 extra_info = ''  # Default value for extra_info
                 if ':' in type:  # If a colon is present in the value
                     type, extra_info = type.split(':', 1)  # Split on the first colon
-                config_dict[key] = {'type': type, 'extra_info': extra_info}
+                config_dict[key] = {'type': type.lower(), 'extra_info': extra_info}
     return config_dict
