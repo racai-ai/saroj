@@ -230,14 +230,14 @@ ner_label_map = {
 }
 
 
-def do_regex_ner(text: str, label_map: bool = False) -> list[tuple[int, int, str]]:
+def do_regex_ner(text: str) -> list[tuple[int, int, str]]:
     """Takes an input test and returns a list of tuples of type
     (start_offset, end_offset, etichetă), for all named entities
-    that were recognized. If `label_map is True`, rename regex labels
-    with ones that were defined."""
+    that were recognized."""
 
     entities = []
 
+    # 1. Do NER with regular expressions
     for ner_label in ner_regex:
         regex = ner_regex[ner_label]
         m = regex.search(text)
@@ -256,21 +256,18 @@ def do_regex_ner(text: str, label_map: bool = False) -> list[tuple[int, int, str
         # end while
     # end for
 
-    if label_map:
-        entities2 = []
+    entities2 = []
 
-        for s, e, l in entities:
-            if l in ner_label_map:
-                entities2.append((s, e, ner_label_map[l]))
-            else:
-                entities2.append((s, e, l))
-            # end if
-        # end for
+    # 2. Map regex labels to final labels
+    for s, e, l in entities:
+        if l in ner_label_map:
+            entities2.append((s, e, ner_label_map[l]))
+        else:
+            entities2.append((s, e, l))
+        # end if
+    # end for
 
-        entities = entities2
-    # end if
-
-    return entities
+    return entities2
 
 
 def process_address_fields(
