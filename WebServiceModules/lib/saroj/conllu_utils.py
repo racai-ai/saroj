@@ -170,8 +170,14 @@ class CoNLLUFileAnnotator(object):
                         to_wli += 1
                     # end if
 
+                    # Also do the BIO annotation here,
+                    # as here we have consecutive tokens.
                     for i in range(from_wli, to_wli):
-                        self._conllu_lines[i][-1] = label
+                        if i == from_wli:
+                            self._conllu_lines[i][-1] = f'B-{label}'
+                        else:
+                            self._conllu_lines[i][-1] = f'I-{label}'
+                        # end if
                     # end for
                 # end if
             # end if
