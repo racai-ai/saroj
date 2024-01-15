@@ -18,19 +18,41 @@ echo "All modules started\n";
 echo "Creating folders and setting access rights\n";
 @mkdir($TASK_DIR);
 @mkdir($TASK_DIR_NEW);
+@mkdir($TASK_DIR_NEW_PRIO);
 @mkdir($TASK_DIR_DONE);
 @mkdir($TASK_DIR_RUN);
 @mkdir($MAP_DIR);
 shell_exec("chown www-data:www-data ${TASK_DIR_NEW}");
+shell_exec("chown www-data:www-data ${TASK_DIR_NEW_PRIO}");
 shell_exec("chown www-data:www-data ${TASK_DIR_DONE}");
 shell_exec("chown www-data:www-data ${TASK_DIR_RUN}");
 shell_exec("chown www-data:www-data ${MAP_DIR}");
 echo "Done\n";
 
+function checkTasksPrio(){
+        global $TASK_DIR_NEW_PRIO, $TASK_DIR_DONE;
+
+	$dh = opendir($TASK_DIR_NEW_PRIO);
+	while (($file = readdir($dh)) !== false) {
+		$pathNew="${TASK_DIR_NEW_PRIO}${file}";
+		$pathDone="${TASK_DIR_DONE}${file}";
+		if(is_file($pathNew)){// && endsWith($pathNew,".task")){
+			echo "Running PRIORITY task $file\n";
+			
+			runTask($pathNew, $pathDone);
+			
+			echo "Done\n";
+		}
+	}
+	closedir($dh);
+}
+
+
 function checkTasks(){
         global $TASK_DIR_NEW, $TASK_DIR_DONE;
 
 	$dh = opendir($TASK_DIR_NEW);
+	checkTasksPrio();
 	while (($file = readdir($dh)) !== false) {
 		$pathNew="${TASK_DIR_NEW}${file}";
 		$pathDone="${TASK_DIR_DONE}${file}";
@@ -40,6 +62,9 @@ function checkTasks(){
 			runTask($pathNew, $pathDone);
 			
 			echo "Done\n";
+			
+			checkTasksPrio();
+			
 		}
 	}
 	closedir($dh);

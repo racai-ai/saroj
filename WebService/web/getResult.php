@@ -6,12 +6,15 @@ $in=get_input(["id"]);
 
 $pathDone="${TASK_DIR_DONE}${in['id']}";
 $pathNew="${TASK_DIR_NEW}${in['id']}";
+$pathPrio="${TASK_DIR_NEW_PRIO}${in['id']}";
 
 $task=false;
 if(is_file($pathDone) && filesize($pathDone)>0){
 	$task=@json_decode(@file_get_contents($pathDone),true);
 }else if(is_file($pathNew)){
 	$task=@json_decode(@file_get_contents($pathNew),true);
+}else if(is_file($pathPrio)){
+	$task=@json_decode(@file_get_contents($pathPrio),true);
 }else{
 	die(json_encode(["status"=>"ERROR", "message"=>"E200 Invalid ID"]));
 }
