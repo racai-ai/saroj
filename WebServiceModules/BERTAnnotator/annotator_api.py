@@ -11,7 +11,6 @@ from lib.saroj.conllu_utils import is_file_conllu
 
 app = Flask(__name__)
 tagger = BERTEntityTagger(seq_len=256)
-tagger.load()
 
 
 @app.route('/process', methods=['POST', 'GET'])
@@ -70,12 +69,20 @@ def check_health():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('PORT', type=int, help='port to listen for requests')
+    parser.add_argument('MODEL', type=str, help='folder to read the model from')
     args = parser.parse_args()
 
     options = {
         'bind': f'127.0.0.1:{args.PORT}',
-        'workers': 1,
+        'workers': 1
     }
+
+    if not os.path.isdir(args.MODEL):
+        print(f'Model folder [{args.MODEL}] is not a folder in the file system', file=sys.stderr, flush=True)
+        exit(1)
+    # end if
+
+    tagger.load(model_folder=args.MODEL)
 
     StandaloneApplication(app, options).run()
     # This is for Windows debug testing only.

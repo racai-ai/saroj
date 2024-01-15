@@ -71,9 +71,13 @@ class BERTEntityTagger(object):
         """Takes the BERT model input sequence length `seq_len`."""
 
         self._model_max_length = seq_len
+        self._model_folder = \
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                'model'
+            )
         self._tokenizer = \
             load_ro_pretrained_tokenizer(max_sequence_len=self._model_max_length)
-        self._abbreviations = self._read_abbreviations()
 
     def _read_abbreviations(self) -> set[str]:
         abbreviations = set()
@@ -213,6 +217,9 @@ class BERTEntityTagger(object):
 
     def train(self, train_folders: list[str], bert_checkpoint: str, epochs: int):
         """`train_folders` contain all folders which have .txt/.ann file pairs."""
+        # 0. Read abbreviations
+        self._abbreviations = self._read_abbreviations()
+
         # 1. Get train/dev examples
         annotated_examples = {}
 
@@ -279,51 +286,29 @@ class BERTEntityTagger(object):
             train_dataset.reshuffle()
         # end for
 
-    def _get_vocab_file(self) -> str:
-        vocab_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'model',
-            'vocab.txt'
-        )
-        print(
-            f'WordPiece vocab file is [{vocab_file}]', file=sys.stderr, flush=True)
-        return vocab_file
-
     def _get_abbrev_file(self) -> str:
-        abbr_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'model',
-            'abbrev.txt'
-        )
+        abbr_file = os.path.join(self._model_folder,
+            'abbrev.txt')
         print(
             f'Abbreviations file is [{abbr_file}]', file=sys.stderr, flush=True)
         return abbr_file
 
     def _get_neraddon_model_file(self) -> str:
-        addon_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'model',
-            'ner_addon.pt'
-        )
+        addon_path = os.path.join(self._model_folder,
+            'ner_addon.pt')
         print(f'NER AddOn file is [{addon_path}]', file=sys.stderr, flush=True)
         return addon_path
 
     def _get_bert_nerfinetuned_folder(self) -> str:
-        finetuned_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'model',
-            'finetuned'
-        )
+        finetuned_path = os.path.join(self._model_folder,
+            'finetuned')
         print(f'NER BERT folder is [{finetuned_path}]',
               file=sys.stderr, flush=True)
         return finetuned_path
 
     def _get_ner_labels_file(self) -> str:
-        labels_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'model',
-            'ner_labels.txt'
-        )
+        labels_path = os.path.join(self._model_folder,
+            'ner_labels.txt')
         print(f'NER labels file is [{labels_path}]',
               file=sys.stderr, flush=True)
         return labels_path
@@ -340,7 +325,12 @@ class BERTEntityTagger(object):
             # end for
         # end with
 
-    def load(self):
+    def load(self, model_folder: str = ''):
+        if model_folder:
+            self._model_folder = model_folder
+        # end if
+        
+        self._abbreviations = self._read_abbreviations()
         self._bertmodel = AutoModel.from_pretrained(
             self._get_bert_nerfinetuned_folder())
         self._bertmodel.to(device)
