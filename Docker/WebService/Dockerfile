@@ -28,7 +28,7 @@ RUN cd /programs_build/python_build/cpython-3.11.4 && make install
 RUN /programs/python-3.11/bin/python3 -m venv /venv
 COPY --from=intermediate /saroj/WebServiceModules/ /modules/
 RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
-RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt
+RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu
 
 # Setup site
 COPY --from=intermediate /saroj/WebService/web/ /site/
