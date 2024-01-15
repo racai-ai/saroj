@@ -32,15 +32,15 @@ def test_location():
         'în contradictoriu cu intimata.'
     result = ann.tag_text(text=input_text)
 
-    assert result[14][2] == 'B-LOC' and result[32][2] == 'I-LOC'
-    assert input_text[result[14][0]:result[32][1]
-                      ] == 'sat Belciug, strada Brusturelui nr. 13, com. Ghiminați, jud. Bihor,'
+    assert result[14][2] == 'B-LOC' and result[31][2] == 'I-LOC'
+    assert input_text[result[14][0]:result[31][1]
+                      ] == 'sat Belciug, strada Brusturelui nr. 13, com. Ghiminați, jud. Bihor'
 
 
 def test_multiple_sentences():
-    input_text = 'Petenta Miruna Mihăescu, domiciliată în Brașov, str. Becului nr. 33, lipsește. Firma de care ' + \
+    input_text = 'Petenta Georgiana Mihăescu, domiciliată în Brașov, str. Becului nr. 33, lipsește. Firma de care ' + \
         'aceasta se ocupa, S.C. Nicușor Balast S.R.L., a dat faliment din cauza ei. Iar aici începe propoziția nr. 3.'
-    result = ann.tag_text(text=input_text)
+    result = ann.tag_text(text=input_text, with_sentence_splitting=True)
 
     assert result[2][2] == 'B-PER' and result[3][2] == 'I-PER'
     assert result[7][2] == 'B-LOC' and result[15][2] == 'I-LOC'

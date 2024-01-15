@@ -398,12 +398,14 @@ class BERTEntityTagger(object):
 
         return sentences
 
-    def tag_text(self, text: str) -> list[tuple[int, int, str]]:
+    def tag_text(self, text: str, with_sentence_splitting: bool = False) -> list[tuple[int, int, str]]:
         """Main method of this class: takes the input `text` and returns
-        a list of (start_offset, end_offset, label) tuples."""
+        a list of (start_offset, end_offset, label) tuples.
+        If `with_sentence_splitting is True`, do sentence splitting prior to NER."""
+        
         text_tokens_offsets = self._tokenize_with_offsets(text)
 
-        if conf_with_sentence_splitting:
+        if with_sentence_splitting:
             sentence_tokens_offsets = \
                 self._split_sentences(offsets=text_tokens_offsets, text=text)
         else:
@@ -651,8 +653,11 @@ class NeuralAnnotator(CoNLLUFileAnnotator):
         self._bert_tagger = tagger
 
     def provide_annotations(self, text: str) -> list[tuple[int, int, str]]:
-        return self._bert_tagger.tag_text(text=text)
-
+        if conf_with_sentence_splitting:
+            return self._bert_tagger.tag_text(text=text, with_sentence_splitting=True)
+        else:
+            return self._bert_tagger.tag_text(text=text)
+        # end if
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
