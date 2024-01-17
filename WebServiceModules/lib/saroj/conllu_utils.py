@@ -149,6 +149,11 @@ class CoNLLUFileAnnotator(object):
         file_text = ''.join(file_words)
         return file_text, file_words, file_words_indexes
 
+    def _add_iob_to_label(self, label: str) -> bool:
+        return not label.startswith('B-') and \
+            not label.startswith('I-') and \
+            label != 'O'
+
     def annotate(self, output_file: str):
         """Does the annotation, using the abstract method `provide_annotations()`
         and writes the resulting file to `output_file`."""
@@ -173,10 +178,14 @@ class CoNLLUFileAnnotator(object):
                     # Also do the BIO annotation here,
                     # as here we have consecutive tokens.
                     for i in range(from_wli, to_wli):
-                        if i == from_wli:
-                            self._conllu_lines[i][-1] = f'B-{label}'
+                        if i == from_wli: 
+                            if self._add_iob_to_label(label):
+                                self._conllu_lines[i][-1] = f'B-{label}'
+                            # end if
                         else:
-                            self._conllu_lines[i][-1] = f'I-{label}'
+                            if self._add_iob_to_label(label):
+                                self._conllu_lines[i][-1] = f'I-{label}'
+                            # end if
                         # end if
                     # end for
                 # end if

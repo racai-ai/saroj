@@ -8,9 +8,8 @@ from lib.saroj.gunicorn import StandaloneApplication
 from lib.saroj.input_data import get_input_data
 from lib.saroj.conllu_utils import is_file_conllu
 
-
 app = Flask(__name__)
-tagger = BERTEntityTagger(seq_len=256)
+tagger = None
 
 
 @app.route('/process', methods=['POST', 'GET'])
@@ -43,6 +42,16 @@ def annotate_conllu():
     elif not is_file_conllu(input_file):
         return jsonify({'status': 'ERROR',
                         'message': 'Input file is not a (valid) CoNLL-U file.'})
+    # end if
+
+    # Model has to be loaded in worker, otherwise PyTorch freezes.
+    # There is no way to load this in a more principled way, but
+    # it's pretty fast and persisted after the load.
+    global tagger
+
+    if tagger is None:
+        tagger = BERTEntityTagger(seq_len=256)
+        tagger.load(model_folder=args.MODEL)
     # end if
 
     try:
@@ -81,8 +90,6 @@ if __name__ == '__main__':
         print(f'Model folder [{args.MODEL}] is not a folder in the file system', file=sys.stderr, flush=True)
         exit(1)
     # end if
-
-    tagger.load(model_folder=args.MODEL)
 
     StandaloneApplication(app, options).run()
     # This is for Windows debug testing only.
