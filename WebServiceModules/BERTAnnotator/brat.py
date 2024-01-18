@@ -2,14 +2,14 @@ import sys
 import re
 import os
 from pathlib import Path
-from config import conf_with_sentence_splitting
+
 
 # If the .txt files have \r\n, have this set to `True`
 _with_crlf = True
 _crlf_rx = re.compile('\r?\n$')
-_sentence_case_rx = re.compile('^\\s*[A-ZȘȚĂÎÂ][a-zșțăîâ-]+\\W')
 
-def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> dict[str, list[tuple[str, int, int]]]:
+
+def read_txt_ann_pair(txt_file: str, ann_file: str) -> dict[str, list[tuple[str, int, int]]]:
     """Reads in a pair of a text file and its BRAT annotation counterpart
     and returns the list of paragraphs along with start/end offsets of annotations."""
 
@@ -59,14 +59,9 @@ def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> 
     # For each paragraph line
     for p_line in txt_lines:
         p_line = _crlf_rx.sub('', p_line)
-
-        if conf_with_sentence_splitting:
-            s_lines = line_sentence_split(abbreviations, p_line)
-        else:
-            s_lines = [p_line]
-        # end if
-
-        assert ''.join(s_lines) == p_line
+        # If you want to split p_line into sentences,
+        # add s_lines = list of sentences from p_line
+        s_lines = [p_line]
 
         if not s_lines:
             if _with_crlf:
@@ -115,50 +110,9 @@ def read_txt_ann_pair(txt_file: str, ann_file: str, abbreviations: set[str]) -> 
 
     return annotations
 
-def line_sentence_split(abbreviations: set[str], input_line: str) -> list[str]:
-    """All returned strings, concatenated, are equal to the input.
-    Split only at '.'"""
-
-    current_sentence = []
-    sentences = []
-
-    for i in range(len(input_line)):
-        current_sentence.append(input_line[i])
-
-        if input_line[i] == '.':
-            # Check to see if the previous token is 
-            # not an abbreviation.
-            p_token = ['.']
-
-            for j in range(i - 1, -1, -1):
-                if input_line[j] not in ' \r\n\t':
-                    p_token.insert(0, input_line[j])
-                else:
-                    break
-                # end if
-            # end for
-
-            p_token = ''.join(p_token)
-
-            if p_token not in abbreviations and \
-                    i < len(input_line) - 1 and \
-                    _sentence_case_rx.match(input_line[i + 1:]):
-                sentences.append(''.join(current_sentence))
-                current_sentence.clear()
-            # end if
-        # end if
-    # end for
-
-    if current_sentence:
-        sentences.append(''.join(current_sentence))
-    # end if
-
-    return sentences
-
 
 def read_txt_ann_folder(ann_folder: str,
-                        annotations: dict[str, list[tuple[str, int, int]]],
-                        abbreviations: set[str]) -> None:
+                        annotations: dict[str, list[tuple[str, int, int]]]) -> None:
     """Reads all BRAT annotations from folder and puts them in `annotations`."""
 
     for txt in os.listdir(ann_folder):
@@ -167,9 +121,7 @@ def read_txt_ann_folder(ann_folder: str,
 
             if os.path.isfile(ann):
                 txt = os.path.join(ann_folder, txt)
-                results = read_txt_ann_pair(
-                    txt_file=txt,
-                    ann_file=ann, abbreviations=abbreviations)
+                results = read_txt_ann_pair(txt_file=txt, ann_file=ann)
 
                 for line in results:
                     if line not in annotations:

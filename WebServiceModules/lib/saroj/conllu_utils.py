@@ -1,10 +1,13 @@
 import re
 
-def read_conllu_file(file: str, append_column: bool = True) -> list[str | list[str]]:
+def read_conllu_file(file: str, append_column: bool = True) -> list[list[str | list[str]]]:
     """Reads a whole CoNLL-U file and stores lines as comments or
-    empty lines (str) or tuples of fields if the line contains annotations."""
+    or tuples of fields if the line contains annotations. When an empty
+    line is found, a sentence boundary is inserted. Returns the list of
+    such sentences from the file."""
 
-    file_lines = []
+    file_sentences = []
+    crt_sentence = []
 
     with open(file, mode='r', encoding='utf-8') as f:
         for line in f:
@@ -18,14 +21,23 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[str | list[s
                     fields.append('O')
                 # end if
 
-                file_lines.append(fields)
+                crt_sentence.append(fields)
+            elif not line.strip():
+                if crt_sentence:
+                    file_sentences.append(crt_sentence)
+                    crt_sentence = []
+                # end if
             else:
-                file_lines.append(line)
+                crt_sentence.append(line)
             # end if
         # end for
     # end with
+                
+    if crt_sentence:
+        file_sentences.append(crt_sentence)
+    # end if
 
-    return file_lines
+    return file_sentences
 
 
 _token_id_rx = re.compile(r'\d+')
@@ -103,9 +115,7 @@ class CoNLLUFileAnnotator(object):
             raise RuntimeError(f'File [{input_file}] is not a valid CoNLL-U file.')
         # end if
 
-        self._conllu_lines = read_conllu_file(file=input_file)
-        self._conllu_text, self._conllu_words, self._conllu_words_indexes = \
-            self._get_text_from_conllu()
+        self._conllu_sentences = read_conllu_file(file=input_file)
     
     def _no_space_after(self, words: list[str], index: int):
         """Modifies the list in place, making sure there is no space
@@ -125,72 +135,99 @@ class CoNLLUFileAnnotator(object):
             # end if
         # end if
 
-    def _get_text_from_conllu(self) -> tuple[str, list[str], list[int]]:
-        """Takes the output of function `read_conllu_file()` and returns the text
+    def _get_text_from_conllu_sentence(self,
+                                       conllu_sentence: list[str | list[str]]) -> tuple[str, list[str], list[int]]:
+        """Takes one sentence as returned by function `read_conllu_file()` and returns the text
         formed by joining all tokens with spaces, removing spaces around punctuation.
         Also returns a list of token to file line indexes and the list of normalized tokens."""
 
-        file_words_indexes = []
-        file_words = []
+        words_indexes = []
+        words = []
 
-        for i, line in enumerate(self._conllu_lines):
+        for i, line in enumerate(conllu_sentence):
             if isinstance(line, list):
                 word = line[1]
-                file_words_indexes.append(i)
-                file_words.append(word + ' ')
+                words_indexes.append(i)
+                words.append(word + ' ')
             # end if
         # end for
 
         # Normalize text: no space between comma and previous word
-        for i in range(len(file_words)):
-            self._no_space_after(words=file_words, index=i)
+        for i in range(len(words)):
+            self._no_space_after(words=words, index=i)
         # end for
 
-        file_text = ''.join(file_words)
-        return file_text, file_words, file_words_indexes
+        sentence_text = ''.join(words)
+        return sentence_text, words, words_indexes
+
+    def _add_iob_to_label(self, label: str) -> bool:
+        return not label.startswith('B-') and \
+            not label.startswith('I-') and \
+            label != 'O'
 
     def annotate(self, output_file: str):
         """Does the annotation, using the abstract method `provide_annotations()`
         and writes the resulting file to `output_file`."""
 
-        annotations = self.provide_annotations(text=self._conllu_text)
-
-        # Insert the annotations on the last column
-        # '_' is the empty default
-        for soff, eoff, label in annotations:
-            if soff >= 0 and eoff >= 0:
-                wli_info = \
-                    self._get_ner_line_indexes(offset=(soff, eoff))
-
-                if wli_info:
-                    from_wli, to_wli = wli_info
-
-                    # If a single line is affected
-                    if from_wli == to_wli:
-                        to_wli += 1
-                    # end if
-
-                    # Also do the BIO annotation here,
-                    # as here we have consecutive tokens.
-                    for i in range(from_wli, to_wli):
-                        if i == from_wli:
-                            self._conllu_lines[i][-1] = f'B-{label}'
-                        else:
-                            self._conllu_lines[i][-1] = f'I-{label}'
-                        # end if
-                    # end for
-                # end if
-            # end if
-        # end for
-
         with open(output_file, mode='w', encoding='utf-8') as f:
-            for line in self._conllu_lines:
-                if isinstance(line, list):
-                    print('\t'.join(line), file=f)
-                else:
-                    print(line, file=f, end='')
-                # end if
-            # end for
+            # Go sentence by sentence
+            for conllu_sentence in self._conllu_sentences:
+                sentence, snt_words, snt_words_indexes = \
+                    self._get_text_from_conllu_sentence(conllu_sentence)
+                annotations = self.provide_annotations(text=sentence)
+
+                # Insert the annotations on the last column
+                # 'O' is the 'outside' default
+                for soff, eoff, label in annotations:
+                    if soff >= 0 and eoff >= 0 and label != 'O':
+                        wli_info = \
+                            self._get_ner_line_indexes_in_sentence(
+                                offset=(soff, eoff),
+                                s_words=snt_words,
+                                s_words_indexes=snt_words_indexes)
+
+                        if wli_info:
+                            from_wli, to_wli = wli_info
+
+                            # If a single line is affected
+                            if from_wli == to_wli:
+                                to_wli += 1
+                            # end if
+
+                            # Also do the BIO annotation here,
+                            # as here we have consecutive tokens.
+                            for i in range(from_wli, to_wli):
+                                if isinstance(conllu_sentence[i], list):
+                                    if i == from_wli: 
+                                        if self._add_iob_to_label(label):
+                                            conllu_sentence[i][-1] = f'B-{label}'
+                                        else:
+                                            conllu_sentence[i][-1] = label
+                                        # end if
+                                    else:
+                                        if self._add_iob_to_label(label):
+                                            conllu_sentence[i][-1] = f'I-{label}'
+                                        else:
+                                            conllu_sentence[i][-1] = label
+                                        # end if
+                                    # end if
+                                # end if
+                            # end for
+                        # end if
+                    # end if
+                # end for annotations in sentence
+                
+                for line in conllu_sentence:
+                    if isinstance(line, list):
+                        print('\t'.join(line), file=f)
+                    else:
+                        print(line, file=f)
+                    # end if
+                # end for
+                
+                # Print EOS mark
+                print(file=f)
+            # end for sentence
         # end with
 
     def provide_annotations(self, text: str) -> list[tuple[int, int, str]]:
@@ -198,16 +235,19 @@ class CoNLLUFileAnnotator(object):
         Takes the `text` to annotate and returns a list of (start_offset, end_offset, label) annotations."""
         raise NotImplementedError('Do not know how to supply the annotations. Please implement me!')
 
-    def _get_ner_line_indexes(self, offset: tuple[int, int]) -> tuple[int, int] | None:
+    def _get_ner_line_indexes_in_sentence(self,
+                                          offset: tuple[int, int],
+                                          s_words: list[str],
+                                          s_words_indexes: list[int]) -> tuple[int, int] | None:
         """Given a start_offset, end_offset `offset` tuple, retrieves the range
-        of the index(es) of the line(s) in the CoNLL-U file which
+        of the index(es) of the line(s) in the CoNLL-U sentence which
         should receive the NER annotation."""
 
         the_offset = 0
         left_i = -1
         right_i = -1
 
-        for i, tok in enumerate(self._conllu_words):
+        for i, tok in enumerate(s_words):
             if left_i == -1:
                 if the_offset + len(tok) > offset[0]:
                     left_i = i
@@ -231,8 +271,7 @@ class CoNLLUFileAnnotator(object):
 
         if left_i >= 0 and left_i <= right_i:
             # Lines found
-            return (self._conllu_words_indexes[left_i],
-                self._conllu_words_indexes[right_i])
+            return (s_words_indexes[left_i], s_words_indexes[right_i])
         else:
             return None
         # end if

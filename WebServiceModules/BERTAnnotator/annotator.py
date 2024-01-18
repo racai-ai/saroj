@@ -15,10 +15,11 @@ from transformers import AutoModel, BatchEncoding
 from sklearn.metrics import classification_report
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.conllu_utils import CoNLLUFileAnnotator
-from config import conf_with_sentence_splitting
+from config import conf_window_length
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f'Running on device [{device}]', file=sys.stderr, flush=True)
 
 
 class NERAddOn(nn.Module):
@@ -217,16 +218,12 @@ class BERTEntityTagger(object):
 
     def train(self, train_folders: list[str], bert_checkpoint: str, epochs: int):
         """`train_folders` contain all folders which have .txt/.ann file pairs."""
-        # 0. Read abbreviations
-        self._abbreviations = self._read_abbreviations()
-
         # 1. Get train/dev examples
         annotated_examples = {}
 
         for folder in train_folders:
             read_txt_ann_folder(ann_folder=folder,
-                                annotations=annotated_examples,
-                                abbreviations=self._abbreviations)
+                                annotations=annotated_examples)
         # end for
 
         self._ner_labels = produce_ner_labels(annotations=annotated_examples)
@@ -330,7 +327,6 @@ class BERTEntityTagger(object):
             self._model_folder = model_folder
         # end if
         
-        self._abbreviations = self._read_abbreviations()
         self._bertmodel = AutoModel.from_pretrained(
             self._get_bert_nerfinetuned_folder())
         self._bertmodel.to(device)
@@ -350,113 +346,71 @@ class BERTEntityTagger(object):
         # Put model into eval mode. It is used for inferencing.
         self._nermodel.eval()
 
-    def _split_sentences(self,
-                         offsets: list[tuple[int, int, int]],
-                         text: str) -> list[list[tuple[int, int, int]]]:
-        """Performs '.' sentence splitting only, checking for abbreviations."""
-        
-        current_sentence = []
-        sentences = []
-
-        for i, (wid, soff, eoff) in enumerate(offsets):
-            token = text[soff:eoff]
-            current_sentence.append((wid, soff, eoff))
-
-            if token == '.':
-                is_abbr = False
-
-                for j in range(i - 1, -1, -1):
-                    p_token = text[offsets[j][1]:eoff]
-
-                    if not BERTEntityTagger._whitespace_rx.search(string=p_token):
-                        if p_token in self._abbreviations:
-                            is_abbr = True
-                            break
-                        # end if
-                    else:
-                        break
-                    # end if
-                # end for
-
-                if not is_abbr:
-                    # Break sentence only if next word is capitalized.
-                    if i < len(offsets) - 1:
-                        n_token = text[offsets[i + 1][1]:offsets[i + 1][2]]
-
-                        if BERTEntityTagger._sent_case_rx.fullmatch(n_token):
-                            sentences.append(current_sentence)
-                            current_sentence = []
-                        # end if
-                    # end if
-                # end if
-            # end if
-        # end for
-
-        if current_sentence:
-            sentences.append(current_sentence)
-        # end if
-
-        return sentences
-
-    def tag_text(self, text: str, with_sentence_splitting: bool = False) -> list[tuple[int, int, str]]:
+    def tag_text(self, text: str) -> list[tuple[int, int, str]]:
         """Main method of this class: takes the input `text` and returns
         a list of (start_offset, end_offset, label) tuples.
         If `with_sentence_splitting is True`, do sentence splitting prior to NER."""
         
-        text_tokens_offsets = self._tokenize_with_offsets(text)
-
-        if with_sentence_splitting:
-            sentence_tokens_offsets = \
-                self._split_sentences(offsets=text_tokens_offsets, text=text)
-        else:
-            sentence_tokens_offsets = [text_tokens_offsets]
-        # end if
-        
+        tokens_offsets = self._tokenize_with_offsets(text)
         annotations = []
 
-        for tokens_offsets in sentence_tokens_offsets:
-            if len(tokens_offsets) <= self._model_max_length:
-                int_tokens = [wid for wid, _, _ in tokens_offsets]
-                predicted_labels = self._tag_token_sequence(int_tokens)
+        if len(tokens_offsets) <= self._model_max_length:
+            int_tokens = [wid for wid, _, _ in tokens_offsets]
+            predicted_labels = self._tag_token_sequence(int_tokens)
 
-                for i in range(len(tokens_offsets)):
+            for i in range(len(tokens_offsets)):
+                start_offset = tokens_offsets[i][1]
+                end_offset = tokens_offsets[i][2]
+                label = predicted_labels[i][0]
+
+                annotations.append((start_offset, end_offset, label))
+            # end for
+        else:
+            from_index = 0
+            to_index = from_index + self._model_max_length
+            no_more_tokens = False
+
+            while True:
+                w_tokens_offsets = tokens_offsets[from_index:to_index]
+                w_int_tokens = [wid for wid, _, _ in w_tokens_offsets]
+                w_predicted_labels = self._tag_token_sequence(w_int_tokens)
+
+                for i in range(from_index, to_index):
                     start_offset = tokens_offsets[i][1]
                     end_offset = tokens_offsets[i][2]
-                    label = predicted_labels[i][0]
+                    label = w_predicted_labels[i - from_index][0]
+                    label_prob = w_predicted_labels[i - from_index][1]
 
-                    annotations.append((start_offset, end_offset, label))
-                # end for
-            else:
-                for i in range(len(tokens_offsets) - self._model_max_length + 1):
-                    i_tokens_offsets = tokens_offsets[i:i + self._model_max_length]
-                    i_int_tokens = [wid for wid, _, _ in i_tokens_offsets]
-                    i_predicted_labels = self._tag_token_sequence(i_int_tokens)
+                    if i < len(annotations):
+                        i_labels = annotations[i][2]
 
-                    for j in range(i, i + self._model_max_length):
-                        start_offset = tokens_offsets[j][1]
-                        end_offset = tokens_offsets[j][2]
-                        label = i_predicted_labels[j - i][0]
-                        label_prob = i_predicted_labels[j - i][1]
-
-                        if j < len(annotations):
-                            j_labels = annotations[j][2]
-
-                            if label in j_labels:
-                                j_labels[label].append(label_prob)
-                            else:
-                                j_labels[label] = [label_prob]
-                            # end if
+                        if label in i_labels:
+                            i_labels[label].append(label_prob)
                         else:
-                            annotations.append(
-                                (start_offset, end_offset, {label: [label_prob]}))
+                            i_labels[label] = [label_prob]
                         # end if
-                    # end for
+                    else:
+                        annotations.append(
+                            (start_offset, end_offset, {label: [label_prob]}))
+                    # end if
                 # end for
+                
+                if no_more_tokens:
+                    break
+                # end if
+                        
+                from_index += conf_window_length
+                to_index = from_index + self._model_max_length
 
-                annotations = [(so, eo, self._select_label(lbs))
-                            for so, eo, lbs in annotations]
-            # end if
-        # end for
+                if to_index > len(tokens_offsets):
+                    to_index = len(tokens_offsets)
+                    no_more_tokens = True
+                # end if
+            # end while
+
+            annotations = [(so, eo, self._select_label(lbs))
+                        for so, eo, lbs in annotations]
+        # end if
 
         self._fix_inconsistent_annotations(annotations)
         return annotations
@@ -653,11 +607,8 @@ class NeuralAnnotator(CoNLLUFileAnnotator):
         self._bert_tagger = tagger
 
     def provide_annotations(self, text: str) -> list[tuple[int, int, str]]:
-        if conf_with_sentence_splitting:
-            return self._bert_tagger.tag_text(text=text, with_sentence_splitting=True)
-        else:
-            return self._bert_tagger.tag_text(text=text)
-        # end if
+        return self._bert_tagger.tag_text(text=text)
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
