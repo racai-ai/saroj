@@ -1,2 +1,3 @@
-conf_with_sentence_splitting = False
-"""If to perform sentence splitting before training on or running on a text fragment."""
+conf_window_length = 4
+"""When there are more than 256 tokens in the input text, sequence it in 256-length windows
+with this step."""
