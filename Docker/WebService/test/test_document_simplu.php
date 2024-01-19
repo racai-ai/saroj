@@ -18,5 +18,15 @@ $id=$data['id'];
 while(true){
     $ret=file_get_contents("http://127.0.0.1:8111/getResult.php?input=".urlencode(json_encode(["id"=>$id])));
     var_dump($ret);
+    $json=json_decode($ret,true);
+    if( 
+        isset($json['status']) && $json['status']=="OK" &&
+        isset($json['result']) && $json['result']=="DONE" &&
+        isset($json['document']) 
+    ){
+        file_put_contents("simplu.out.docx",base64_decode($json['document']));
+        break;
+    }
+        
     sleep(1);
 }

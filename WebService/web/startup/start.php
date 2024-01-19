@@ -95,6 +95,7 @@ function runTask($pathNew, $pathDone){
 	file_put_contents($pathDocx,base64_decode($task['document']));
 
 	$pathOutput="${TASK_DIR_RUN}output.docx";
+	$pathOutputAnn="${TASK_DIR_RUN}output.ann";
 	
 	$pathCaseMap="${MAP_DIR}${task['caseid']}.map";
 	
@@ -103,7 +104,8 @@ function runTask($pathNew, $pathDone){
 		"DOCID" => $task['docid'],
 		"DOCX" => $pathDocx,
 		"CASEMAP" => $pathCaseMap,
-		"OUTPUT" => $pathOutput
+		"OUTPUT" => $pathOutput,
+		"OUTPUTANN" => $pathOutputAnn
 	];
 	
 	foreach($config['anonymization'] as $step){
@@ -147,6 +149,7 @@ function runTask($pathNew, $pathDone){
 		}else{
 			$task['output']=base64_encode(file_get_contents($pathOutput));
 			$task['status']="DONE";
+                        if(is_file($pathOutputAnn))$task['outputann']=base64_encode(file_get_contents($pathOutputAnn));
 		}
 	}
 	
