@@ -24,7 +24,9 @@ if(!is_array($task) || !isset($task['status'])){
 }
 
 if($task['status']==="DONE"){
-	echo json_encode(["status" => "OK", "result" => $task['status'], "document" => $task['output'], "version" => $task['version']]);
+        $ret=["status" => "OK", "result" => $task['status'], "document" => $task['output'], "version" => $task['version']];
+        if(isset($task['outputann']))$ret['outputann']=$task['outputann'];
+	echo json_encode($ret);
 }else if($task['status']==="SCHEDULED" || $task['status']==="RUNNING"){
 	echo json_encode(["status" => "OK", "result" => $task['status'], "document" => ""]);
 }else if($task['status']==="ERROR"){
