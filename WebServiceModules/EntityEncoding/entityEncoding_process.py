@@ -247,7 +247,7 @@ def map_tokens(entity_mapping, tokens):
     for (token, ner), (_, next_ner) in zip_longest(tokens, tokens[1:], fillvalue=("None", "None")):
         token, _ = suffix_replace(token)
         if ner in VOID_NER:
-            entity_merge_map.extend([(token, ner, "_")])
+            entity_merge_map.extend([(token, ner)])
             continue
 
         current_key += " " + token

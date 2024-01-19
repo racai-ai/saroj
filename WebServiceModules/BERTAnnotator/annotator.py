@@ -80,17 +80,6 @@ class BERTEntityTagger(object):
         self._tokenizer = \
             load_ro_pretrained_tokenizer(max_sequence_len=self._model_max_length)
 
-    def _read_abbreviations(self) -> set[str]:
-        abbreviations = set()
-
-        with open(self._get_abbrev_file(), mode='r', encoding='utf-8') as f:
-            for line in f:
-                abbreviations.add(line.strip())
-            # end for
-        # end with
-
-        return abbreviations
-
     def _tokenize_with_offsets(self, text: str) -> list[tuple[int, int, int]]:
         """Assume that tokenizer does not insert/delete characters!
         `RoBertPreTrainedTokenizer` will only change some characters."""
