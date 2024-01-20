@@ -2,7 +2,7 @@ FROM alpine as intermediate
 LABEL stage=intermediate
 RUN apk update && \
     apk add --update git
-RUN git clone --depth 1 --branch webservice https://github.com/racai-ai/saroj.git
+RUN git clone --depth 1 --branch saroj_1.0 https://github.com/racai-ai/saroj.git
 
 FROM php:7.4-apache
 ARG DEBIAN_FRONTEND=noninteractive
