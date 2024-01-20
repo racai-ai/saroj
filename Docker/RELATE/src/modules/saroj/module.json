@@ -1,0 +1,18 @@
+{
+
+"order":100,
+
+"languages":["ro"],
+
+"tasks":[
+		{
+				"name":"SAROJ",
+				"type":"saroj",
+				"description":"Use the system from the SAROJ project to perform anonymization.",
+				"scheduler":"scheduler.php:Modules\\saroj\\schedule",
+				"runner":"runner.php:Modules\\saroj\\runner"
+
+		}
+]
+
+}
