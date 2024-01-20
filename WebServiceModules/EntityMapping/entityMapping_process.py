@@ -48,6 +48,7 @@ def count_inst_entities(filename):
             continue
         columns = line.strip().split('\t')
         if columns[LAST_TOKEN] in VOID_NER:
+            current_value = 0
             continue
         if columns[-2].startswith("I-"):
             current_value += 1
