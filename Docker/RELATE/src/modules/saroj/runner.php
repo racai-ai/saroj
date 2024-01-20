@@ -48,8 +48,9 @@ function processAnn($corpus,$ann,$fpathOutAnn,$fpathOutConllup,$fpathOutTxt,$fpa
     foreach(explode("\n",$ann) as $line){
         if(empty($line)){
             if($current!="O"){
-                $pos=mb_strlen($text);
-                $entities.="T${entId}\t${current} ${start} $pos\t".mb_substr($text,$start)."\n";
+                $entText=mb_substr($text,$start);
+                $pos=$start+mb_strlen($entText)-1;
+                $entities.="T${entId}\t${current} ${start} $pos\t${entText}\n";
                 $entId++;
                 $current="O";
             }
@@ -64,8 +65,9 @@ function processAnn($corpus,$ann,$fpathOutAnn,$fpathOutConllup,$fpathOutTxt,$fpa
             else $nertype=$ner;
 
             if($current!="O" && ($nertype=="O" || $nertype!=$current)){
-                $pos=mb_strlen($text);
-                $entities.="T${entId}\t${current} ${start} $pos\t".mb_substr($text,$start)."\n";
+                $entText=mb_substr($text,$start);
+                $pos=$start+mb_strlen($entText)-1;
+                $entities.="T${entId}\t${current} ${start} $pos\t${entText}\n";
                 $entId++;
                 $current="O";
             }
@@ -79,8 +81,9 @@ function processAnn($corpus,$ann,$fpathOutAnn,$fpathOutConllup,$fpathOutTxt,$fpa
         }
     }
     if($current!="O"){
-        $pos=mb_strlen($text);
-        $entities.="T${entId}\t${current} ${start} $pos\t".mb_substr($text,$start)."\n";
+        $entText=mb_substr($text,$start);
+        $pos=$start+mb_strlen($entText)-1;
+        $entities.="T${entId}\t${current} ${start} $pos\t${entText}\n";
         $entId++;
         $current="O";
     }
@@ -92,10 +95,16 @@ function runSAROJ($corpus,$fpathIn,$fpathOut,$fpathOutAnn,$fpathOutConllup,$fpat
     global $settings;
     $url=$settings->get("saroj.url");
 
+    $docid=basename($fpathIn);
+    $pos=strrpos($docid,"."); if($pos!==false)$docid=substr($docid,0,$pos);
+
+    $caseid=$docid;
+    $pos=strpos($caseid,"_"); if($pos!==false && $pos>0)$caseid=substr($caseid,0,$pos);
+
     $ret=sendData("$url/startAnonymization.php",
         [ "input" => json_encode([
-          "caseid" => "CASE1",
-          "docid" => "DOCID1",
+          "caseid" => $caseid,
+          "docid" => $docid,
           "document" => base64_encode(file_get_contents($fpathIn))
     ])]);
 

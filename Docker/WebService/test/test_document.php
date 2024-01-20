@@ -24,7 +24,7 @@ while(true){
         isset($json['result']) && $json['result']=="DONE" &&
         isset($json['document']) 
     ){
-        file_put_contents("simplu.out.docx",base64_decode($json['document']));
+        file_put_contents("test1.out.docx",base64_decode($json['document']));
         break;
     }
         
