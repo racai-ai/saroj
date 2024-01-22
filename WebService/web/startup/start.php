@@ -114,10 +114,20 @@ function runTask($pathNew, $pathDone){
 		foreach($step['args'] as $arg){
 			$key=$arg['key'];
 			$value=$arg['value'];
-			if(!isset($data[$value])){
+                        if(!is_array($value)){
+			    if(!isset($data[$value])){
 				$data[$value]="${TASK_DIR_RUN}${value}";
-			}
-			$stepData[$key]=$data[$value];
+			    }
+			    $stepData[$key]=$data[$value];
+                        }else{
+                            $stepData[$key]=[];
+                            foreach($value as $v){
+			        if(!isset($data[$v])){
+				    $data[$v]="${TASK_DIR_RUN}${v}";
+			        }
+			        $stepData[$key][]=$data[$v];
+                            }
+                        }
 		}
 		
 		$result=file_get_contents("http://127.0.0.1:$port/process?input=".urlencode(json_encode($stepData)));
