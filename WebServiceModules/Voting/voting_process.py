@@ -49,7 +49,7 @@ def most_frequent_item(lst):
 # Function to read CoNLL-U Plus file
 def read_conll_file(file_path):
     data = []
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             tokens = line.strip().split('\t')
             data.append(tokens)
@@ -165,7 +165,7 @@ def majority_algorithm(files):
 
 # Function to write CoNLL-U Plus file
 def write_conll_file(file_path, data):
-    with open(file_path, 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8', errors="ignore") as file:
         for line in data:
             file.write('\t'.join(line) + '\n')
 

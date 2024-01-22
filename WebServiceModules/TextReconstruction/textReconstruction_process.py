@@ -10,7 +10,7 @@ def read_conllup(conllup_file):
     conllup_data = []
 
     # Open the CONLLUP file for reading
-    with open(conllup_file, "r", encoding="utf-8") as file:
+    with open(conllup_file, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
             # Skip empty lines and lines starting with "#" (comments)
             if not line.strip() or line.startswith("#"):

@@ -30,10 +30,10 @@ def read_mapping(mapping_path):
     entity_mapping = {}
     # Check if mapping file exists; if not, create it
     if not os.path.exists(mapping_path):
-        with open(mapping_path, "w") as mapping_file:
+        with open(mapping_path, "w", encoding="utf-8") as mapping_file:
             mapping_file.write("")
     # Load existing mapping data into memory
-    with open(mapping_path, "r", encoding="utf-8") as mapping_file:
+    with open(mapping_path, "r", encoding="utf-8", errors="ignore") as mapping_file:
         for line in mapping_file:
             token, ner_id, *extra = line.strip().split('\t')
             entity_mapping[token] = ner_id
@@ -64,7 +64,7 @@ def read_tokens_from_file(input_path):
     """
     tokens = []
 
-    with open(input_path, "r", encoding="utf-8") as input_file:
+    with open(input_path, "r", encoding="utf-8", errors="ignore") as input_file:
         for line in input_file:
             line = line.strip()
             if not line or line.startswith("#"):
@@ -127,7 +127,7 @@ def add_entity_mapping(current_entity_tokens, entity_mapping, map_file, previous
             previous_ner = previous_ner[2:] if "-" in previous_ner else previous_ner
             entity_mapping[combined_string] = f"#{previous_ner}{str(len(entity_mapping) + 1)}"
             # entity_mapping[combined_string] = previous_ner
-            with open(map_file, "a", encoding="utf-8") as mapping_file:
+            with open(map_file, "a", encoding="utf-8", errors="ignore") as mapping_file:
                 mapping_file.write(f"{combined_string}\t{entity_mapping[combined_string]}\n")
 
 
@@ -302,7 +302,7 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
     new_ner_id = ""
     mapped_tokens = map_tokens(entity_mapping, tokens)
 
-    with open(input_path, "r", encoding="utf-8") as input_file, open(output_path, "w", encoding="utf-8") as output_file:
+    with open(input_path, "r", encoding="utf-8", errors="ignore") as input_file, open(output_path, "w", encoding="utf-8") as output_file:
         ner_processor = NERProcessor(output_file, new_ner_id, mapped_tokens)
         current_line = None
 

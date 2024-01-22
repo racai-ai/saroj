@@ -31,7 +31,7 @@ def load_dictionary_with_max_token_count(dictionary_path):
     max_token_count = 0
 
     # Open the specified file for reading with UTF-8 encoding
-    with open(dictionary_path, 'r', encoding='utf-8') as file:
+    with open(dictionary_path, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             parts = line.strip().split('\t')
             if len(parts) == 2:
@@ -78,7 +78,7 @@ def test_subsequences(tokens, trie_root):
 def parse_text_document(input_file):
     output = []
 
-    with open(input_file, 'r', encoding='utf-8') as file:
+    with open(input_file, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             # Assuming the lines are separated by tabs
             line_data = line.strip().split('\t')
@@ -177,5 +177,5 @@ def assign_ner(input_file, output_file, trie_root, max_count):
 
     # Write the final output
     output_buffer.seek(0)
-    with open(output_file, 'w', encoding='utf-8') as outfile:
+    with open(output_file, 'w', encoding='utf-8', errors="ignore") as outfile:
         outfile.write(output_buffer.read())

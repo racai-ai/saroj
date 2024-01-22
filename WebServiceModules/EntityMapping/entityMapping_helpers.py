@@ -65,7 +65,7 @@ def update_mapping_file(mapping_file, entity, replacement):
         None
     """
     with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding="utf-8", errors="ignore") as temp:
-        with open(mapping_file, 'r', encoding="utf-8") as file:
+        with open(mapping_file, 'r', encoding="utf-8",errors="ignore") as file:
             for line in file:
                 columns = line.strip().split('\t')
                 if len(columns) >= 2:
@@ -89,7 +89,7 @@ def handle_character(ner_inst, replacement):
 
 def parse_mapping_file(mapping_file):
     mapping_dict = defaultdict(list)
-    with open(mapping_file, 'r', encoding="utf-8") as f:
+    with open(mapping_file, 'r', encoding="utf-8", errors="ignore") as f:
         for line in f:
             parts = line.strip().split('\t')
             entity = ''.join(filter(str.isalpha, parts[1]))
@@ -138,7 +138,7 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
         str: The replacement value found in the mapping file, or '' if not found.
     """
     replacement = ""  # Default replacement if not found
-    with open(mapping_file, 'r', encoding="utf-8") as file:
+    with open(mapping_file, 'r', encoding="utf-8", errors="ignore") as file:
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 3 and columns[NER_ID] == ner_id_and_potential_suffix:
@@ -164,7 +164,7 @@ def read_config_file(file_path):
               }
     """
     config_dict = {}
-    with open(file_path, 'r', encoding="utf-8") as file:
+    with open(file_path, 'r', encoding="utf-8", errors="ignore") as file:
         for line in file:
             line = line.strip()  # Remove leading/trailing whitespace
             if line:  # Skip empty lines

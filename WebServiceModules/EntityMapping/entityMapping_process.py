@@ -40,7 +40,7 @@ def count_inst_entities(filename):
     result = []
     current_value = 0
 
-    with open(filename, 'r', encoding="utf-8") as file:
+    with open(filename, 'r', encoding="utf-8", errors="ignore") as file:
         lines = file.readlines()
 
     for line in reversed(lines):
@@ -381,7 +381,7 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
     counter_inst_list = count_inst_entities(input_file)
 
     # Open the input and output files
-    with open(input_file, 'r', encoding="utf-8") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
+    with open(input_file, 'r', encoding="utf-8", errors="ignore") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
         # Process each line in the input file
         for line in input_f:
             # Preprocess the line to extract the columns and token information
