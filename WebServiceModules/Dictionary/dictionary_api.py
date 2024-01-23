@@ -107,7 +107,7 @@ if __name__ == '__main__':
     dictionary, max_count = load_dictionary_with_max_token_count(args.DICTIONARY)
     trie_root = TrieNode()
     for key, value in dictionary.items():
-        words = sorted(key.lower().split(), key=custom_sort)
+        words = sorted(key.split(), key=custom_sort)
         add_to_trie(trie_root, words, value)
     del dictionary
 
