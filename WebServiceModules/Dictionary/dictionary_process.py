@@ -105,6 +105,7 @@ def process_and_write(output_buffer, current_line, current_entities, trie_root):
         process_and_write_entities(output_buffer, current_line, r, current_entities)
     else:
         handle_not_found(output_buffer, current_line, current_entities)
+        current_entities.popleft()
 
 
 def handle_not_found(output_buffer, current_line, current_entities):
@@ -173,7 +174,6 @@ def assign_ner(input_file, output_file, trie_root, max_count):
         current_entities.popleft()
     while current_entities:
         process_and_write(output_buffer, current_line, current_entities, trie_root)
-        current_entities.popleft()
 
     # Write the final output
     output_buffer.seek(0)
