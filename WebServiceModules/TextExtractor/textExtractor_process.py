@@ -268,16 +268,15 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
         with open(filename + ".te1", "w", encoding="utf-8") as f:
             word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
             f.writelines(word_lines)
-
+    # Remove non-breaking spaces
+    processed_text = text.replace("\u00A0", " ")
     if run_analysis:
         # Process the text using UDPipe
-        token_list, error = process_text_with_udpipe(model, text)
+        token_list, error = process_text_with_udpipe(model, processed_text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
         conllup_text = udpipe_token_to_conllup(token_list, words)
     else:
-        # Remove non-breaking spaces
-        processed_text = text.replace("\u00A0", " ")
         conllup_text = spacy_token_to_conllup(model(processed_text), words)
 
     # Save the CONLL-U formatted text to the output file
