@@ -101,7 +101,7 @@ def process_and_write_entities(output_buffer, current_line, r,current_entities):
 
 def process_and_write(output_buffer, current_line, current_entities, trie_root):
     r = test_subsequences(current_entities, trie_root)
-    if r and r[0].isupper():
+    if r and r[0][0].isupper():
         process_and_write_entities(output_buffer, current_line, r, current_entities)
     else:
         handle_not_found(output_buffer, current_line, current_entities)
