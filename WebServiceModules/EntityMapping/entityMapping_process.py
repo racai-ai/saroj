@@ -130,10 +130,10 @@ def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
 
 
 def already_mapped_I_inst(replacement):
-    if len(replacement.split()) == 1:
-        return "_"
-    else:
+    if len(replacement.split()) >= counter_inst:
         return replacement.split()[-counter_inst]
+    else:
+        return "!DELETE!"
 
 
 def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_potential_suffix):
@@ -165,7 +165,7 @@ def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_p
     if any(fallthrough_conditions):
         return replacement
 
-    return replacement_tokens[-counter_inst] if len(replacement_tokens) >= counter_inst else "_"
+    return replacement_tokens[-counter_inst] if len(replacement_tokens) >= counter_inst else "!DELETE!"
 
 
 def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file):
@@ -187,7 +187,7 @@ def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file):
     # Update the mapping file and replacement dictionary
     update_mapping_file(mapping_file, ner_id_and_potential_suffix, rep if len(split_old_rep) > 1 else "")
 
-    return rep if len(split_old_rep) > 1 else "_"
+    return rep if len(split_old_rep) > 1 else "!DELETE!"
 
 
 def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, mapping_file):
