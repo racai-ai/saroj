@@ -101,7 +101,7 @@ def process_and_write_entities(output_buffer, current_line, r,current_entities):
 
 def process_and_write(output_buffer, current_line, current_entities, trie_root):
     r = test_subsequences(current_entities, trie_root)
-    if r:
+    if r and r[0].isupper():
         process_and_write_entities(output_buffer, current_line, r, current_entities)
     else:
         handle_not_found(output_buffer, current_line, current_entities)
@@ -163,7 +163,7 @@ def assign_ner(input_file, output_file, trie_root, max_count):
     current_line = deque(maxlen=max_count)
 
     for line in lines:
-        token, _ = suffix_replace(line[0].lower())
+        token, _ = suffix_replace(line[0])
         current_entities.append(token)
         current_line.append(line[1])
 
