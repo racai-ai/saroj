@@ -378,6 +378,7 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
     - The `dicts['replacement']` is a dictionary of replacement options for entities not found already in the mapping file.
     """
     global counter_inst
+    global initials_mappings
     # Count the instances of each entity in the input file
     counter_inst_list = count_inst_entities(input_file)
 
@@ -413,3 +414,4 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
 
             columns.append(replacement)
             write_output_columns(output_f, columns)
+            initials_mappings.clear()
