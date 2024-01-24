@@ -12,8 +12,8 @@
 5	NR.	număr	NOUN	Yn	Abbr=Yes	4	flat	_	SpacesAfter=\s\s\s|TokenRange=49:52
 
 # sent_id = 2
-# text = 1.313/113/2013
-1	1.313/113/2013	1.313/113/2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	0	nummod	_	SpacesAfter=\r\n\r\n\r\n|TokenRange=55:69
+# text = 1313/113/2013
+1	1313/113/2013	1313/113/2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	0	nummod	_	SpacesAfter=\r\n\r\n\r\n|TokenRange=55:69
 
 # newpar
 # sent_id = 3

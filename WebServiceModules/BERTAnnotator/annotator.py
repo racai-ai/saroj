@@ -595,7 +595,7 @@ class NeuralAnnotator(CoNLLUFileAnnotator):
         super().__init__(input_file)
         self._bert_tagger = tagger
 
-    def provide_annotations(self, text: str) -> list[tuple[int, int, str]]:
+    def provide_annotations(self, text: str, text_before: str) -> list[tuple[int, int, str]]:
         return self._bert_tagger.tag_text(text=text)
 
 

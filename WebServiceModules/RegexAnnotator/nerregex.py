@@ -123,8 +123,8 @@ ner_regex = {
             [rR]ed(?:\s+|(?:actor\s+|actat\s+|\.\s*))|
             [tT]ehnored(?:\s+|(?:actat\s+|actor\s+|\.\s*))|
             [Îî]ntocmit\s+|[Ll]ucrat\s+|Gref(?:\s+|(?:ier\s+|\.\s*))|
-            [Jj]ud(?:\s+|(?:ecător\s+|\.\s*))|[Tt]ehn(?:\s+|\.?\s*)|[Tt]hred(?:\s+|\.?\s*)
-            [dD]act(?:\s+|(?:ilografiat|ilograf[aă]?|\.))
+            [Jj]ud(?:\s+|(?:ecător\s+|\.\s*))|[Tt]ehn(?:\s+|\.\s*)|[Tt]hred(?:\s+|\.\s*)
+            [dD]act(?:\s+|(?:ilografiat\s+|ilograf[aă]?\s+|\.))
         )
         ([\w][\w.-]*[\w.]) # captura
         ''', re.VERBOSE),
@@ -155,14 +155,14 @@ ner_regex = {
     # OK
     'NUMAR_DOSAR': re.compile(r'''
         \b
-        [dD]osar\s(?:[Nn][rR](?:\s+|\.\s*)|[Nn]um[aă]r(?:ul)?\s+)
+        [dD][oO][sS][Aa][Rr]\s(?:[Nn][rR](?:\s+|\.\s*)|[Nn]um[aă]r(?:ul)?\s+)
         (\d+) # captura nr. de dosar
         /\d+/[12]\d{3}
         \b''', re.VERBOSE),
     # OK
     'NUMAR_DOSAR_PENAL': re.compile(r'''
         \b
-        [dD]osar\s(?:[Nn][rR](?:\s+|\.\s*)|[Nn]um[aă]r(?:ul)?\s+)
+        [dD][oO][sS][Aa][Rr]\s(?:[Nn][rR](?:\s+|\.\s*)|[Nn]um[aă]r(?:ul)?\s+)
         (\d+) # captura nr. de dosar
         /P/[12]\d{3}
         \b''', re.VERBOSE),
@@ -230,10 +230,20 @@ ner_label_map = {
 }
 
 
-def do_regex_ner(text: str) -> list[tuple[int, int, str]]:
-    """Takes an input test and returns a list of tuples of type
+def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
+    """Takes an input text and returns a list of tuples of type
     (start_offset, end_offset, etichetă), for all named entities
-    that were recognized."""
+    that were recognized. If `previous_text` is not empty, it is preappended
+    to `text` with a space after it. The offsets are given relative to `text`."""
+
+    offset_ballast = 0
+    previous_text = previous_text.strip()
+
+    if previous_text:
+        text = previous_text + ' ' + text
+        # Plus 1 for the space
+        offset_ballast = len(previous_text) + 1
+    # end if
 
     entities = []
 
@@ -266,8 +276,21 @@ def do_regex_ner(text: str) -> list[tuple[int, int, str]]:
             entities2.append((s, e, l))
         # end if
     # end for
+    
+    entities3 = []
 
-    return entities2
+    # 3. Get rid of the offset balast.
+    for s, e, l in entities2:
+        # Only keep entities that appear in text, not
+        # the ones that appear in the previous_text
+        if s >= offset_ballast:
+            entities3.append((
+                s - offset_ballast,
+                e - offset_ballast, l))
+        # end if
+    # end for
+
+    return entities3
 
 
 def process_address_fields(

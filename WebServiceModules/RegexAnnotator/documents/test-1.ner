@@ -12,8 +12,8 @@
 5	NR.	număr	NOUN	Yn	Abbr=Yes	4	flat	_	SpacesAfter=\s\s\s|TokenRange=49:52	O
 
 # sent_id = 2
-# text = 1.313/113/2013
-1	1.313/113/2013	1.313/113/2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	0	nummod	_	SpacesAfter=\r\n\r\n\r\n|TokenRange=55:69	O
+# text = 1313/113/2013
+1	1313/113/2013	1313/113/2013	NUM	Mc-s-b	Number=Sing|NumForm=Combi|NumType=Card	0	nummod	_	SpacesAfter=\r\n\r\n\r\n|TokenRange=55:69	B-CASE
 
 # newpar
 # sent_id = 3
@@ -253,3 +253,4 @@
 1	X.-Y.Z.	X.-y.z.	NOUN	Yn	Abbr=Yes	0	root	_	SpacesAfter=\r\n|TokenRange=1117:1124	B-INITIALS
 2	Final	final	PROPN	Np	_	1	flat	_	SpaceAfter=No|TokenRange=1126:1131	O
 3	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\r\n|TokenRange=1131:1132	O
+
