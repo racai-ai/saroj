@@ -1,0 +1,11 @@
+1	Nicusor	Nicusura	VERB	Vmip1s	Mood=Ind|Number=Sing|Person=1|Tense=Pres|VerbForm=Fin	0	root	_	_	1505	1512	B-PER
+2	t	t	ADV	Rgp	Degree=Pos	1	advmod	_	_	1615	1616	O
+3	Firma	Firmă	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	1	obj	_	_	1909	1914	B-ORG
+4	New	new	PROPN	Np	_	3	nmod	_	_	2078	2081	I-ORG
+5	Investments	Investments	PROPN	Np	_	4	flat	_	SpacesAfter=\s\n	2191	2453	I-ORG
+
+1	CNP	cnp	_	_	_	_	_	_	_	1	1	_
+2	1111111111111	1111111111111	_	_	_	_	_	_	_	1	1	B-CNP
+3	xyz@email.com	xyz@email.com	_	_	_	_	_	_	_	1	1	B-EMAIL
+
+

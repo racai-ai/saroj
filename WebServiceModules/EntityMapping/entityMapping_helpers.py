@@ -64,8 +64,8 @@ def update_mapping_file(mapping_file, entity, replacement):
     Returns:
         None
     """
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding="utf-8") as temp:
-        with open(mapping_file, 'r', encoding="utf-8") as file:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding="utf-8", errors="ignore") as temp:
+        with open(mapping_file, 'r', encoding="utf-8", errors="ignore") as file:
             for line in file:
                 columns = line.strip().split('\t')
                 if len(columns) >= 2:
@@ -87,36 +87,43 @@ def handle_character(ner_inst, replacement):
     return replacement
 
 
-def parse_mapping_file(mapping_file):
-    mapping_dict = defaultdict(list)
-    with open(mapping_file, 'r') as f:
+def parse_mapping_file(mapping_file, config_dict):
+    init_dict = defaultdict(list)
+    name_dict = defaultdict(list)
+    with open(mapping_file, 'r', encoding="utf-8", errors="ignore") as f:
         for line in f:
             parts = line.strip().split('\t')
             entity = ''.join(filter(str.isalpha, parts[1]))
             initials = parts[2] if len(parts) > 2 else None
-            mapping_dict[entity].append(initials)
-    return mapping_dict
+            init_dict[entity].append(initials)
+            if initials and config_dict.get(entity, {}).get('type') == 'initials':
+                names = [s for part in parts[0].split() for s in part.split('-')]
+                initials_list = initials.split()
+
+                for name, initial in zip(names, initials_list):
+                    name_dict[name] = initial
+    return init_dict, name_dict
 
 
 def handle_initials(ner_inst, name, mapping_file, config_dict):
     # Split name into words and map each word to a random initial, reusing existing mappings
-    words = name.split()
+    words = name.split("-")
     available_chars = set(string.ascii_uppercase)
 
     # Parse the mapping file
-    mapping_dict = parse_mapping_file(mapping_file)
+    mapping_dict, initials_mappings = parse_mapping_file(mapping_file,config_dict)
 
     # Remove used initials from available_chars
-    used_initials = [initial for entity, initials_list in mapping_dict.items() 
-                     if entity in config_dict and config_dict[entity]['type'] == 'initials' 
+    used_initials = [initial for entity, initials_list in mapping_dict.items()
+                     if entity in config_dict and config_dict[entity]['type'] == 'initials'
                      for initials in initials_list if initials is not None for initial in initials.split()]
     available_chars = list(filter(lambda initial: initial not in used_initials, available_chars))
 
     # Map each word to a random initial from the remaining available_chars
-    initials = [initials_mappings.setdefault(word, random.choice(list(available_chars))) for word in words
-                if available_chars]
+    initials = [initials_mappings.setdefault(word, random.choice(list(available_chars))
+                if available_chars else get_random_X()) for word in words]
 
-    initials = get_random_X() if not initials else ' '.join(initials)
+    initials = ' '.join(initials)
     return initials
 
 
@@ -138,7 +145,7 @@ def search_mapping_file(mapping_file, ner_id_and_potential_suffix):
         str: The replacement value found in the mapping file, or '' if not found.
     """
     replacement = ""  # Default replacement if not found
-    with open(mapping_file, 'r', encoding="utf-8") as file:
+    with open(mapping_file, 'r', encoding="utf-8", errors="ignore") as file:
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 3 and columns[NER_ID] == ner_id_and_potential_suffix:
@@ -164,7 +171,7 @@ def read_config_file(file_path):
               }
     """
     config_dict = {}
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding="utf-8", errors="ignore") as file:
         for line in file:
             line = line.strip()  # Remove leading/trailing whitespace
             if line:  # Skip empty lines

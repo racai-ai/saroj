@@ -1,0 +1,26 @@
+== Info:   Trying 127.0.0.1...
+== Info: TCP_NODELAY set
+== Info: Connected to 127.0.0.1 (127.0.0.1) port 8111 (#0)
+=> Send header, 112 bytes (0x70)
+0000: GET /getResult.php?input={"id":"JOBID"} HTTP/1.1
+0032: Host: 127.0.0.1:8111
+0048: User-Agent: curl/7.61.1
+0061: Accept: */*
+006e: 
+<= Recv header, 17 bytes (0x11)
+0000: HTTP/1.1 200 OK
+<= Recv header, 37 bytes (0x25)
+0000: Date: Wed, 24 Jan 2024 06:15:30 GMT
+<= Recv header, 43 bytes (0x2b)
+0000: Server: Apache/2.4.54 (Debian) PHP/7.4.33
+<= Recv header, 26 bytes (0x1a)
+0000: X-Powered-By: PHP/7.4.33
+<= Recv header, 20 bytes (0x14)
+0000: Content-Length: 46
+<= Recv header, 40 bytes (0x28)
+0000: Content-Type: text/html; charset=UTF-8
+<= Recv header, 2 bytes (0x2)
+0000: 
+<= Recv data, 46 bytes (0x2e)
+0000: {"status":"ERROR","message":"E200 Invalid ID"}
+== Info: Connection #0 to host 127.0.0.1 left intact

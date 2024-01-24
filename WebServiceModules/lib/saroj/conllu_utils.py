@@ -9,7 +9,7 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[list[str | l
     file_sentences = []
     crt_sentence = []
 
-    with open(file, mode='r', encoding='utf-8') as f:
+    with open(file, mode='r', encoding='utf-8', errors="ignore") as f:
         for line in f:
             if CoNLLUFileAnnotator._int_rx.match(line):
                 fields = line.strip().split()

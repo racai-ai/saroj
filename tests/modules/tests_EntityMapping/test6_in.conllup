@@ -1,0 +1,75 @@
+1	Nicusor	_	_	_	_	_	_	_	_	0	0	B-PER	#PER1
+2	a	_	_	_	_	_	_	_	_	0	0	O	_
+3	mers	_	_	_	_	_	_	_	_	0	0	O	_
+4	la	_	_	_	_	_	_	_	_	0	0	O	_
+5	Maria	_	_	_	_	_	_	_	_	0	0	B-PER	#PER2
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Casa	_	_	_	_	_	_	_	_	0	0	O	_
+2	Mariei	_	_	_	_	_	_	_	_	0	0	B-PER	#PER2_ei
+3	este	_	_	_	_	_	_	_	_	0	0	O	_
+4	în	_	_	_	_	_	_	_	_	0	0	O	_
+5	Cluj	_	_	_	_	_	_	_	_	0	0	B-LOC	#LOC3
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Clujul	_	_	_	_	_	_	_	_	0	0	B-LOC	#LOC3_ul
+2	este	_	_	_	_	_	_	_	_	0	0	O	_
+3	un	_	_	_	_	_	_	_	_	0	0	O	_
+4	oraș	_	_	_	_	_	_	_	_	0	0	O	_
+5	mare	_	_	_	_	_	_	_	_	0	0	O	_
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Firma	_	_	_	_	_	_	_	_	0	0	O	_
+2	Mariei	_	_	_	_	_	_	_	_	0	0	B-PER	#PER2_ei
+3	este	_	_	_	_	_	_	_	_	0	0	O	_
+4	XYZ	_	_	_	_	_	_	_	_	0	0	B-ORG	#ORG4
+5	SRL	_	_	_	_	_	_	_	_	0	0	I-ORG	#ORG4
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Directoare	_	_	_	_	_	_	_	_	0	0	O	_
+2	este	_	_	_	_	_	_	_	_	0	0	O	_
+3	Oana	_	_	_	_	_	_	_	_	0	0	B-PER	#PER5
+4	Popescu	_	_	_	_	_	_	_	_	0	0	I-PER	#PER5
+5	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Casa	_	_	_	_	_	_	_	_	0	0	O	_
+2	Oanei	_	_	_	_	_	_	_	_	0	0	B-PER	#PER6_ei
+3	este	_	_	_	_	_	_	_	_	0	0	O	_
+4	în	_	_	_	_	_	_	_	_	0	0	O	_
+5	Turda	_	_	_	_	_	_	_	_	0	0	B-LOC	#LOC7
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Casa	_	_	_	_	_	_	_	_	0	0	O	_
+2	Oanei	_	_	_	_	_	_	_	_	0	0	B-PER	#PER5_ei
+3	Popescu	_	_	_	_	_	_	_	_	0	0	I-PER	#PER5
+4	este	_	_	_	_	_	_	_	_	0	0	O	_
+5	în	_	_	_	_	_	_	_	_	0	0	O	_
+6	Turda	_	_	_	_	_	_	_	_	0	0	B-LOC	#LOC7
+7	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+1	Primarul	_	_	_	_	_	_	_	_	0	0	O	_
+2	Turzii	_	_	_	_	_	_	_	_	0	0	B-LOC	#LOC7_zii
+3	este	_	_	_	_	_	_	_	_	0	0	O	_
+4	Ion	_	_	_	_	_	_	_	_	0	0	B-PER	#PER8
+5	Ionel	_	_	_	_	_	_	_	_	0	0	I-PER	#PER8
+6	.	_	_	_	_	_	_	_	_	0	0	O	_
+
+
+1	01/01/2020	_	_	_	_	_	_	_	_	0	0	B-DATE	#DATE9
+2	1999999999	_	_	_	_	_	_	_	_	0	0	B-CNP	#CNP10
+3	XXX@XXX.COM	_	_	_	_	_	_	_	_	0	0	B-EMAIL	#EMAIL11
+4	RO30UUUUUUUUUU	_	_	_	_	_	_	_	_	0	0	B-IBAN	#IBAN12
+5	ST	_	_	_	_	_	_	_	_	0	0	B-INITIALS	#INITIALS13
+6	99999/10.11.2020	_	_	_	_	_	_	_	_	0	0	B-DECISION	#DECISION14
+7	9999/9999/10.11.2020	_	_	_	_	_	_	_	_	0	0	B-CASE	#CASE15
+8	XY19999	_	_	_	_	_	_	_	_	0	0	B-DOCNUMBER	#DOCNUMBER16
+9	909090909	_	_	_	_	_	_	_	_	0	0	B-PHONE	#PHONE17
+10	RO:RO:RO:1000000	_	_	_	_	_	_	_	_	0	0	B-ECLI	#ECLI18
+11	BV-00-XXX	_	_	_	_	_	_	_	_	0	0	B-AUTO	#AUTO19
+12	XY90909090	_	_	_	_	_	_	_	_	0	0	B-ID	#ID20
+13	RO9999999	_	_	_	_	_	_	_	_	0	0	B-CUI	#CUI21
+14	99999/2023	_	_	_	_	_	_	_	_	0	0	B-NCAD	#NCAD22
+
+
+
+

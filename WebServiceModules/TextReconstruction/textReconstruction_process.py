@@ -10,7 +10,7 @@ def read_conllup(conllup_file):
     conllup_data = []
 
     # Open the CONLLUP file for reading
-    with open(conllup_file, "r", encoding="utf-8") as file:
+    with open(conllup_file, "r", encoding="utf-8", errors="ignore") as file:
         for line in file:
             # Skip empty lines and lines starting with "#" (comments)
             if not line.strip() or line.startswith("#"):
@@ -63,13 +63,22 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False):
             docx_content = content_file.read()
 
         for row in filtered_conllup_list:
-            docx_content = docx_content[:int(row["START"]) + delta_t] + row["ANONYMIZED"].encode(
-                "utf-8") + docx_content[int(row["END"]) + delta_t:]
-            if len(row["FORM"].encode("utf-8")) <= int(row["END"]) - int(row["START"]) == len(
-                    row["FORM"].encode("utf-8")):
-                delta_t += len(row["ANONYMIZED"].encode("utf-8")) - len(row["FORM"].encode("utf-8"))
+            start = int(row["START"])
+            end = int(row["END"])
+            anonym = row["ANONYMIZED"].encode("utf-8")
+            len_form = len(row["FORM"].encode("utf-8"))
+
+            if anonym == "!DELETE!".encode("utf-8"):
+                docx_content = docx_content[:start + delta_t] + docx_content[end + delta_t:]
+                delta_t -= end - start
+                continue
             else:
-                delta_t -= int(row["END"]) - int(row["START"]) - len(row["ANONYMIZED"].encode("utf-8"))
+                docx_content = docx_content[:start + delta_t] + anonym + docx_content[end + delta_t:]
+
+            if len(anonym) >= end - start:
+                delta_t += len(anonym) - len_form
+            else:
+                delta_t -= end - start - len(anonym)
 
         # Write the modified content back to the file
         with open(content_path, "wb") as content_file:

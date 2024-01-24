@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, OrderedDict
 
 
 def is_empty(data):
@@ -49,7 +49,7 @@ def most_frequent_item(lst):
 # Function to read CoNLL-U Plus file
 def read_conll_file(file_path):
     data = []
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             tokens = line.strip().split('\t')
             data.append(tokens)
@@ -86,25 +86,26 @@ def add_algorithm(files):
     previous_ner = ''
 
     for line in zip(*files):
-        ner = replace_underscore_and_empty(set([sublist[-1].split('-')[-1] for sublist in line]))
-        
+        ner = replace_underscore_and_empty(list(OrderedDict.fromkeys([sublist[-1].split('-')[-1] for sublist in line])))
+        ner_w = next((value for value in ner if value != "O"), "O")
+
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
             body = False
             continue
-        for i in ner:
-            if i != 'O' and (not body or previous_ner != i):
-                result_data.append(line[0][:-1] + ["B-" + str(i)])
-                previous_ner = str(i)
-                body = True
-            elif i != 'O' and body:
-                result_data.append(line[0][:-1] + ["I-" + str(i)])
-                previous_ner = str(i)
-                body = True
-            elif i == 'O' and len(ner) == 1:
-                result_data.append(line[0])
-                previous_ner = ""
-                body = False
+
+        if ner_w != 'O' and (not body or previous_ner != ner_w):
+            result_data.append(line[0][:-1] + ["B-" + str(ner_w)])
+            previous_ner = str(ner_w)
+            body = True
+        elif ner_w != 'O' and body:
+            result_data.append(line[0][:-1] + ["I-" + str(ner_w)])
+            previous_ner = str(ner_w)
+            body = True
+        elif ner_w == 'O' and len(ner) == 1:
+            result_data.append(line[0])
+            previous_ner = ""
+            body = False
 
     return result_data
 
@@ -165,7 +166,7 @@ def majority_algorithm(files):
 
 # Function to write CoNLL-U Plus file
 def write_conll_file(file_path, data):
-    with open(file_path, 'w', encoding='utf-8') as file:
+    with open(file_path, 'w', encoding='utf-8', errors="ignore") as file:
         for line in data:
             file.write('\t'.join(line) + '\n')
 

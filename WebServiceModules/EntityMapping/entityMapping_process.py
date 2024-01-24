@@ -14,6 +14,7 @@ LAST_TOKEN = -1
 NER = -2
 NER_ID = 1
 FORM = 1
+DELETE_MARK = "!DELETE!"
 
 
 def count_inst_entities(filename):
@@ -40,7 +41,7 @@ def count_inst_entities(filename):
     result = []
     current_value = 0
 
-    with open(filename, 'r', encoding="utf-8") as file:
+    with open(filename, 'r', encoding="utf-8", errors="ignore") as file:
         lines = file.readlines()
 
     for line in reversed(lines):
@@ -48,6 +49,7 @@ def count_inst_entities(filename):
             continue
         columns = line.strip().split('\t')
         if columns[LAST_TOKEN] in VOID_NER:
+            current_value = 0
             continue
         if columns[-2].startswith("I-"):
             current_value += 1
@@ -129,10 +131,10 @@ def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
 
 
 def already_mapped_I_inst(replacement):
-    if len(replacement.split()) == 1:
-        return "_"
-    else:
+    if len(replacement.split()) >= counter_inst:
         return replacement.split()[-counter_inst]
+    else:
+        return DELETE_MARK
 
 
 def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_potential_suffix):
@@ -164,7 +166,7 @@ def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_p
     if any(fallthrough_conditions):
         return replacement
 
-    return replacement_tokens[-counter_inst] if len(replacement_tokens) >= counter_inst else "_"
+    return replacement_tokens[-counter_inst] if len(replacement_tokens) >= counter_inst else DELETE_MARK
 
 
 def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file):
@@ -186,7 +188,7 @@ def process_entity_inst_I(ner_id_and_potential_suffix, mapping_file):
     # Update the mapping file and replacement dictionary
     update_mapping_file(mapping_file, ner_id_and_potential_suffix, rep if len(split_old_rep) > 1 else "")
 
-    return rep if len(split_old_rep) > 1 else "_"
+    return rep if len(split_old_rep) > 1 else DELETE_MARK
 
 
 def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, mapping_file):
@@ -376,11 +378,12 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
     - The `dicts['replacement']` is a dictionary of replacement options for entities not found already in the mapping file.
     """
     global counter_inst
+    global initials_mappings
     # Count the instances of each entity in the input file
     counter_inst_list = count_inst_entities(input_file)
 
     # Open the input and output files
-    with open(input_file, 'r', encoding="utf-8") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
+    with open(input_file, 'r', encoding="utf-8", errors="ignore") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
         # Process each line in the input file
         for line in input_f:
             # Preprocess the line to extract the columns and token information
@@ -411,3 +414,4 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
 
             columns.append(replacement)
             write_output_columns(output_f, columns)
+            initials_mappings.clear()

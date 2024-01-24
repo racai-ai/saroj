@@ -55,7 +55,7 @@ def read_replacement_dictionary(dictionary_file):
     - If an NER identifier already exists in the dictionary, the replacement is appended to its list.
     """
     replacement_dict = {}
-    with open(dictionary_file, 'r', encoding="utf-8") as file:
+    with open(dictionary_file, 'r', encoding="utf-8", errors="ignore") as file:
         for line in file:
             columns = line.strip().split('\t')
             if len(columns) == 2:

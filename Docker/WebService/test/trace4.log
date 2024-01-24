@@ -1,0 +1,28 @@
+== Info:   Trying 127.0.0.1...
+== Info: TCP_NODELAY set
+== Info: Connected to 127.0.0.1 (127.0.0.1) port 8111 (#0)
+=> Send header, 93 bytes (0x5d)
+0000: GET /checkHealth.php HTTP/1.1
+001f: Host: 127.0.0.1:8111
+0035: User-Agent: curl/7.61.1
+004e: Accept: */*
+005b: 
+<= Recv header, 17 bytes (0x11)
+0000: HTTP/1.1 200 OK
+<= Recv header, 37 bytes (0x25)
+0000: Date: Wed, 24 Jan 2024 06:15:30 GMT
+<= Recv header, 43 bytes (0x2b)
+0000: Server: Apache/2.4.54 (Debian) PHP/7.4.33
+<= Recv header, 26 bytes (0x1a)
+0000: X-Powered-By: PHP/7.4.33
+<= Recv header, 21 bytes (0x15)
+0000: Content-Length: 163
+<= Recv header, 40 bytes (0x28)
+0000: Content-Type: text/html; charset=UTF-8
+<= Recv header, 2 bytes (0x2)
+0000: 
+<= Recv data, 163 bytes (0xa3)
+0000: {"status":"OK","message":"max_count = 11 containing PER:1392920,
+0040:  ORG:6023\nReplacement dictionary file '\/data\/replacement.dic'
+0080:  is empty.\n","version":"1.0-test"}
+== Info: Connection #0 to host 127.0.0.1 left intact

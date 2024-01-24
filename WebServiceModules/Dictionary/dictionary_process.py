@@ -31,7 +31,7 @@ def load_dictionary_with_max_token_count(dictionary_path):
     max_token_count = 0
 
     # Open the specified file for reading with UTF-8 encoding
-    with open(dictionary_path, 'r', encoding='utf-8') as file:
+    with open(dictionary_path, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             parts = line.strip().split('\t')
             if len(parts) == 2:
@@ -78,7 +78,7 @@ def test_subsequences(tokens, trie_root):
 def parse_text_document(input_file):
     output = []
 
-    with open(input_file, 'r', encoding='utf-8') as file:
+    with open(input_file, 'r', encoding='utf-8', errors="ignore") as file:
         for line in file:
             # Assuming the lines are separated by tabs
             line_data = line.strip().split('\t')
@@ -101,10 +101,11 @@ def process_and_write_entities(output_buffer, current_line, r,current_entities):
 
 def process_and_write(output_buffer, current_line, current_entities, trie_root):
     r = test_subsequences(current_entities, trie_root)
-    if r:
+    if r and r[0][0].isupper():
         process_and_write_entities(output_buffer, current_line, r, current_entities)
     else:
         handle_not_found(output_buffer, current_line, current_entities)
+        current_entities.popleft()
 
 
 def handle_not_found(output_buffer, current_line, current_entities):
@@ -162,7 +163,7 @@ def assign_ner(input_file, output_file, trie_root, max_count):
     current_line = deque(maxlen=max_count)
 
     for line in lines:
-        token, _ = suffix_replace(line[0].lower())
+        token, _ = suffix_replace(line[0])
         current_entities.append(token)
         current_line.append(line[1])
 
@@ -173,9 +174,8 @@ def assign_ner(input_file, output_file, trie_root, max_count):
         current_entities.popleft()
     while current_entities:
         process_and_write(output_buffer, current_line, current_entities, trie_root)
-        current_entities.popleft()
 
     # Write the final output
     output_buffer.seek(0)
-    with open(output_file, 'w', encoding='utf-8') as outfile:
+    with open(output_file, 'w', encoding='utf-8', errors="ignore") as outfile:
         outfile.write(output_buffer.read())
