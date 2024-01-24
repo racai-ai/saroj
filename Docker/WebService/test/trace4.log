@@ -10,7 +10,7 @@
 <= Recv header, 17 bytes (0x11)
 0000: HTTP/1.1 200 OK
 <= Recv header, 37 bytes (0x25)
-0000: Date: Mon, 22 Jan 2024 12:24:43 GMT
+0000: Date: Wed, 24 Jan 2024 06:15:30 GMT
 <= Recv header, 43 bytes (0x2b)
 0000: Server: Apache/2.4.54 (Debian) PHP/7.4.33
 <= Recv header, 26 bytes (0x1a)
@@ -22,7 +22,7 @@
 <= Recv header, 2 bytes (0x2)
 0000: 
 <= Recv data, 163 bytes (0xa3)
-0000: {"status":"OK","message":"max_count = 11 containing PER:1234558,
-0040:  ORG:6441\nReplacement dictionary file '\/data\/replacement.dic'
+0000: {"status":"OK","message":"max_count = 11 containing PER:1392920,
+0040:  ORG:6023\nReplacement dictionary file '\/data\/replacement.dic'
 0080:  is empty.\n","version":"1.0-test"}
 == Info: Connection #0 to host 127.0.0.1 left intact

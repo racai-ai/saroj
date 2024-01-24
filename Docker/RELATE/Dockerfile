@@ -12,6 +12,7 @@ COPY src/ /site/
 RUN chown -R www-data:www-data /site/
 #COPY conf/000-default.conf /etc/apache2/sites-enabled/
 COPY conf/apache2.conf /etc/apache2/
+COPY conf/php.ini /usr/local/etc/php/
 
 RUN python3 -m venv /venv
 
