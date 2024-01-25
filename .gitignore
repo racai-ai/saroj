@@ -13,3 +13,4 @@ WebServiceModules/BERTAnnotator/model/vocab.txt
 WebServiceModules/BERTAnnotator/model/abbrev.txt
 WebServiceModules/BERTAnnotator/debug.py
 Docker/WebService/test/simplu.out.docx
+WebServiceModules/RegexAnnotator/debug.py

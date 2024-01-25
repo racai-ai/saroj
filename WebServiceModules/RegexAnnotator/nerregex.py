@@ -1,3 +1,5 @@
+import sys
+import os
 import re
 
 ner_addr_sep = re.compile(r'''[\s,]''')
@@ -30,7 +32,9 @@ ner_address_fields = [
     # aleea
     re.compile(r'''\b[Aa]leea\s+'''),
     # numărul
-    re.compile(r'''\b(?:[Nn][rR](?:\.\s*|\s+)|[Nn]um[ăa]r(?:ul)?\s+)''')
+    re.compile(r'''\b(?:[Nn][rR](?:\.\s*|\s+)|[Nn]um[ăa]r(?:ul)?\s+)'''),
+    # __DB_CITY__
+    re.compile(r'''\b__DB_CITY__''')
 ]
 # NOTE: All char sequences that have to be anonymized are captured in groups (...)
 ner_regex = {
@@ -50,7 +54,7 @@ ner_regex = {
     # OK
     'ADRESA': re.compile(r'''
         \b
-        (?:cu\sdomiciliul\sîn\s+|domiciliat[ă]?\sîn\s+|cu\ssediul\sîn\s+)
+        (?:cu\sdomiciliul\sîn\s+|domiciliat[ă]?\sîn\s+|cu\ssediul\sîn\s+|în\s+)
         (
             (?:
                 (?:
@@ -86,6 +90,9 @@ ner_regex = {
                         [Nn]um[ăa]r(?:ul)?|
                         [Aa]leea
                     )\s+
+                    |
+                    # Testează orașul din fișierul data/localitati.txt
+                    __DB_CITY__
                 )
                 [\s\w."'-]+  # valoarea câmpului
                 (?:,\s*|\s+) # separatorul
@@ -230,12 +237,91 @@ ner_label_map = {
 }
 
 
+def _load_localitati() -> set[str]:
+    localitati_file = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'data', 'localitati.txt')
+    localitati = set()
+
+    print(f'Loading data file with cities [{localitati_file}]', file=sys.stderr, flush=True)
+
+    with open(localitati_file, mode='r', encoding='utf-8') as f:
+        for line in f:
+            city_std = line.strip()
+            city_old = city_std.replace('Ș', 'Ş')
+            city_old = city_old.replace('Ț', 'Ţ')
+            
+            localitati.add(city_std)
+            localitati.add(city_old)
+        # end for
+    # end with
+    
+    return localitati
+
+
+ro_cities = _load_localitati()
+_city_rx = re.compile(r'''
+    \b
+    (?:în|din)\s
+    (
+        [A-ZȘȚŞŢĂÎÂ][şţșțăîâa-z]+
+        (?:
+            [ -]
+            (?:
+                [A-ZȘȚŞŢĂÎÂ][şţșțăîâa-z]+
+                |
+                (?:de|cel|din|I\\.|sub|lui|la|1|cu|pe)
+            )
+        ){0,3}
+    ),''', re.VERBOSE
+)
+
+
+def _insert_city_marks(text: str) -> str:
+    """Given an input text, mark possible Romanian cities with
+    string `'__DB_CITY__'`, so that the ADDRESS regex is able
+    to pick it up. Returns the modified text."""
+
+    m = _city_rx.search(text)
+    insert_indexes = []
+
+    while m:
+        city = m.group().upper()
+        spc_idx = city.rfind(' ')
+        city = city[spc_idx + 1:-1]
+
+        if city in ro_cities:
+            insert_indexes.append(m.start() + spc_idx + 1)
+        # end if
+            
+        m = _city_rx.search(text, pos=m.end())
+    # end while
+
+    if not insert_indexes:
+        # No cities found
+        return text
+    # end if
+
+    text2_pieces = []
+    from_i = 0
+    
+    for to_i in insert_indexes:
+        text2_pieces.append(text[from_i:to_i])
+        text2_pieces.append('__DB_CITY__')
+        from_i = to_i
+    # end if
+    
+    text2_pieces.append(text[from_i:])
+    return ''.join(text2_pieces)
+
+
 def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
     """Takes an input text and returns a list of tuples of type
     (start_offset, end_offset, etichetă), for all named entities
     that were recognized. If `previous_text` is not empty, it is preappended
     to `text` with a space after it. The offsets are given relative to `text`."""
 
+    text = _insert_city_marks(text)
     offset_ballast = 0
     previous_text = previous_text.strip()
 
@@ -290,7 +376,28 @@ def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
         # end if
     # end for
 
-    return entities3
+    entities4 = []
+    dbci = text.find('__DB_CITY__')
+    dbc_len = len('__DB_CITY__')
+
+    # 4. Remove __DB_CITY__ and adjust the offsets accordingly.
+    while dbci >= 0:
+        for s, e, l in entities3:
+            if s > dbci:
+                entities4.append((s - dbc_len, e - dbc_len, l))
+            else:
+                entities4.append((s, e, l))
+            # end if
+        # end for
+        
+        dbci = text.find('__DB_CITY__', dbci + dbc_len)
+    # end while
+        
+    if not entities4:
+        return entities3
+    else:
+        return entities4
+    # end if
 
 
 def process_address_fields(
