@@ -1,11 +1,40 @@
 import os
 import zipfile
+import re 
 
 import ufal.udpipe as ud
 from conllu import parse
 
 from textExtractor_XMLParser import XMLParserWithPosition
 
+
+def normalize_text(text):
+    replacements = {
+        "\u00A0": " ",
+        "\u201C": "\"",
+        "\u201D": "\"",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u00AB": "\"",
+        "\u00BB": "\"",
+        "\u2039": "'",
+        "\u203A": "'",
+        "„": "\"",
+        "\r": " ",
+        "\t": " ",
+        'ş': 'ș',
+        'Ş': 'Ș',
+        'Ţ': 'Ț',
+        'ţ': 'ț',
+        'Ã': 'Ă',
+        'ã': 'ă',
+        'ø': 'o'
+    }
+
+    regex = re.compile("|".join(map(re.escape, replacements.keys())))
+    text = regex.sub(lambda match: replacements[match.group(0)], text)
+
+    return text
 
 def process_text_with_udpipe(udpipe_model, text):
     """
@@ -268,8 +297,8 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
         with open(filename + ".te1", "w", encoding="utf-8") as f:
             word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
             f.writelines(word_lines)
-    # Remove non-breaking spaces
-    processed_text = text.replace("\u00A0", " ")
+    # Normalize the text
+    processed_text = normalize_text(text)
     if run_analysis:
         # Process the text using UDPipe
         token_list, error = process_text_with_udpipe(model, processed_text)
