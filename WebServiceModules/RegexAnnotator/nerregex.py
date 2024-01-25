@@ -33,6 +33,10 @@ ner_address_fields = [
     re.compile(r'''\b[Aa]leea\s+'''),
     # numărul
     re.compile(r'''\b(?:[Nn][rR](?:\.\s*|\s+)|[Nn]um[ăa]r(?:ul)?\s+)'''),
+    # corp
+    re.compile(r'''\b[Cc]orp(?:ul)?\s+'''),
+    # sector
+    re.compile(r'''\b(?:[Ss]ect(?:\.\s*|\s+)|[Ss]ector(?:ul)?\s+)'''),
     # __DB_CITY__
     re.compile(r'''\b__DB_CITY__''')
 ]
@@ -71,7 +75,8 @@ ner_regex = {
                         [Bb][v-]?d|
                         [Bb]lv|
                         [Bb]-dul|
-                        [Nn][Rr]
+                        [Nn][Rr]|
+                        [Ss]ect
                     )(?:\.\s*|\s+)
                     |
                     (?:
@@ -88,13 +93,18 @@ ner_regex = {
                         [Bb]ulevard(?:ul)?|
                         [Cc]alea|
                         [Nn]um[ăa]r(?:ul)?|
-                        [Aa]leea
+                        [Aa]leea|
+                        [Cc]orp(?:ul)?|
+                        [Ss]ector(?:ul)?
                     )\s+
                     |
                     # Testează orașul din fișierul data/localitati.txt
                     __DB_CITY__
                 )
-                [\s\w."'-]+  # valoarea câmpului
+                (?:
+                    \w|
+                    \w[\s\w.&-]*\w
+                ) # valoarea câmpului
                 (?:,\s*|\s+) # separatorul
             )+
         ) # captura (toată adresa)
@@ -273,7 +283,7 @@ _city_rx = re.compile(r'''
                 (?:de|cel|din|I\\.|sub|lui|la|1|cu|pe)
             )
         ){0,3}
-    ),''', re.VERBOSE
+    )\b''', re.VERBOSE
 )
 
 
@@ -288,7 +298,7 @@ def _insert_city_marks(text: str) -> str:
     while m:
         city = m.group().upper()
         spc_idx = city.rfind(' ')
-        city = city[spc_idx + 1:-1]
+        city = city[spc_idx + 1:]
 
         if city in ro_cities:
             insert_indexes.append(m.start() + spc_idx + 1)
@@ -326,11 +336,12 @@ def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
     previous_text = previous_text.strip()
 
     if previous_text:
+        previous_text = _insert_city_marks(previous_text)
         text = previous_text + ' ' + text
         # Plus 1 for the space
         offset_ballast = len(previous_text) + 1
     # end if
-
+   
     entities = []
 
     # 1. Do NER with regular expressions
@@ -369,14 +380,15 @@ def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
     for s, e, l in entities2:
         # Only keep entities that appear in text, not
         # the ones that appear in the previous_text
-        if s >= offset_ballast:
+        if e > offset_ballast:
             entities3.append((
-                s - offset_ballast,
+                0 if s < offset_ballast else s - offset_ballast,
                 e - offset_ballast, l))
         # end if
     # end for
 
     entities4 = []
+    text = text[offset_ballast:]
     dbci = text.find('__DB_CITY__')
     dbc_len = len('__DB_CITY__')
 

@@ -169,16 +169,12 @@ class CoNLLUFileAnnotator(object):
         """Does the annotation, using the abstract method `provide_annotations()`
         and writes the resulting file to `output_file`."""
 
-        previous_sentnce = ''
-
         with open(output_file, mode='w', encoding='utf-8') as f:
             # Go sentence by sentence
             for conllu_sentence in self._conllu_sentences:
                 sentence, snt_words, snt_words_indexes = \
                     self._get_text_from_conllu_sentence(conllu_sentence)
-                annotations = \
-                    self.provide_annotations(
-                        text=sentence, text_before=previous_sentnce)
+                annotations = self.provide_annotations(sentence)
 
                 # Insert the annotations on the last column
                 # 'O' is the 'outside' default
@@ -232,15 +228,13 @@ class CoNLLUFileAnnotator(object):
                 
                 # Print EOS mark
                 print(file=f)
-                previous_sentnce = sentence
             # end for sentence
         # end with
 
-    def provide_annotations(self, text: str, text_before: str) -> list[tuple[int, int, str]]:
+    def provide_annotations(self, sentence: str) -> list[tuple[int, int, str]]:
         """This is the specific annotator method. To be implemented in sub-classes.
-        Takes the `text` to annotate and returns a list of (start_offset, end_offset, label) annotations
-        relative to `text`. Some annotators may need the previous text `text_before` to work, such as
-        the previous sentence if `text` is the current sentence."""
+        Takes the next `sentence` from CoNLL-U file to annotate and returns a list of
+        (start_offset, end_offset, label) annotations relative to `sentence`."""
 
         raise NotImplementedError('Do not know how to supply the annotations. Please implement me!')
 
