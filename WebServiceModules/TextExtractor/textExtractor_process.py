@@ -30,9 +30,22 @@ def normalize_text(text):
         'ã': 'ă',
         'ø': 'o'
     }
+    # Add ranges of weird unicode characters
+    for i in range(0x2020, 0x2025):
+        replacements[chr(i)] = "- "
+    for i in range(0x2072, 0x2074):
+        replacements[chr(i)] = "- "
+    replacements[chr(0x208F)] = "- "
+    for i in range(0x209D, 0x20A0):
+        replacements[chr(i)] = "- "
+    for i in range(0x25A0, 0x26A0):
+        replacements[chr(i)] = "- "
 
     regex = re.compile("|".join(map(re.escape, replacements.keys())))
     text = regex.sub(lambda match: replacements[match.group(0)], text)
+
+    text = re.sub(r'(([A-Z][.])+)([A-Z][a-z]+)', r'\1 \3', text)
+    text = re.sub(r'([a-zA-Z.ăîâșțĂÎÂȘȚ]+)/([a-zA-Z.ăîâșțĂÎÂȘȚ]+)', r'\1 / \2', text)
 
     return text
 
@@ -291,22 +304,23 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
         is True, UDPipe is used for tokenization; otherwise, spaCy is used.
     """
     words = get_words_with_positions(docx_file)
-    text = "".join(str(word[0]) for word in words)
+    # normalize words
+    normalized_words = [(normalize_text(word[0]), word[1], word[2]) for word in words]
+    normalized_text = "".join(str(word[0]) for word in normalized_words)
     filename, _ = os.path.splitext(output_file)
+    # in .te1 file the words are not normalized - are the original ones
     if save_internal_files:
         with open(filename + ".te1", "w", encoding="utf-8") as f:
             word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
             f.writelines(word_lines)
-    # Normalize the text
-    processed_text = normalize_text(text)
     if run_analysis:
         # Process the text using UDPipe
-        token_list, error = process_text_with_udpipe(model, processed_text)
+        token_list, error = process_text_with_udpipe(model, normalized_text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
-        conllup_text = udpipe_token_to_conllup(token_list, words)
+        conllup_text = udpipe_token_to_conllup(token_list, normalized_words)
     else:
-        conllup_text = spacy_token_to_conllup(model(processed_text), words)
+        conllup_text = spacy_token_to_conllup(model(normalized_text), normalized_words)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:
