@@ -31,6 +31,8 @@ def normalize_text(text):
         'ø': 'o'
     }
     # Add ranges of weird unicode characters
+    for i in range(0x2000, 0x200F):
+        replacements[chr(i)] = " "
     for i in range(0x2020, 0x2025):
         replacements[chr(i)] = "- "
     for i in range(0x2072, 0x2074):
