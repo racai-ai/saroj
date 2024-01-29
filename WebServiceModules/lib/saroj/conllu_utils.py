@@ -12,7 +12,7 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[list[str | l
     with open(file, mode='r', encoding='utf-8', errors="ignore") as f:
         for line in f:
             if CoNLLUFileAnnotator._int_rx.match(line):
-                fields = line.strip().split()
+                fields = line.strip().split("\t")
 
                 if append_column:
                     # That's for NER info
@@ -59,7 +59,7 @@ def is_file_conllu(input_file: str) -> bool:
             line = line.strip()
 
             if line and not line.startswith('#'):
-                parts = line.split()
+                parts = line.split("\t")
 
                 if number_of_fields == 0:
                     number_of_fields = len(parts)
