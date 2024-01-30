@@ -12,7 +12,7 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[list[str | l
     with open(file, mode='r', encoding='utf-8', errors="ignore") as f:
         for line in f:
             if CoNLLUFileAnnotator._int_rx.match(line):
-                fields = line.strip().split("\t")
+                fields = line.strip().split('\t')
 
                 if append_column:
                     # That's for NER info
@@ -22,13 +22,9 @@ def read_conllu_file(file: str, append_column: bool = True) -> list[list[str | l
                 # end if
 
                 crt_sentence.append(fields)
-            elif not line.strip():
-                if crt_sentence:
-                    file_sentences.append(crt_sentence)
-                    crt_sentence = []
-                # end if
-            else:
-                crt_sentence.append(line)
+            elif not line.strip() and crt_sentence:
+                file_sentences.append(crt_sentence)
+                crt_sentence = []
             # end if
         # end for
     # end with
@@ -59,7 +55,7 @@ def is_file_conllu(input_file: str) -> bool:
             line = line.strip()
 
             if line and not line.startswith('#'):
-                parts = line.split("\t")
+                parts = line.split('\t')
 
                 if number_of_fields == 0:
                     number_of_fields = len(parts)
@@ -136,18 +132,16 @@ class CoNLLUFileAnnotator(object):
         # end if
 
     def _get_text_from_conllu_sentence(self,
-                                       conllu_sentence: list[str | list[str]]) -> tuple[str, list[str], list[int]]:
-        """Takes one sentence as returned by function `read_conllu_file()` and returns the text
-        formed by joining all tokens with spaces, removing spaces around punctuation.
-        Also returns a list of token to file line indexes and the list of normalized tokens."""
+                                       conllu_sentence: list[str | list[str]]) -> list[str]:
+        """Takes one sentence as returned by function `read_conllu_file()` and returns the list
+        of words, one word per sentence token, with/without a space after it.
+        Joining this sentence with the empty string yields the sentence text."""
 
-        words_indexes = []
         words = []
 
         for i, line in enumerate(conllu_sentence):
             if isinstance(line, list):
                 word = line[1]
-                words_indexes.append(i)
                 words.append(word + ' ')
             # end if
         # end for
@@ -157,8 +151,7 @@ class CoNLLUFileAnnotator(object):
             self._no_space_after(words=words, index=i)
         # end for
 
-        sentence_text = ''.join(words)
-        return sentence_text, words, words_indexes
+        return words
 
     def _add_iob_to_label(self, label: str) -> bool:
         return not label.startswith('B-') and \
@@ -172,27 +165,21 @@ class CoNLLUFileAnnotator(object):
         with open(output_file, mode='w', encoding='utf-8') as f:
             # Go sentence by sentence
             for conllu_sentence in self._conllu_sentences:
-                sentence, snt_words, snt_words_indexes = \
+                snt_words = \
                     self._get_text_from_conllu_sentence(conllu_sentence)
+                sentence = ''.join(snt_words)
                 annotations = self.provide_annotations(sentence)
 
                 # Insert the annotations on the last column
                 # 'O' is the 'outside' default
                 for soff, eoff, label in annotations:
                     if soff >= 0 and eoff >= 0 and label != 'O':
-                        wli_info = \
-                            self._get_ner_line_indexes_in_sentence(
-                                offset=(soff, eoff),
-                                s_words=snt_words,
-                                s_words_indexes=snt_words_indexes)
+                        wli_info = self._get_ner_line_indexes_in_sentence(
+                            offset=(soff, eoff),
+                            s_words=snt_words)
 
                         if wli_info:
                             from_wli, to_wli = wli_info
-
-                            # If a single line is affected
-                            if from_wli == to_wli:
-                                to_wli += 1
-                            # end if
 
                             # Also do the BIO annotation here,
                             # as here we have consecutive tokens.
@@ -240,41 +227,41 @@ class CoNLLUFileAnnotator(object):
 
     def _get_ner_line_indexes_in_sentence(self,
                                           offset: tuple[int, int],
-                                          s_words: list[str],
-                                          s_words_indexes: list[int]) -> tuple[int, int] | None:
+                                          s_words: list[str]) -> tuple[int, int] | None:
         """Given a start_offset, end_offset `offset` tuple, retrieves the range
         of the index(es) of the line(s) in the CoNLL-U sentence which
         should receive the NER annotation."""
 
-        the_offset = 0
+        tok_offset_start = 0
+        tok_offset_end = 0
         left_i = -1
         right_i = -1
 
         for i, tok in enumerate(s_words):
-            if left_i == -1:
-                if the_offset + len(tok) > offset[0]:
+            tok_offset_end = tok_offset_start + len(tok)
+
+            if not (tok_offset_end <= offset[0] or \
+                    offset[1] <= tok_offset_start):
+                if left_i == -1:
                     left_i = i
-                elif the_offset + len(tok) == offset[0]:
-                    left_i = i + 1
                 # end if
+                    
+                right_i = i
+            elif offset[1] <= tok_offset_start:
+                break
             # end if
 
-            if right_i == -1:
-                if the_offset + len(tok) > offset[1]:
-                    right_i = i
-                    break
-                elif the_offset + len(tok) == offset[1]:
-                    right_i = i + 1
-                    break
-                # end if
-            # end if
-
-            the_offset += len(tok)
+            tok_offset_start = tok_offset_end
         # end for
-
+            
+        if right_i == -1:
+            # s_words has the same length as th CoNLL-U sentence
+            right_i = len(s_words)
+        # end
+            
         if left_i >= 0 and left_i <= right_i:
-            # Lines found
-            return (s_words_indexes[left_i], s_words_indexes[right_i])
+            # Lines found, right_i excluded, always
+            return (left_i, right_i + 1)
         else:
             return None
         # end if

@@ -2,7 +2,7 @@ import sys
 import os
 import re
 
-ner_addr_sep = re.compile(r'''[\s,]''')
+ner_addr_sep = re.compile(r'''[\s,.;]''')
 ner_address_fields = [
     # județul
     re.compile(r'''\b(?:[Jj]ud(?:\.\s*|\s+)|[Jj]ude[țtţ](?:ul)?\s+)'''),
@@ -58,7 +58,7 @@ ner_regex = {
     # OK
     'ADRESA': re.compile(r'''
         \b
-        (?:cu\sdomiciliul\sîn\s+|domiciliat[ă]?\sîn\s+|cu\ssediul\sîn\s+|în\s+)
+        (?:cu\sdomiciliul\sîn\s+|domiciliat[ă]?\sîn\s+|cu\ssediul\sîn\s+|[îi]n\s+(?=__DB_CITY__))
         (
             (?:
                 (?:
@@ -98,17 +98,16 @@ ner_regex = {
                         [Ss]ector(?:ul)?
                     )\s+
                     |
-                    # Testează orașul din fișierul data/localitati.txt
                     __DB_CITY__
                 )
                 (?:
-                    \w|
-                    \w[\s\w.&-]*\w
+                    [A-ZȘȚĂÎÂŞŢ][A-ZȘȚĂÎÂŞŢa-zșțăîâşţ]*(?:\s*[&\s.-]\s*[A-ZȘȚĂÎÂŞŢ][A-ZȘȚĂÎÂŞŢa-zșțăîâşţ]*){0,2}|
+                    [A-Z0-9]{1,3}(?:\s?bis)?
                 ) # valoarea câmpului
-                (?:,\s*|\s+) # separatorul
+                (?:[,.;]\s*|\s+) # separatorul
             )+
         ) # captura (toată adresa)
-        \b''', re.VERBOSE),
+        ''', re.VERBOSE),
     # OK
     'TELEFON': re.compile(r'''
         \b
@@ -137,13 +136,51 @@ ner_regex = {
     'TEHNOREDACTOR': re.compile(r'''
         \b
         (?:
-            [rR]ed(?:\s+|(?:actor\s+|actat\s+|\.\s*))|
-            [tT]ehnored(?:\s+|(?:actat\s+|actor\s+|\.\s*))|
-            [Îî]ntocmit\s+|[Ll]ucrat\s+|Gref(?:\s+|(?:ier\s+|\.\s*))|
-            [Jj]ud(?:\s+|(?:ecător\s+|\.\s*))|[Tt]ehn(?:\s+|\.\s*)|[Tt]hred(?:\s+|\.\s*)
-            [dD]act(?:\s+|(?:ilografiat\s+|ilograf[aă]?\s+|\.))
+            Red(?:actor\s+|actat\s+|\.\s*)|
+            Tehnored(?:actat\s+|actor\s+|\.\s*)|
+            [ÎI]ntocmit\s+|
+            Lucrat\s+|
+            Gref(?:ier\s+|\.\s*)|
+            Jud(?:ecător\s+|\.\s*)|
+            Tehn\.\s*|
+            Thred\.\s*|
+            Dact(?:ilografiat\s+|ilograf[aă]?\s+|\.\s*)
+        )(?:,\s*)?
+        (
+            [A-ZȘȚĂÎÂŞŢ](?:[a-zșțăîâşţ-]+\s+|\.)
+            (?:[\s-]?[A-ZȘȚĂÎÂŞŢ](?:[a-zșțăîâşţ-]+\s+|\.))*
+        ) # captura
+        ''', re.VERBOSE),
+    # OK
+    'TEHNOREDACTOR2': re.compile(r'''
+        \b
+        (
+            [A-ZȘȚĂÎÂŞŢ](?:[a-zșțăîâşţ-]+|\.)
+            (?:[\s-][A-ZȘȚĂÎÂŞŢ](?:[a-zșțăîâşţ-]+|\.))*
+        ) # captura
+        \s+
+        (?:
+            Red(?:actor[\s,]|\.\s*)|
+            Tehnored(?:actor[\s,]|\.\s*)|
+            Tehn\.\s*|
+            Thred\.\s*|
+            Gref(?:ier[\s,]|\.\s*)
         )
-        ([\w][\w.-]*[\w.]) # captura
+        ''', re.VERBOSE),
+    # OK
+    'TEHNOREDACTOR3': re.compile(r'''
+        \b
+        (
+            [A-ZȘȚĂÎÂŞŢ]\.?(?:-?[A-ZȘȚĂÎÂŞŢ]\.?)+
+        ) # captura
+        \s*/\s*
+        (?:
+            Red(?:actor[\s,]|\.\s*)|
+            Tehnored(?:actor[\s,]|\.\s*)|
+            Tehn\.\s*|
+            Thred\.\s*|
+            Gref(?:ier[\s,]|\.\s*)
+        )
         ''', re.VERBOSE),
     # OK
     'HOTARARE': re.compile(r'''
@@ -243,6 +280,8 @@ ner_label_map = {
     'NUMAR_DOSAR': 'CASE',
     'NUMAR_DOSAR_PENAL': 'CASE',
     'TEHNOREDACTOR': 'INITIALS',
+    'TEHNOREDACTOR2': 'INITIALS',
+    'TEHNOREDACTOR3': 'INITIALS',
     'IBAN': 'IBAN'
 }
 
@@ -387,29 +426,29 @@ def do_regex_ner(text: str, previous_text: str) -> list[tuple[int, int, str]]:
         # end if
     # end for
 
-    entities4 = []
+    entities_dbci = []
     text = text[offset_ballast:]
-    dbci = text.find('__DB_CITY__')
+    dbci = text.rfind('__DB_CITY__')
     dbc_len = len('__DB_CITY__')
 
     # 4. Remove __DB_CITY__ and adjust the offsets accordingly.
-    while dbci >= 0:
-        for s, e, l in entities3:
-            if s > dbci:
-                entities4.append((s - dbc_len, e - dbc_len, l))
-            else:
-                entities4.append((s, e, l))
-            # end if
-        # end for
-        
-        dbci = text.find('__DB_CITY__', dbci + dbc_len)
-    # end while
-        
-    if not entities4:
-        return entities3
-    else:
-        return entities4
+    if dbci >= 0:
+        while dbci >= 0:
+            for s, e, l in entities3:
+                if s > dbci:
+                    entities_dbci.append((s - dbc_len, e - dbc_len, l))
+                else:
+                    entities_dbci.append((s, e, l))
+                # end if
+            # end for
+            
+            dbci = text.rfind('__DB_CITY__', 0, dbci)
+            entities3 = entities_dbci
+            entities_dbci = []
+        # end while
     # end if
+
+    return entities3
 
 
 def process_address_fields(
