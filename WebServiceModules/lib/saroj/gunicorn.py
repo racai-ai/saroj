@@ -4,6 +4,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
     def __init__(self, app, options=None):
         self.options = options or {}
+        self.options['timeout'] = 600
         self.application = app
         super().__init__()
 
