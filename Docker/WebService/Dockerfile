@@ -34,6 +34,7 @@ RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r 
 COPY --from=intermediate /saroj/WebService/web/ /site/
 RUN chown -R www-data:www-data /site/
 COPY conf/apache2.conf /etc/apache2/
+COPY conf/php.ini /usr/local/etc/php/
 ENV APACHE_RUN_USER www-data
 ENV APACHE_RUN_GROUP www-data
 ENV APACHE_LOG_DIR /var/log/apache2

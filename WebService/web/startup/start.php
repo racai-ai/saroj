@@ -1,7 +1,7 @@
 <?php
 
 set_time_limit(0);
-ini_set('default_socket_timeout', 600);
+ini_set('default_socket_timeout', 30*60);
 
 require_once "../lib/lib.php";
 
