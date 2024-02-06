@@ -2,7 +2,11 @@
 
 require_once "lib/lib.php";
 
-$in=get_input(["caseid","docid","document"]);
+$in=get_input(["caseid","docid","document"],["type"=>"docx"]);
+
+$in['type']=strtolower($in['type']);
+if($in['type']!="txt" && $in['type']!="docx")
+	die(json_encode(["status"=>"ERROR","message"=>"E007 Invalid type"]));
 
 if(isset($in['priority']) && $in['priority']==1){
 	$fname=tempnam($TASK_DIR_NEW_PRIO,uniqid());

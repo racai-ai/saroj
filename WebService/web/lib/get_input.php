@@ -1,6 +1,6 @@
 <?php
 
-function get_input($keys){
+function get_input($keys,$opt=[]){
 	if(!isset($_REQUEST['input'])){
 		die('{"status":"ERROR", "message":"E001 No input provided"}');
 	}
@@ -13,6 +13,12 @@ function get_input($keys){
 	foreach($keys as $k){
 		if(!isset($input[$k])){
 			die('{"status":"ERROR", "message":"E003 Missing key in input JSON ['.$k.']"}');
+		}
+	}
+
+	foreach($opt as $k=>$v){
+		if(!isset($input[$k])){
+			$input[$k]=$v;
 		}
 	}
 	
