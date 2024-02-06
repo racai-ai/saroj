@@ -3,7 +3,8 @@ import re
 import shutil
 import tempfile
 import zipfile
-
+from xml.sax.saxutils import escape
+import traceback
 
 def read_conllup(conllup_file):
     # Initialize an empty list to store the CONLLUP data as dictionaries
@@ -47,24 +48,34 @@ def read_conllup(conllup_file):
     return conllup_data
 
 
-def anonymize(conllup_list, input_path, output_path, save_internal_files=False):
+def anonymize(conllup_list, input_path, output_path, save_internal_files=False, input_type="docx"):
     # Create a unique temporary file to extract the DOCX content
     temp_file_path = tempfile.mkdtemp(dir='.')
     delta_t = 0
     try:
-        # Extract the DOCX file
-        with zipfile.ZipFile(input_path, "r") as zip_ref:
-            zip_ref.extractall(temp_file_path)
+        if input_type == "docx":
+            # Extract the DOCX file
+            with zipfile.ZipFile(input_path, "r") as zip_ref:
+                zip_ref.extractall(temp_file_path)
+
+            content_path = os.path.join(temp_file_path, "word", "document.xml")
+            with open(content_path, "rb") as content_file:
+                docx_content = content_file.read()
+        else:
+            docx_content="<d>"
+            with open(input_path, "r", encoding="utf-8", errors='ignore') as fin:
+                for line in fin:
+                    docx_content+="<w:t>"+escape(line)+"</w:t>"
+            docx_content+="</d>"
+            docx_content=docx_content.encode("utf-8")
 
         filtered_conllup_list = [row for row in conllup_list if row["ANONYMIZED"] != "_"]
-
-        content_path = os.path.join(temp_file_path, "word", "document.xml")
-        with open(content_path, "rb") as content_file:
-            docx_content = content_file.read()
-
         for row in filtered_conllup_list:
             start = int(row["START"])
             end = int(row["END"])
+
+            if input_type == "txt": start-=1; end-=1
+
             anonym = row["ANONYMIZED"].encode("utf-8")
             len_form = len(row["FORM"].encode("utf-8"))
 
@@ -80,17 +91,26 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False):
             else:
                 delta_t -= end - start - len(anonym)
 
-        # Write the modified content back to the file
-        with open(content_path, "wb") as content_file:
-            content_file.write(docx_content)
+        if input_type == "docx":
+            # Write the modified content back to the file
+            with open(content_path, "wb") as content_file:
+                content_file.write(docx_content)
 
-        # Recreate the modified DOCX file
-        with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=-1) as new_zip_ref:
-            for root, _, files in os.walk(temp_file_path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.relpath(file_path, temp_file_path)
-                    new_zip_ref.write(file_path, arcname=arcname)
+            # Recreate the modified DOCX file
+            with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=-1) as new_zip_ref:
+                for root, _, files in os.walk(temp_file_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, temp_file_path)
+                        new_zip_ref.write(file_path, arcname=arcname)
+        else:
+            docx_content=docx_content.decode()
+            docx_content=docx_content.replace("<d>","").replace("</d>","").replace("<w:t>","").replace("</w:t>","")
+            with open(output_path, "w", encoding='utf-8') as fout:
+                fout.write(docx_content)
+    #except Exception as inst:
+    #    traceback.print_exc()
+    #    raise inst
 
     finally:
         # Clean up the temporary directory

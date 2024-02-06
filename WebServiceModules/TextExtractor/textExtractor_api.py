@@ -33,15 +33,20 @@ def convert_docx_to_conllu():
 
     input_file = data["input"]
     output_file = data["output"]
+    input_type="docx"
+    valid_types={"txt":True,"docx":True}
+    if "type" in data:
+        input_type = data["type"].lower()
+        if input_type not in valid_types: input_type="docx"
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
-    if not allowed_file(input_file):
+    if input_type == "docx" and not allowed_file(input_file):
         return jsonify({"status": "ERROR", "message": "Invalid file format."})
 
     if input_file:
         try:
-            docx_to_conllup(token_model, input_file, output_file, regex, replacements)
+            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type)
             return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})

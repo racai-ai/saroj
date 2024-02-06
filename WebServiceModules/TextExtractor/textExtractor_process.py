@@ -8,7 +8,7 @@ from conllu import parse
 from textExtractor_XMLParser import XMLParserWithPosition
 from textExtractor_config import args
 from textExtractor_helpers import *
-
+from xml.sax.saxutils import escape
 
 def process_text_with_udpipe(udpipe_model, text):
     """
@@ -187,7 +187,7 @@ def spacy_token_to_conllup(text, words):
     return conllup_text
 
 
-def get_words_with_positions(docx_file):
+def get_words_with_positions(docx_file, input_type):
     """
     Extracts words with their positions from the 'document.xml' file inside a DOCX file.
 
@@ -204,15 +204,26 @@ def get_words_with_positions(docx_file):
         KeyError: If the 'document.xml' file is not found within the DOCX archive.
     """
     XMLparser = XMLParserWithPosition()
-    with zipfile.ZipFile(docx_file, 'r') as zip_ref:
-        with zip_ref.open("word/document.xml") as xml_file:
-            for line in xml_file:
-                XMLparser.parser.Parse(line)
+
+    if input_type == "txt":
+        XMLparser.parser.Parse("<d>")
+        with open(docx_file, 'r', encoding='utf-8', errors='ignore') as fin: 
+            for line in fin:
+                txt="<w:t>"
+                txt+=escape(line)
+                txt+="</w:t>"
+                XMLparser.parser.Parse(txt)
+        XMLparser.parser.Parse("</d>")
+    else:
+        with zipfile.ZipFile(docx_file, 'r') as zip_ref:
+            with zip_ref.open("word/document.xml") as xml_file:
+                for line in xml_file:
+                    XMLparser.parser.Parse(line)
 
     return XMLparser.words
 
 
-def docx_to_conllup(model, docx_file, output_file, regex, replacements):
+def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type):
     """
     Convert a .docx file to CONLL-U formatted text.
 
@@ -231,7 +242,7 @@ def docx_to_conllup(model, docx_file, output_file, regex, replacements):
         Exception: If an error occurs while processing text with UDPipe (when run_analysis is True).
 
     """
-    words = get_words_with_positions(docx_file)
+    words = get_words_with_positions(docx_file, input_type)
     # normalize words
     normalized_words = [(normalize_text(word[0], regex, replacements), word[1], word[2]) for word in words]
     normalized_text = "".join(str(word[0]) for word in normalized_words)
