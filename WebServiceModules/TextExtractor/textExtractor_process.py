@@ -209,9 +209,9 @@ def get_words_with_positions(docx_file, input_type):
         XMLparser.parser.Parse("<d>")
         with open(docx_file, 'r', encoding='utf-8', errors='ignore') as fin: 
             for line in fin:
-                txt="<w:t>"
+                txt="<w:p><w:t>"
                 txt+=escape(line)
-                txt+="</w:t>"
+                txt+="</w:t></w:p>"
                 XMLparser.parser.Parse(txt)
         XMLparser.parser.Parse("</d>")
     else:

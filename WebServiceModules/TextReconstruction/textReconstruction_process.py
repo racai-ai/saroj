@@ -65,7 +65,7 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
             docx_content="<d>"
             with open(input_path, "r", encoding="utf-8", errors='ignore') as fin:
                 for line in fin:
-                    docx_content+="<w:t>"+escape(line)+"</w:t>"
+                    docx_content+="<w:p><w:t>"+escape(line)+"</w:t></w:p>"
             docx_content+="</d>"
             docx_content=docx_content.encode("utf-8")
 
@@ -105,7 +105,7 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
                         new_zip_ref.write(file_path, arcname=arcname)
         else:
             docx_content=docx_content.decode()
-            docx_content=docx_content.replace("<d>","").replace("</d>","").replace("<w:t>","").replace("</w:t>","")
+            docx_content=docx_content.replace("<d>","").replace("</d>","").replace("<w:t>","").replace("</w:t>","").replace("<w:p>","").replace("</w:p>","")
             with open(output_path, "w", encoding='utf-8') as fout:
                 fout.write(docx_content)
     #except Exception as inst:
