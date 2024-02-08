@@ -258,10 +258,11 @@ ner_regex = {
         [cC].?\s?[uU].?\s?[iI].?\s+
         ((?:RO)?\d{6,8}) # captura
         \b''', re.VERBOSE),
+    # OK
     'IBAN': re.compile(r'''
         \b
         (?:cont(?:\sbancar)?|(?:cod\s)?IBAN)\s
-        (RO[0-9A-Z]{22}) # captura, IBAN-ul are 24 de caractere în România
+        (RO\s*\d{2}\s*[A-Z]{4}(?:(?:\s*[0-9A-Z]){4}){4}) # captura, IBAN-ul are 24 de caractere în România
         \b
         ''', re.VERBOSE)
 }

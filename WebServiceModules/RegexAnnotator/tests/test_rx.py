@@ -92,6 +92,7 @@ def test_readactat():
     assert (5, 12, 'INITIALS') in results
     assert (41, 48, 'INITIALS') in results
 
+
 def test_adresa():
     input_text = "Maria Ioanidi, domiciliată în com. Bucșa, jud. Bihor, sat Verești, str. Alunului nr. 45, s-a aflat ..."
     results = do_regex_ner(text=input_text, previous_text='')
@@ -100,6 +101,7 @@ def test_adresa():
     assert (58, 65, 'LOC') in results
     assert (72, 80, 'LOC') in results
     assert (85, 87, 'LOC') in results
+
 
 def test_adresa2():
     input_text = "Maria Ioanidi, cu domiciliul în jud. Vaslui, oraș Vaslui str. Alunului Beat, nr. 45, bl. B1, sc. 2, apt. 25, s-a aflat ..."
@@ -112,7 +114,14 @@ def test_adresa2():
     assert (97, 98, 'LOC') in results
     assert (105, 107, 'LOC') in results
 
+
 def test_iban():
     input_text = "Societatea SC Bubu S.R.L, cont bancar RO49AAAA1B31007593840000, cu sediul în ..."
     results = do_regex_ner(text=input_text, previous_text='')
     assert (38, 62, 'IBAN') in results
+
+
+def test_iban_spaces():
+    input_text = "Societatea SC Bubu S.R.L, cont bancar RO 49 AAAA 1B31 0075 9384 0000, cu sediul în ..."
+    results = do_regex_ner(text=input_text, previous_text='')
+    assert (38, 68, 'IBAN') in results
