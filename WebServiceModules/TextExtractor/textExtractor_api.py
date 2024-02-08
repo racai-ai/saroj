@@ -1,10 +1,10 @@
-import argparse
-
 import ufal.udpipe as ud
 from flask import Flask, jsonify
 import spacy
 
-from textExtractor_process import docx_to_conllup, allowed_file
+from textExtractor_process import docx_to_conllup
+from textExtractor_helpers import allowed_file, create_replacement_regex
+from textExtractor_config import args
 
 import os
 import sys
@@ -33,15 +33,20 @@ def convert_docx_to_conllu():
 
     input_file = data["input"]
     output_file = data["output"]
+    input_type="docx"
+    valid_types={"txt":True,"docx":True}
+    if "type" in data:
+        input_type = data["type"].lower()
+        if input_type not in valid_types: input_type="docx"
 
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
-    if not allowed_file(input_file):
+    if input_type == "docx" and not allowed_file(input_file):
         return jsonify({"status": "ERROR", "message": "Invalid file format."})
 
     if input_file:
         try:
-            docx_to_conllup(token_model, input_file, output_file, args.RUN_ANALYSIS, args.SAVE_INTERNAL_FILES)
+            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type)
             return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})
@@ -64,15 +69,6 @@ def check_health():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('PORT', type=int, help='port to listen for requests')
-    parser.add_argument('--RUN_ANALYSIS', '-r', action='store_true',
-                        help='if present, will run text analysis using UDPIPE')
-    parser.add_argument('--SAVE_INTERNAL_FILES', '-s', action='store_true',
-                        help='if present, will save internal files, useful for debugging')
-    parser.add_argument("--udpipe_model", type=str, help="Path to the UDPipe model file.")
-
-    args = parser.parse_args()
 
     token_model = None
     if args.udpipe_model:
@@ -81,6 +77,8 @@ if __name__ == '__main__':
     if not args.RUN_ANALYSIS:
         token_model = spacy.load("ro_core_news_sm")
 
+    regex, replacements = create_replacement_regex()
+    
     options = {
         'bind': '%s:%s' % ('127.0.0.1', args.PORT),
         'workers': 1,

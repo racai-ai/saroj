@@ -2,7 +2,7 @@
 
 require_once "lib/lib.php";
 
-$in=get_input(["caseid","docid","document"]);
+$in=get_input(["caseid","docid","document"],["type"=>"docx"]);
 $in['priority']=1;
 
 $data=@file_get_contents("http://127.0.0.1:80/startAnonymization?input=".urlencode(json_encode($in)));

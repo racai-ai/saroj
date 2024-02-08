@@ -30,13 +30,19 @@ def anonymize_docx():
     output_docx_path = data["output"]
     original_docx_path = data["original"]
 
+    input_type="docx"
+    valid_types={"txt":True,"docx":True}
+    if "type" in data:
+        input_type = data["type"].lower()
+        if input_type not in valid_types: input_type="docx"
+
     if input_file == '':
         return jsonify({"status": "ERROR", "message": "No file selected."})
 
     if input_file:
         try:
             conllup_data = read_conllup(input_file)
-            anonymize(conllup_data, original_docx_path, output_docx_path, args.SAVE_INTERNAL_FILES)
+            anonymize(conllup_data, original_docx_path, output_docx_path, args.SAVE_INTERNAL_FILES, input_type)
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})

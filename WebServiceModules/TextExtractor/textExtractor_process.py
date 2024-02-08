@@ -6,50 +6,9 @@ import ufal.udpipe as ud
 from conllu import parse
 
 from textExtractor_XMLParser import XMLParserWithPosition
-
-
-def normalize_text(text):
-    replacements = {
-        "\u00A0": " ",
-        "\u201C": "\"",
-        "\u201D": "\"",
-        "\u2018": "'",
-        "\u2019": "'",
-        "\u00AB": "\"",
-        "\u00BB": "\"",
-        "\u2039": "'",
-        "\u203A": "'",
-        "„": "\"",
-        "\r": " ",
-        "\t": " ",
-        'ş': 'ș',
-        'Ş': 'Ș',
-        'Ţ': 'Ț',
-        'ţ': 'ț',
-        'Ã': 'Ă',
-        'ã': 'ă',
-        'ø': 'o'
-    }
-    # Add ranges of weird unicode characters
-    for i in range(0x2000, 0x200F):
-        replacements[chr(i)] = " "
-    for i in range(0x2020, 0x2025):
-        replacements[chr(i)] = "- "
-    for i in range(0x2072, 0x2074):
-        replacements[chr(i)] = "- "
-    replacements[chr(0x208F)] = "- "
-    for i in range(0x209D, 0x20A0):
-        replacements[chr(i)] = "- "
-    for i in range(0x25A0, 0x26A0):
-        replacements[chr(i)] = "- "
-
-    regex = re.compile("|".join(map(re.escape, replacements.keys())))
-    text = regex.sub(lambda match: replacements[match.group(0)], text)
-
-    text = re.sub(r'(([A-Z][.])+)([A-Z][a-z]+)', r'\1 \3', text)
-    text = re.sub(r'([a-zA-Z.ăîâșțĂÎÂȘȚ]+)/([a-zA-Z.ăîâșțĂÎÂȘȚ]+)', r'\1 / \2', text)
-
-    return text
+from textExtractor_config import args
+from textExtractor_helpers import *
+from xml.sax.saxutils import escape
 
 def process_text_with_udpipe(udpipe_model, text):
     """
@@ -78,36 +37,6 @@ def process_text_with_udpipe(udpipe_model, text):
     token_list = parse(processed_text)
 
     return token_list, None
-
-
-def dict_to_string(d):
-    """
-    Convert a dictionary to a string representation.
-
-    Args:
-        d (dict): The dictionary to be converted.
-
-    Returns:
-        str: The string representation of the dictionary in the format "key1=value1|key2=value2|..."
-             or an underscore (_) if the dictionary is empty.
-    """
-    if d:
-        return "|".join([f"{key}={value}" for key, value in d.items()])
-    else:
-        return "_"
-
-
-def format_none_value(value):
-    """
-    Convert None values to underscores to conform to the CONLL-U format.
-
-    Args:
-        value: The value to be converted.
-
-    Returns:
-        str: The converted value as a string or an underscore (_) if the value is None.
-    """
-    return "_" if value is None else str(value)
 
 
 def udpipe_token_to_conllup(token_list, words):
@@ -258,7 +187,7 @@ def spacy_token_to_conllup(text, words):
     return conllup_text
 
 
-def get_words_with_positions(docx_file):
+def get_words_with_positions(docx_file, input_type):
     """
     Extracts words with their positions from the 'document.xml' file inside a DOCX file.
 
@@ -275,25 +204,36 @@ def get_words_with_positions(docx_file):
         KeyError: If the 'document.xml' file is not found within the DOCX archive.
     """
     XMLparser = XMLParserWithPosition()
-    with zipfile.ZipFile(docx_file, 'r') as zip_ref:
-        with zip_ref.open("word/document.xml") as xml_file:
-            for line in xml_file:
-                XMLparser.parser.Parse(line)
+
+    if input_type == "txt":
+        XMLparser.parser.Parse("<d>")
+        with open(docx_file, 'r', encoding='utf-8', errors='ignore') as fin: 
+            for line in fin:
+                txt="<w:p><w:t>"
+                txt+=escape(line)
+                txt+="</w:t></w:p>"
+                XMLparser.parser.Parse(txt)
+        XMLparser.parser.Parse("</d>")
+    else:
+        with zipfile.ZipFile(docx_file, 'r') as zip_ref:
+            with zip_ref.open("word/document.xml") as xml_file:
+                for line in xml_file:
+                    XMLparser.parser.Parse(line)
 
     return XMLparser.words
 
 
-def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_internal_files=False):
+def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type):
     """
     Convert a .docx file to CONLL-U formatted text.
 
     Args:
-        model(str/spacy): The path to the UDPipe model to use for text analysis if `run_analysis` is True or
-                     spacy model if `run_analysis` is False.
+        model (str/spacy): The path to the UDPipe model to use for text analysis if `run_analysis` is True or
+                           spacy model if `run_analysis` is False.
         docx_file (str): The path to the input .docx file.
         output_file (str): The path where the CONLL-U formatted text will be saved.
-        run_analysis (bool, optional): Whether to run text analysis using UDPipe. Default is False.
-        save_internal_files (bool, optional): Whether to save internal files (useful for debugging). Default is False.
+        regex (str): The regular expression pattern for text normalization.
+        replacements (dict): A dictionary of replacement patterns for text normalization.
 
     Returns:
         str: The path of the output_file after processing (if run_analysis is False) or the CONLL-U formatted text.
@@ -301,45 +241,27 @@ def docx_to_conllup(model, docx_file, output_file, run_analysis=False, save_inte
     Raises:
         Exception: If an error occurs while processing text with UDPipe (when run_analysis is True).
 
-    Note:
-        The `run_analysis` parameter determines whether to perform text analysis using UDPipe or spaCy. If `run_analysis`
-        is True, UDPipe is used for tokenization; otherwise, spaCy is used.
     """
-    words = get_words_with_positions(docx_file)
+    words = get_words_with_positions(docx_file, input_type)
     # normalize words
-    normalized_words = [(normalize_text(word[0]), word[1], word[2]) for word in words]
+    normalized_words = [(normalize_text(word[0], regex, replacements), word[1], word[2]) for word in words]
     normalized_text = "".join(str(word[0]) for word in normalized_words)
     filename, _ = os.path.splitext(output_file)
     # in .te1 file the words are not normalized - are the original ones
-    if save_internal_files:
-        with open(filename + ".te1", "w", encoding="utf-8") as f:
-            word_lines = [f"Word: '{word[0]}' | Start Index: {word[1]} | End Index: {word[2]}\n" for word in words]
-            f.writelines(word_lines)
-    if run_analysis:
+    if args.SAVE_INTERNAL_FILES:
+        save_log(words, filename)
+    if args.RUN_ANALYSIS:
         # Process the text using UDPipe
         token_list, error = process_text_with_udpipe(model, normalized_text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
         conllup_text = udpipe_token_to_conllup(token_list, normalized_words)
     else:
-        conllup_text = spacy_token_to_conllup(model(normalized_text), normalized_words)
+         # Process the text using Spacy
+        spacy_model_output = model(normalized_text)
+        conllup_text = spacy_token_to_conllup(spacy_model_output, normalized_words)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(conllup_text)
     return output_file
-
-
-def allowed_file(filename):
-    """
-    Check if the given filename has a valid extension.
-
-    Args:
-        filename (str): The name of the file to be checked.
-
-    Returns:
-        bool: True if the file has a valid extension (in this case, .docx), False otherwise.
-    """
-    allowed_extensions = {'docx'}
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in allowed_extensions

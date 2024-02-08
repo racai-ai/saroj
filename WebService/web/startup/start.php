@@ -1,6 +1,7 @@
 <?php
 
 set_time_limit(0);
+ini_set('default_socket_timeout', 60*60);
 
 require_once "../lib/lib.php";
 
@@ -89,6 +90,7 @@ function runTask($pathNew, $pathDone){
 	
 	$task['status']="RUNNING";
 	$task['version']=$config['version'];
+	if(!isset($task['type']))$task['type']="docx";
 	file_put_contents($pathNew,json_encode($task));
 	
 	$pathDocx="${TASK_DIR_RUN}input.docx";
@@ -103,6 +105,7 @@ function runTask($pathNew, $pathDone){
 		"CASEID" => $task['caseid'],
 		"DOCID" => $task['docid'],
 		"DOCX" => $pathDocx,
+		"TYPE" => $task['type'],
 		"CASEMAP" => $pathCaseMap,
 		"OUTPUT" => $pathOutput,
 		"OUTPUTANN" => $pathOutputAnn
