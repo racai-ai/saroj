@@ -1,6 +1,6 @@
 import os
 import zipfile
-import re 
+from jellyfish import jaro_winkler_similarity
 
 import ufal.udpipe as ud
 from conllu import parse
@@ -64,7 +64,8 @@ def udpipe_token_to_conllup(token_list, words):
             acc_count = 1
             acc = ""
             while words_id < len(words):
-                if token["form"] in words[words_id][0]:
+                score = jaro_winkler_similarity(token["form"], words[words_id][0])
+                if score > 0.7:  # Threshold chosen arbitrarily
                     start_offset = words[words_id][1]
                     end_offset = words[words_id][2]
                     break
@@ -143,7 +144,8 @@ def spacy_token_to_conllup(text, words):
             acc_count = 1
             acc = ""
             while words_id < len(words):
-                if token.text in words[words_id][0]:
+                score = jaro_winkler_similarity(token.text, words[words_id][0])
+                if score > 0.7:  # Threshold chosen arbitrarily
                     start_offset = words[words_id][1]
                     end_offset = words[words_id][2]
                     break
