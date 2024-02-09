@@ -50,9 +50,16 @@ def most_frequent_item(lst):
 def read_conll_file(file_path):
     data = []
     with open(file_path, 'r', encoding='utf-8', errors="ignore") as file:
+        lastEmpty=False
         for line in file:
             tokens = line.strip().split('\t')
-            data.append(tokens)
+            if len(tokens)!=1 or not lastEmpty:
+                data.append(tokens)
+
+            if len(tokens)==1:
+                lastEmpty=True
+            else:
+                lastEmpty=False
     return data
 
 
