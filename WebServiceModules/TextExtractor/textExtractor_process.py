@@ -76,7 +76,7 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                 token["sid"]=sid;
                 all_tokens.append(token)
 
-        distance, path = fastdtw(tokens_t, words_t, dist=Levenshtein.distance)
+        distance, path = fastdtw(tokens_t, words_t, radius=10, dist=Levenshtein.distance)
 
         conllup_text = ""
         sid=1
@@ -109,12 +109,13 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                 token["start_offset"] = words[p[1]][1]
                 token["end_offset"] = words[p[1]][2]
                 prev_token=p[0]
+
+                if token["sid"]!=sid:
+                    conllup_text += "\n"
+                    sid=token["sid"]
             else:
                 token["end_offset"] = words[p[1]][2]
 
-            if token["sid"]!=sid:
-                conllup_text += "\n"
-                sid=token["sid"]
 
         if prev_token>0:
             ptoken = all_tokens[prev_token]
