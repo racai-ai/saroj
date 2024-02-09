@@ -22,6 +22,7 @@ import java.net.URLDecoder;
 import java.io.InputStreamReader;
 
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -68,8 +69,8 @@ public class Server {
     	
         System.out.println("Starting server on port "+port);
 		HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1",port),0);
-        server.createContext("/checkHealth", new CheckHealthHandler("logs"));
-        server.createContext("/process", new ProcessHandler("logs",rp));
+        server.createContext("/checkHealth", new CheckHealthHandler(null));
+        server.createContext("/process", new ProcessHandler(null,rp));
 
         server.start();
     }
@@ -197,11 +198,14 @@ public class Server {
                 String day=dateFormat.format(date);
                 dateFormat=new SimpleDateFormat("HHmmss");
                 String time=dateFormat.format(date);
-                String path=this.base_log_path+"/"+year+"/"+month;
-                File log_path=new File(path);
-                log_path.mkdirs();
 
-                PrintWriter outLog = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path+"/"+day+".log",true),StandardCharsets.UTF_8)));
+                PrintStream outLog = System.out; 
+                if(this.base_log_path!=null) {
+                    String path=this.base_log_path+"/"+year+"/"+month;
+                    File log_path=new File(path);
+                    log_path.mkdirs();
+                	outLog=new PrintStream(new FileOutputStream(path+"/"+day+".log",true),true,"UTF-8");
+                }
                 
                 /*if(FULL_LOG) {
                 	outLog.println(String.format("%s-%s-%s %s\t%s\t%s", year,month,day,time,ip,ex.getRequestURI().toString()));
@@ -228,7 +232,8 @@ public class Server {
 	                }
                 	outLog.println();
                 /*}*/
-                outLog.close();
+                	
+                if(this.base_log_path!=null) {outLog.close();}
                 
                 
                 // SEND REPLY
