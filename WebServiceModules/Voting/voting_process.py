@@ -60,6 +60,9 @@ def read_conll_file(file_path):
                 data.append(tokens)
             else:
                 lastEmpty=True
+
+    data.append([])
+
     return data
 
 
