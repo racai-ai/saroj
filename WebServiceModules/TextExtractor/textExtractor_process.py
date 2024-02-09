@@ -87,10 +87,6 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
 
             if len(w.strip()) == 0: continue
 
-            if token["sid"]!=sid:
-                conllup_text += "\n"
-                sid=token["sid"]
-
             if p[0]!=prev_token:
                 if prev_token>=0:
                     ptoken = all_tokens[prev_token]
@@ -115,6 +111,10 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                 prev_token=p[0]
             else:
                 token["end_offset"] = words[p[1]][2]
+
+            if token["sid"]!=sid:
+                conllup_text += "\n"
+                sid=token["sid"]
 
         if prev_token>0:
             ptoken = all_tokens[prev_token]
