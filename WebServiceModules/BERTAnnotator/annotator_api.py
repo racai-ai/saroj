@@ -11,6 +11,7 @@ from lib.saroj.conllu_utils import is_file_conllu
 app = Flask(__name__)
 tagger = None
 
+import sys, traceback
 
 @app.route('/process', methods=['POST', 'GET'])
 def annotate_conllu():
@@ -59,6 +60,7 @@ def annotate_conllu():
         ann.annotate(output_file)
         return jsonify({'status': 'OK', 'message': output_file})
     except Exception as e:
+        traceback.print_exc(file=sys.stdout)
         return jsonify({'status': 'ERROR', 'message': str(e)})
     # end try
 

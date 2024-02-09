@@ -1,6 +1,6 @@
 import argparse
 import os
-import sys
+import sys, traceback
 
 from flask import Flask, jsonify
 from textReconstruction_process import anonymize, read_conllup
@@ -45,6 +45,7 @@ def anonymize_docx():
             anonymize(conllup_data, original_docx_path, output_docx_path, args.SAVE_INTERNAL_FILES, input_type)
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             return jsonify({"status": "ERROR", "message": str(e)})
 
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})
