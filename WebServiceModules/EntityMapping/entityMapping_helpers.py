@@ -4,7 +4,10 @@ import re
 import shutil
 import string
 import tempfile
-
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from lib.saroj.dictionary_helper import read_replacement_dictionary
 from entityMapping_config import args
 
 NOT_FOUND = args.REPLACEMENT * 3
@@ -18,9 +21,14 @@ counters = {}
 # Global mappings for initials
 initials_mappings = {}
 
+REPLACEMENTS = read_replacement_dictionary(args.DICTIONARY)
 
 def get_random_X():
     return args.REPLACEMENT * random.randint(3, 10)
+
+
+def get_random_ner(ner):
+    return random.choice(REPLACEMENTS[ner])
 
 
 def hashtag_ner(ner_id_and_potential_suffix):
@@ -121,7 +129,7 @@ def handle_initials(ner_inst, name, mapping_file, config_dict):
 
     # Map each word to a random initial from the remaining available_chars
     initials = [initials_mappings.setdefault(word, random.choice(list(available_chars))
-                if available_chars else get_random_X()) for word in words]
+                if available_chars else random.choice(string.ascii_uppercase)) for word in words]
 
     initials = ' '.join(initials)
     return initials

@@ -79,7 +79,7 @@ def filter_neutral_valid_replacements(replacements):
 
     If valid replacements are found, one of them is randomly chosen and returned.
     If no valid replacements are found, a random replacement from the original list is returned.
-    If the original list of replacements is empty, a random value is generated using get_random_X().
+    If the original list of replacements is empty, a random value is generated.
     """
     filtered_replacements = [replacement for replacement in replacements
                              if not replacement.split()[FIRST_TOKEN].endswith('a')]
@@ -90,7 +90,7 @@ def filter_neutral_valid_replacements(replacements):
     if valid_replacements:
         return random.choice(valid_replacements)
 
-    return random.choice(replacements) if replacements else get_random_X()
+    return random.choice(replacements) if replacements else None
 
 
 def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
@@ -217,7 +217,7 @@ def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, 
         replacement = next((fname for fname in replacement_list), None)
 
     if replacement is None:
-        replacement = random.choice(replacement_dict[ner]) if replacement_dict[ner] else get_random_X()
+        replacement = random.choice(replacement_dict[ner]) if replacement_dict[ner] else get_random_ner(ner)
 
     old_rep = replacement
     # Modify the replacement with the suffix
@@ -247,6 +247,8 @@ def process_neutral_entity(ner_id_and_potential_suffix, replacement_dict, mappin
 
     replacements = replacement_dict[ner]
     replacement = filter_neutral_valid_replacements(replacements)
+    if replacement is None:
+        replacement = get_random_ner(ner)
 
     # Set the new value for columns
     old_rep = rep = insert_suffix_multiple_tokens(replacement, suffix)

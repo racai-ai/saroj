@@ -21,12 +21,13 @@ pip install -r requirements.txt
 ## How to Run  
 Run the script:  
 ```  
-python textExtractor_api.py PORT [--RUN_ANALYSIS] [--SAVE_INTERNAL_FILES] [--udpipe_model UDPipeModelPath]  
+python textExtractor_api.py PORT [--RUN_ANALYSIS] [--SAVE_INTERNAL_FILES] [--udpipe_model UDPipeModelPath] [--dtw]
 ```  
 * _PORT_ (required): The port number to listen for incoming API requests.  
 * _--RUN_ANALYSIS_ or -r (optional): Include this flag to enable text analysis using UDPipe. By default, text analysis is disabled.  
 * _--SAVE_INTERNAL_FILES_ or -s (optional): Include this flag to save internal files, which can be useful for debugging. By default, this option is disabled.  
 * _--udpipe_model_ (optional): Path to the UDPipe model file. If not _--RUN_ANALYSIS_ flag enable, UDPipe tokenization will be skipped.  
+* _--dtw_ (optional): Use DTW for mapping docx spans to tokens.
   
 ## Usage  
 Once the API is running, you can interact with the following endpoints:  

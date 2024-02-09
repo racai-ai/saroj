@@ -1,6 +1,6 @@
 import os
 import zipfile
-import re 
+from jellyfish import jaro_winkler_similarity
 
 import ufal.udpipe as ud
 from conllu import parse
@@ -9,6 +9,9 @@ from textExtractor_XMLParser import XMLParserWithPosition
 from textExtractor_config import args
 from textExtractor_helpers import *
 from xml.sax.saxutils import escape
+
+from fastdtw import fastdtw,dtw
+import Levenshtein
 
 def process_text_with_udpipe(udpipe_model, text):
     """
@@ -39,7 +42,7 @@ def process_text_with_udpipe(udpipe_model, text):
     return token_list, None
 
 
-def udpipe_token_to_conllup(token_list, words):
+def udpipe_token_to_conllup(token_list, words, use_dtw):
     """
     Convert a list of tokens to CONLL-U formatted text.
 
@@ -57,6 +60,83 @@ def udpipe_token_to_conllup(token_list, words):
         DEPS, MISC, START, END).
     """
 
+    if use_dtw:
+        words_t=[]
+        tokens_t=[]
+        all_tokens=[]
+
+        for w in words:
+            words_t.append(w[0])
+
+        sid=0
+        for sentence in token_list:
+            sid+=1
+            for token in sentence:
+                tokens_t.append(token["form"])
+                token["sid"]=sid;
+                all_tokens.append(token)
+
+        distance, path = dtw(tokens_t, words_t, dist=Levenshtein.distance)
+
+        conllup_text = ""
+        sid=1
+        prev_token = -1
+        for p in path:
+            token=all_tokens[p[0]]
+            w=words_t[p[1]]
+
+            if len(w.strip()) == 0: continue
+
+            if token["sid"]!=sid:
+                conllup_text += "\n"
+                sid=token["sid"]
+
+            if p[0]!=prev_token:
+                if prev_token>=0:
+                    ptoken = all_tokens[prev_token]
+                    token_info = [
+                        str(ptoken["id"]),
+                        ptoken["form"],
+                        ptoken["lemma"],
+                        format_none_value(ptoken["upos"]),
+                        format_none_value(ptoken["xpos"]),
+                        dict_to_string(ptoken["feats"]),
+                        format_none_value(str(ptoken["head"])),
+                        format_none_value(ptoken["deprel"]),
+                        format_none_value(ptoken["deps"]),
+                        dict_to_string(ptoken["misc"]),
+                        str(ptoken["start_offset"]),
+                        str(ptoken["end_offset"]),
+                    ]
+                    conllup_text += "\t".join(token_info) + "\n"
+
+                token["start_offset"] = words[p[1]][1]
+                token["end_offset"] = words[p[1]][2]
+                prev_token=p[0]
+            else:
+                token["end_offset"] = words[p[1]][2]
+
+        if prev_token>0:
+            ptoken = all_tokens[prev_token]
+            token_info = [
+                str(ptoken["id"]),
+                ptoken["form"],
+                ptoken["lemma"],
+                format_none_value(ptoken["upos"]),
+                format_none_value(ptoken["xpos"]),
+                dict_to_string(ptoken["feats"]),
+                format_none_value(str(ptoken["head"])),
+                format_none_value(ptoken["deprel"]),
+                format_none_value(ptoken["deps"]),
+                dict_to_string(ptoken["misc"]),
+                str(ptoken["start_offset"]),
+                str(ptoken["end_offset"]),
+            ]
+            conllup_text += "\t".join(token_info) + "\n"
+
+        return conllup_text
+
+    # if not DTW
     conllup_text = ""
     words_id = 0
     for sentence in token_list:
@@ -64,7 +144,8 @@ def udpipe_token_to_conllup(token_list, words):
             acc_count = 1
             acc = ""
             while words_id < len(words):
-                if token["form"] in words[words_id][0]:
+                score = jaro_winkler_similarity(token["form"], words[words_id][0])
+                if score > 0.7:  # Threshold chosen arbitrarily
                     start_offset = words[words_id][1]
                     end_offset = words[words_id][2]
                     break
@@ -104,7 +185,7 @@ def udpipe_token_to_conllup(token_list, words):
     return conllup_text
 
 
-def spacy_token_to_conllup(text, words):
+def spacy_token_to_conllup(text, words, use_dtw):
     """
      Convert a spaCy document to CONLL-U formatted text.
 
@@ -143,7 +224,8 @@ def spacy_token_to_conllup(text, words):
             acc_count = 1
             acc = ""
             while words_id < len(words):
-                if token.text in words[words_id][0]:
+                score = jaro_winkler_similarity(token.text, words[words_id][0])
+                if score > 0.7:  # Threshold chosen arbitrarily
                     start_offset = words[words_id][1]
                     end_offset = words[words_id][2]
                     break
@@ -223,7 +305,7 @@ def get_words_with_positions(docx_file, input_type):
     return XMLparser.words
 
 
-def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type):
+def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type, use_dtw):
     """
     Convert a .docx file to CONLL-U formatted text.
 
@@ -255,11 +337,11 @@ def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_ty
         token_list, error = process_text_with_udpipe(model, normalized_text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
-        conllup_text = udpipe_token_to_conllup(token_list, normalized_words)
+        conllup_text = udpipe_token_to_conllup(token_list, normalized_words, use_dtw)
     else:
          # Process the text using Spacy
         spacy_model_output = model(normalized_text)
-        conllup_text = spacy_token_to_conllup(spacy_model_output, normalized_words)
+        conllup_text = spacy_token_to_conllup(spacy_model_output, normalized_words, use_dtw)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:

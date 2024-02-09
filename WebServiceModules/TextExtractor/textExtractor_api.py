@@ -7,7 +7,7 @@ from textExtractor_helpers import allowed_file, create_replacement_regex
 from textExtractor_config import args
 
 import os
-import sys
+import sys, traceback
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.gunicorn import StandaloneApplication
 from lib.saroj.input_data import get_input_data
@@ -46,9 +46,10 @@ def convert_docx_to_conllu():
 
     if input_file:
         try:
-            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type)
+            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type, args.dtw)
             return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             return jsonify({"status": "ERROR", "message": str(e)})
 
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})
