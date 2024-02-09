@@ -63,10 +63,14 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
     if use_dtw:
         words_t=[]
         tokens_t=[]
+        words_map=[]
         all_tokens=[]
 
-        for w in words:
-            words_t.append(w[0])
+        for wi in range(0,len(words)):
+            w=words[wi][0]
+            if len(w.strip())>0:
+                words_t.append(w)
+                words_map.append(wi)
 
         sid=0
         for sentence in token_list:
@@ -76,16 +80,16 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                 token["sid"]=sid;
                 all_tokens.append(token)
 
-        distance, path = fastdtw(tokens_t, words_t, radius=100, dist=Levenshtein.distance)
+        distance, path = fastdtw(tokens_t, words_t, radius=5, dist=Levenshtein.distance)
 
         conllup_text = ""
         sid=1
         prev_token = -1
         for p in path:
             token=all_tokens[p[0]]
-            w=words_t[p[1]]
 
-            if len(w.strip()) == 0: continue
+            #w=words_t[p[1]]
+            #if len(w.strip()) == 0: continue
 
             if p[0]!=prev_token:
                 if prev_token>=0:
@@ -106,8 +110,8 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                     ]
                     conllup_text += "\t".join(token_info) + "\n"
 
-                token["start_offset"] = words[p[1]][1]
-                token["end_offset"] = words[p[1]][2]
+                token["start_offset"] = words[words_map[p[1]]][1]
+                token["end_offset"] = words[words_map[p[1]]][2]
                 prev_token=p[0]
 
                 if token["sid"]!=sid:
