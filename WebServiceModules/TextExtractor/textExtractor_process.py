@@ -1,6 +1,5 @@
 import os
 import zipfile
-from jellyfish import jaro_winkler_similarity
 
 import ufal.udpipe as ud
 from conllu import parse
@@ -10,8 +9,9 @@ from textExtractor_config import args
 from textExtractor_helpers import *
 from xml.sax.saxutils import escape
 
-from fastdtw import fastdtw,dtw
+from fastdtw import fastdtw
 import Levenshtein
+
 
 def process_text_with_udpipe(udpipe_model, text):
     """
@@ -143,29 +143,45 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
 
     # if not DTW
     conllup_text = ""
+    acc = ""
     words_id = 0
+    flag = False
     for sentence in token_list:
         for token in sentence:
             acc_count = 1
-            acc = ""
-            while words_id < len(words):
-                score = jaro_winkler_similarity(token["form"], words[words_id][0])
-                if score > 0.7:  # Threshold chosen arbitrarily
-                    start_offset = words[words_id][1]
-                    end_offset = words[words_id][2]
-                    break
-                else:
-                    acc += words[words_id][0]
+            # if the flag is True, the token is in the accumulator
+            if flag:
+                flag = False
+            else:
+                while words_id < len(words):
+                    word = words[words_id][0].strip()
+                    # if word is empty, skip it
+                    if not word:
+                        words_id += 1
+                        continue
+                    # if the token is in the word, get the start and end offset
+                    if token["form"] in word:
+                        start_offset = words[words_id][1]
+                        end_offset = words[words_id][2]
+                        acc = ""
+                        break
+                    # if the token is not in the word, add the word to the accumulator
+                    acc += word
+                    # if the token is in the accumulator, get the start and end offset based on the accumulator
                     if token["form"] in acc:
                         start_offset = words[words_id - acc_count + 1][1]
                         end_offset = words[words_id][2]
+                        # if there are still characters in the accumulator, remove the token from the accumulator
+                        acc = acc[len(token["form"]):]
+                        # if the accumulator is not empty, set the flag to True
+                        if acc:
+                            acc = ""
+                            flag = True
                         break
-                    elif acc.startswith(" ") or len(acc) == 0:
-                        acc_count -= 1
-                        acc = acc.strip()
+                    # if the token is not in the accumulator, increment the accumulator count and the words_id
                     acc_count += 1
+                    words_id += 1
                 words_id += 1
-            words_id += 1
             if end_offset < start_offset:
                 raise Exception("End position is smaller than start position for token " + token["form"])
 
@@ -222,30 +238,47 @@ def spacy_token_to_conllup(text, words, use_dtw):
     conllup_text = ""
     token_id = 1
     words_id = 0
+    acc = ""
+    flag = False
     for sentence in text.sents:
         for token in sentence:
-            if len(str(token).strip()) == 0:
+            # Skip empty tokens
+            if not str(token).strip():
                 continue
             acc_count = 1
-            acc = ""
-            while words_id < len(words):
-                score = jaro_winkler_similarity(token.text, words[words_id][0])
-                if score > 0.7:  # Threshold chosen arbitrarily
-                    start_offset = words[words_id][1]
-                    end_offset = words[words_id][2]
-                    break
-                else:
-                    acc += words[words_id][0]
+            # if the flag is True, the token is in the accumulator
+            if flag:
+                flag = False
+            else:
+                while words_id < len(words):
+                    word = words[words_id][0].strip()
+                    # if word is empty, skip it
+                    if not word:
+                        words_id += 1
+                        continue
+                    # if the token is in the word, get the start and end offset
+                    if token.text in word:
+                        start_offset = words[words_id][1]
+                        end_offset = words[words_id][2]
+                        acc = ""
+                        break
+                    # if the token is not in the word, add the word to the accumulator
+                    acc += word
+                    # if the token is in the accumulator, get the start and end offset based on the accumulator
                     if token.text in acc:
                         start_offset = words[words_id - acc_count + 1][1]
                         end_offset = words[words_id][2]
+                        # if there are still characters in the accumulator, remove the token from the accumulator
+                        acc = acc[len(token.text):]
+                        # if the accumulator is not empty, set the flag to True
+                        if acc:
+                            acc = ""
+                            flag = True
                         break
-                    elif acc.startswith(" ") or len(acc) == 0:
-                        acc_count -= 1
-                        acc = acc.strip()
+                    # if the token is not in the accumulator, increment the accumulator count and the words_id
                     acc_count += 1
+                    words_id += 1
                 words_id += 1
-            words_id += 1
             if end_offset < start_offset:
                 raise Exception("End position is smaller than start position token " + token.text)
             # Get the token's attributes
