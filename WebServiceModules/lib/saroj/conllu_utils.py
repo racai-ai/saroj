@@ -49,10 +49,12 @@ def is_file_conllu(input_file: str) -> bool:
 
     number_of_fields = 0
     previous_id = 0
+    lnum = 0
 
     with open(file=input_file, mode='r', encoding='utf-8', errors='ignore') as f:
         for line in f:
             line = line.strip()
+            lnum += 1
 
             if line and not line.startswith('#'):
                 parts = line.split('\t')
@@ -62,6 +64,7 @@ def is_file_conllu(input_file: str) -> bool:
                 elif number_of_fields != len(parts):
                     # A line with a different number of fields.
                     # CoNLL-U isn't valid.
+                    print("CONLLUP Error: different number of fields in line ",lnum)
                     return False
                 # end if
 
@@ -72,6 +75,7 @@ def is_file_conllu(input_file: str) -> bool:
                         if tid != 1:
                             # First ID in the sentence is not 1
                             # CoNLL-U isn't valid.
+                            print("CONLLUP Error: first id is not 1 in line ",lnum)
                             return False
                         else:
                             previous_id = 1
@@ -79,6 +83,7 @@ def is_file_conllu(input_file: str) -> bool:
                     elif previous_id + 1 != tid:
                         # IDs are not consecutive.
                         # CoNLL-U isn't valid.
+                        print("CONLLUP Error: ids not consecutive in line ",lnum)
                         return False
                     else:
                         previous_id = tid
@@ -86,6 +91,7 @@ def is_file_conllu(input_file: str) -> bool:
                 else:
                     # There is no ID as the first token of the line
                     # CoNLL-U isn't valid.
+                    print("CONLLUP Error: no ID as the first token in line ",lnum)
                     return False
                 # end if
             else:
