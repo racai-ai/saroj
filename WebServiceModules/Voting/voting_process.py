@@ -53,13 +53,13 @@ def read_conll_file(file_path):
         lastEmpty=False
         for line in file:
             tokens = line.strip().split('\t')
-            if len(tokens)!=1 or not lastEmpty:
+            if len(tokens)>1:
+                if lastEmpty:
+                    data.append([])
+                    lastEmpty=False
                 data.append(tokens)
-
-            if len(tokens)==1:
-                lastEmpty=True
             else:
-                lastEmpty=False
+                lastEmpty=True
     return data
 
 
