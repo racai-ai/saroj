@@ -74,7 +74,9 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
             start = int(row["START"])
             end = int(row["END"])
 
-            if input_type == "txt": start-=1; end-=1
+            if input_type == "txt": 
+                start-=1
+                end-=1
 
             anonym = row["ANONYMIZED"].encode("utf-8")
             len_form = len(row["FORM"].encode("utf-8"))
