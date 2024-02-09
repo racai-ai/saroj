@@ -151,7 +151,7 @@ def __dtw(x, y, window, dist):
 
 
 def __reduce_by_half(x):
-    return [(x[i] + x[1+i])  for i in range(0, len(x) - len(x) % 2, 2)]
+    return [ " ".join([x[i] , x[1+i]])  for i in range(0, len(x) - len(x) % 2, 2)]
 
 
 def __expand_window(path, len_x, len_y, radius):
