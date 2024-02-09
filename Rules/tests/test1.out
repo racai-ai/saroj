@@ -1,0 +1,19 @@
+1	Maria	Maria	PROPN	Np	_	_	_	_	_	557	563	B-PER
+2	maria@organizatie.com	maria@organizatie.com	PROPN	Np	_	_	_	_	_	557	563	_
+3	test	test	PROPN	Np	_	_	_	_	_	557	563	O
+4	Maria	Maria	PROPN	Np	_	_	_	_	_	557	563	B-PER
+5	test	test	PROPN	Np	_	_	_	_	_	557	563	O
+6	.	.	PUNCT	X	_	_	_	_	_	557	563	_
+
+20	executării	executare	NOUN	Ncfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	18	nmod	_	_	515	526	O
+21	silite	silit	ADJ	Afpfson	Case=Dat,Gen|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	20	amod	_	_	527	533	O
+22	formulată	formula	VERB	Vmp--sf	Gender=Fem|Number=Sing|VerbForm=Part	20	acl	_	_	534	544	O
+23	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	24	case	_	_	545	547	O
+24	petentul	petent	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	22	nmod:agent	_	_	548	556	O
+25	BIROUL	Biroul	PROPN	Np	_	24	nmod	_	_	557	563	B-ORG
+26	EXECUTORULUI	EXECUTORULUI	PROPN	Np	_	25	flat	_	_	564	576	I-ORG
+27	JUDECĂTORESC	JUDECĂTORESC	PROPN	Np	_	25	flat	_	_	577	590	I-ORG
+28	TĂNASE	TĂNASE	PROPN	Np	_	25	flat	_	_	591	598	I-ORG
+29	MARIAN	MARIAN	PROPN	Np	_	25	flat	_	_	599	605	I-ORG
+30	TRAIAN	Traian	PROPN	Np	_	25	flat	_	SpaceAfter=No	606	612	I-ORG
+31	.	.	PUNCT	PERIOD	_	14	punct	_	_	612	613	O
