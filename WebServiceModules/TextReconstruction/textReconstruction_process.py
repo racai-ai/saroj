@@ -52,6 +52,7 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
     # Create a unique temporary file to extract the DOCX content
     temp_file_path = tempfile.mkdtemp(dir='.')
     delta_t = 0
+    prev_start = -1
     try:
         if input_type == "docx":
             # Extract the DOCX file
@@ -74,12 +75,17 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
             start = int(row["START"])
             end = int(row["END"])
 
+            # Skip the current row if its start offset is not bigger than the previous one
+            # keep the previous anonymization for this position
+            if start <= prev_start:
+                continue
+            prev_start = start
+
             if input_type == "txt": 
                 start-=1
                 end-=1
 
             anonym = row["ANONYMIZED"].encode("utf-8")
-            len_form = len(row["FORM"].encode("utf-8"))
 
             if anonym == "!DELETE!".encode("utf-8"):
                 docx_content = docx_content[:start + delta_t] + docx_content[end + delta_t:]
@@ -89,7 +95,7 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
                 docx_content = docx_content[:start + delta_t] + anonym + docx_content[end + delta_t:]
 
             if len(anonym) >= end - start:
-                delta_t += len(anonym) - len_form
+                delta_t += len(anonym) - (end - start)
             else:
                 delta_t -= end - start - len(anonym)
 
