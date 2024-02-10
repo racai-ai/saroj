@@ -1,5 +1,5 @@
 import xml.parsers.expat as expat
-
+import html
 
 class XMLParserWithPosition:
     """
@@ -40,8 +40,12 @@ class XMLParserWithPosition:
             self.words.append((" ", 0, 0))
         if name == "w:t":
             cursor = 0
+            # escape the text to avoid problems with special characters, only  & is escaped, 
+            # in future maybe we need to escape more characters
+            escaped_text_span = self.current_text_span.replace('&', '&amp;')
+            # get words without escaping because we need to find them in the original text
             words = self.find_words(self.current_text_span)
-            position = self.parser.CurrentByteIndex - len(self.current_text_span.encode())
+            position = self.parser.CurrentByteIndex - len(escaped_text_span.encode())
             for word in words:
                 self.words.append((word, position + cursor, position + cursor + len(word.encode())))
                 cursor += self.current_text_span.encode()[cursor:].find(word.encode()) + len(word.encode())
@@ -49,9 +53,7 @@ class XMLParserWithPosition:
             self.current_text_span = ""
 
     def char_data(self, data):
-
-        if not self.current_text_span:
-            self.current_text_span += data
+        self.current_text_span += data
 
     def find_words(self, text):
         segments = []
