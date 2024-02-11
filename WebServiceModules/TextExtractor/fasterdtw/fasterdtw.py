@@ -10,11 +10,11 @@ def fastdtw(x, y, radius=5, dist=None):
 
     if len(y)==0:
         print("fasterdtw: Warning: len(y)=0; cannot make mappings")
-        return path
+        return (0,path)
 
     if len(x)==0:
         print("fasterdtw: Warning: len(x)=0; cannot make mappings")
-        return path
+        return (0,path)
 
 
     while xpos<len(x):
@@ -44,4 +44,5 @@ def fastdtw(x, y, radius=5, dist=None):
                 path.append([xpos,ypos])
                 xpos+=1
                 if ypos<len(y)-1: ypos+=1
-    return path
+
+    return (0,path)
