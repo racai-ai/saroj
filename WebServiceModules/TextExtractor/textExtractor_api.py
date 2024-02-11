@@ -46,7 +46,7 @@ def convert_docx_to_conllu():
 
     if input_file:
         try:
-            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type, args.dtw)
+            docx_to_conllup(token_model, input_file, output_file, regex, replacements, input_type, args.dtw, args.align2)
             return jsonify({"status": "OK", "message": output_file})
         except Exception as e:
             traceback.print_exc(file=sys.stdout)

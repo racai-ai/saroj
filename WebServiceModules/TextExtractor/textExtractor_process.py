@@ -42,7 +42,7 @@ def process_text_with_udpipe(udpipe_model, text):
     return token_list, None
 
 
-def udpipe_token_to_conllup(token_list, words, use_dtw):
+def udpipe_token_to_conllup(token_list, words, use_dtw, use_align2):
     """
     Convert a list of tokens to CONLL-U formatted text.
 
@@ -60,6 +60,94 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
         DEPS, MISC, START, END).
     """
 
+    if use_align2:
+        words_t=[]
+        last_end=-1
+        last_start=-1
+        last_w=""
+        for w in words:
+            if w[1]==w[2] or len(w[0].strip())==0: continue
+
+            if last_end==-1:
+                last_w=w[0]
+                last_start=w[1]
+                last_end=w[2]
+            elif last_end==w[1]:
+                last_w+=w[0]
+                last_end=w[2]
+            else:
+                words_t.append([last_w,last_start,last_end])
+                last_w=w[0]
+                last_start=w[1]
+                last_end=w[2]
+        
+        words_t.append([last_w,last_start,last_end])
+        
+        for w in words_t: print(w)
+
+        conllup_text=""
+        segment=0
+        segment_pos=0
+        for sentence in token_list:
+            for token in sentence:
+                #print("START",token["form"])
+                #print("seg=",segment,"pos=",segment_pos)
+                t=token["form"]
+                ind=words_t[segment][0].find(t,segment_pos)
+                if ind>=0:
+                    segment_pos=ind
+                    token["start"]=words_t[segment][1]+segment_pos
+                    segment_pos+=len(t)
+                    token["end"]=words_t[segment][1]+segment_pos
+                else:
+                    #print("Not found in segment:",words_t[segment])
+                    segment+=1
+                    segment_pos=0
+                    ind=words_t[segment][0].find(t,segment_pos)
+                    if ind>=0:
+                        segment_pos=ind
+                        token["start"]=words_t[segment][1]+segment_pos
+                        segment_pos+=len(t)
+                        token["end"]=words_t[segment][1]+segment_pos
+                    elif t.startswith(words_t[segment][0]):
+                        #print("TOKEN OVER 2 SEGMENTS:",t,words_t[segment])
+                        token["start"]=words_t[segment][1]
+                        token["end"]=words_t[segment][2]
+                        st=words_t[segment][0]
+                        segment_pos=0
+                        while t.startswith(st):
+                            segment+=1
+                            st+=words_t[segment][0]
+                    else:
+                        print("MATCH NOT FOUND!!!!!")
+                        print("token=",token)
+                        print("seg=",segment,"seg_pos=",segment_pos)
+                        print("segment=",words_t[segment])
+                        token["start"]=0
+                        token["end"]=0
+                        #sys.exit(-1)
+
+                token_info = [
+                    str(token["id"]),
+                    token["form"],
+                    token["lemma"],
+                    format_none_value(token["upos"]),
+                    format_none_value(token["xpos"]),
+                    dict_to_string(token["feats"]),
+                    format_none_value(str(token["head"])),
+                    format_none_value(token["deprel"]),
+                    format_none_value(token["deps"]),
+                    dict_to_string(token["misc"]),
+                    str(token["start"]),
+                    str(token["end"]),
+                ]
+                conllup_text += "\t".join(token_info) + "\n"
+                #print("seg=",segment,"pos=",segment_pos)
+
+            conllup_text+="\n"
+
+        return conllup_text
+
     if use_dtw:
         words_t=[]
         tokens_t=[]
@@ -67,8 +155,8 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
         all_tokens=[]
 
         for wi in range(0,len(words)):
-            w=words[wi][0]
-            if len(w.strip())>0:
+            w=words[wi][0].strip()
+            if len(w)>0:
                 words_t.append(w)
                 words_map.append(wi)
 
@@ -80,7 +168,7 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
                 token["sid"]=sid;
                 all_tokens.append(token)
 
-        distance, path = fastdtw(tokens_t, words_t, radius=5, dist=Levenshtein.distance)
+        distance, path = fastdtw(tokens_t, words_t, radius=100, dist=Levenshtein.distance)
 
         conllup_text = ""
         sid=1
@@ -205,7 +293,7 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
     return conllup_text
 
 
-def spacy_token_to_conllup(text, words, use_dtw):
+def spacy_token_to_conllup(text, words, use_dtw, use_align2):
     """
      Convert a spaCy document to CONLL-U formatted text.
 
@@ -342,7 +430,7 @@ def get_words_with_positions(docx_file, input_type):
     return XMLparser.words
 
 
-def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type, use_dtw):
+def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_type, use_dtw, use_align2):
     """
     Convert a .docx file to CONLL-U formatted text.
 
@@ -374,11 +462,11 @@ def docx_to_conllup(model, docx_file, output_file, regex, replacements, input_ty
         token_list, error = process_text_with_udpipe(model, normalized_text)
         if error:
             raise Exception("Error occurred while processing text with UDPipe.")
-        conllup_text = udpipe_token_to_conllup(token_list, normalized_words, use_dtw)
+        conllup_text = udpipe_token_to_conllup(token_list, normalized_words, use_dtw, use_align2)
     else:
          # Process the text using Spacy
         spacy_model_output = model(normalized_text)
-        conllup_text = spacy_token_to_conllup(spacy_model_output, normalized_words, use_dtw)
+        conllup_text = spacy_token_to_conllup(spacy_model_output, normalized_words, use_dtw, use_align2)
 
     # Save the CONLL-U formatted text to the output file
     with open(output_file, "w", encoding="utf-8") as f:
