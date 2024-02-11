@@ -98,7 +98,7 @@ def udpipe_token_to_conllup(token_list, words, use_dtw, use_align2):
                     segment_pos=ind
                     token["start"]=words_t[segment][1]+segment_pos
                     segment_pos+=len(t)
-                    token["end"]=words_t[segment][1]+segment_pos+1
+                    token["end"]=words_t[segment][1]+segment_pos
                 else:
                     #print("Not found in segment:",words_t[segment])
                     segment+=1
@@ -108,7 +108,7 @@ def udpipe_token_to_conllup(token_list, words, use_dtw, use_align2):
                         segment_pos=ind
                         token["start"]=words_t[segment][1]+segment_pos
                         segment_pos+=len(t)
-                        token["end"]=words_t[segment][1]+segment_pos+1
+                        token["end"]=words_t[segment][1]+segment_pos
                     elif t.startswith(words_t[segment][0]):
                         #print("TOKEN OVER 2 SEGMENTS:",t,words_t[segment])
                         token["start"]=words_t[segment][1]
