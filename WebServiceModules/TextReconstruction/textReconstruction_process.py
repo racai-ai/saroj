@@ -81,9 +81,9 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
                 continue
             prev_start = start
 
-            if input_type == "txt": 
-                start-=1
-                end-=1
+            #if input_type == "txt": 
+            #    start-=1
+            #    end-=1
 
             anonym = row["ANONYMIZED"].encode("utf-8")
 
