@@ -155,31 +155,30 @@ def udpipe_token_to_conllup(token_list, words, use_dtw):
             else:
                 while words_id < len(words):
                     word = words[words_id][0].strip()
-                    # if word is empty, skip it
-                    if not word:
-                        words_id += 1
-                        continue
-                    # if the token is in the word, get the start and end offset
-                    if token["form"] in word:
+                    if token["form"] == word:
                         start_offset = words[words_id][1]
                         end_offset = words[words_id][2]
                         acc = ""
                         break
                     # if the token is not in the word, add the word to the accumulator
-                    acc += word
+                    else:
+                        acc += words[words_id][0]
                     # if the token is in the accumulator, get the start and end offset based on the accumulator
-                    if token["form"] in acc:
-                        start_offset = words[words_id - acc_count + 1][1]
-                        end_offset = words[words_id][2]
-                        # if there are still characters in the accumulator, remove the token from the accumulator
-                        acc = acc[len(token["form"]):]
-                        # if the accumulator is not empty, set the flag to True
-                        if acc:
-                            acc = ""
-                            flag = True
-                        break
-                    # if the token is not in the accumulator, increment the accumulator count and the words_id
-                    acc_count += 1
+                        if token["form"] in acc:
+                            start_offset = words[words_id - acc_count + 1][1]
+                            end_offset = words[words_id][2]
+                            # if there are still characters in the accumulator, remove the token from the accumulator
+                            acc = acc[len(token["form"]):]
+                            # if the accumulator is not empty, set the flag to True
+                            if acc:
+                                acc = ""
+                                flag = True
+                            break
+                        elif acc.startswith(" ") or len(acc) == 0:
+                            acc_count -= 1
+                            acc = acc.strip()
+                        acc_count += 1
+                        # if the token is not in the accumulator, increment the accumulator count and the words_id
                     words_id += 1
                 words_id += 1
             if end_offset < start_offset:
