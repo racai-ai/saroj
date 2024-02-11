@@ -36,7 +36,9 @@ def load_dictionary_with_max_token_count(dictionary_path):
             parts = line.strip().split('\t')
             if len(parts) == 2:
                 entity_type, entity_name = parts
-                dictionary[entity_name] = entity_type
+                # Add the entity name and type to the dictionary,
+                # lowercasing the entity name to ensure case-insensitive matching
+                dictionary[entity_name.lower()] = entity_type
                 # Calculate the maximum token count
                 token_count = len(entity_name.split())
                 # Check if the current entity name has more tokens than the current maximum
@@ -62,15 +64,16 @@ def test_subsequences(tokens, trie_root):
     results = ()
 
     cleaned_tokens = [token for token in tokens if token != "-"]
-    sorted_tokens = sorted(cleaned_tokens, key=custom_sort)
-    for position in range(len(cleaned_tokens), 0, -1):
+    sorted_tokens = sorted((token.lower() for token in cleaned_tokens), key=custom_sort)
+    
+    for _ in range(len(cleaned_tokens), 0, -1):
         found, ner = find_in_trie(trie_root, sorted_tokens)
 
         if found:
             results = (' '.join(cleaned_tokens), ner)
             break
         remove_token = cleaned_tokens.pop()
-        sorted_tokens.remove(remove_token)
+        sorted_tokens.remove(remove_token.lower())
 
     return results
 
