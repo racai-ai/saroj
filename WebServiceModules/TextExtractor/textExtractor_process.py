@@ -9,7 +9,7 @@ from textExtractor_config import args
 from textExtractor_helpers import *
 from xml.sax.saxutils import escape
 
-from fastdtw import fastdtw
+from fasterdtw import fastdtw
 import Levenshtein
 
 
