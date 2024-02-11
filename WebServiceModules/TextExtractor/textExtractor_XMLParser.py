@@ -40,16 +40,16 @@ class XMLParserWithPosition:
             self.words.append((" ", 0, 0))
         if name == "w:t":
             cursor = 0
-            # escape the text to avoid problems with special characters, only  & is escaped, 
-            # in future maybe we need to escape more characters
-            escaped_text_span = self.current_text_span.replace('&', '&amp;')
+            # escape text span to get the correct length of the text, because the text can contain special characters
+            # dont escape quotes as they have unicode representation in XML, not like & or <,>
+            escaped_text_span = html.escape(self.current_text_span, quote=False)
             # get words without escaping because we need to find them in the original text
             words = self.find_words(self.current_text_span)
             position = self.parser.CurrentByteIndex - len(escaped_text_span.encode())
             for word in words:
-                self.words.append((word, position + cursor, position + cursor + len(word.encode())))
-                cursor += self.current_text_span.encode()[cursor:].find(word.encode()) + len(word.encode())
-
+                escaped_word = html.escape(word, quote=False).encode()
+                self.words.append((word, position + cursor, position + cursor + len(escaped_word)))
+                cursor += escaped_text_span.encode()[cursor:].find(escaped_word) + len(escaped_word)
             self.current_text_span = ""
 
     def char_data(self, data):
