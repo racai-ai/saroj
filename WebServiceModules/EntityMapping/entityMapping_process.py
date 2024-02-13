@@ -322,6 +322,7 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts):
         replacement = case_func(ner, lemma, mapping_file, config_dict)
         extra_initials = counter_inst != 1
         update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
+        replacement += ner_config.get('extra_info', '')
     else:
         replacement = case_func(ner_id_and_potential_suffix, token_tpl, replacement_dict, mapping_file)
 
