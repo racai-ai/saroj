@@ -137,7 +137,7 @@ def already_mapped_I_inst(replacement):
         return DELETE_MARK
 
 
-def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_potential_suffix):
+def process_already_mapped_replacement(replacement, ner_inst, type_ner, ner_id_and_potential_suffix):
     """
     Process a replacement based on NER instance and potential suffix.
 
@@ -150,6 +150,11 @@ def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_p
         str: The processed replacement.
     """
 
+    type = "character"
+    if type_ner is not None: type=type_ner.get("type")
+
+    if type=="initials": replacement = replacement.replace(" ",type_ner.get("extra_info","")+" ") + type_ner.get("extra_info","")
+
     if ner_inst.startswith("I-"):
         return already_mapped_I_inst(replacement)
 
@@ -158,6 +163,7 @@ def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_p
                   type == "dictionary"]
     if all(conditions):
         return process_suffix_tokens(replacement, ner_id_and_potential_suffix)
+
 
     replacement_tokens = replacement.split()
     fallthrough_conditions = [len(replacement_tokens) > 1 and counter_inst == 1,
@@ -410,6 +416,7 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
 
             # If a replacement was found, process it and write it to the output file
             if replacement and not extra_initials:
+                ner, _ = get_ner_and_suffix(ner_id_and_potential_suffix)
                 replacement = process_already_mapped_replacement(replacement, ner_inst, dicts["config"].get(ner),
                                                                  ner_id_and_potential_suffix)
             else:
