@@ -50,6 +50,9 @@ class NERProcessor:
             self.output_file.write('\t'.join(fields) + '\n')
 
         if self.last_line:
+            match_tpl = next((t for t in self.mapped_tokens if t[0] == " ".join(self.search)), None)
+            if match_tpl is not None:
+                _, self.new_ner_id = match_tpl
             self.acc_write()
 
     def acc_write(self):
