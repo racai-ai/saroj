@@ -32,7 +32,8 @@ RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
 RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn
 
 # Setup Java
-RUN apt-get install -y default-jre
+#RUN apt-get install -y default-jre
+RUN apt-get install -y openjdk-17-jre-headless
 COPY --from=intermediate /saroj/Rules/ /Rules/
 
 # Setup site
