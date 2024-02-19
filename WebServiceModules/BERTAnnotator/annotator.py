@@ -589,6 +589,22 @@ class BERTEntityTagger(object):
                 f'  -> average epoch {epoch} loss: {average_epoch_loss:.5f}', file=sys.stderr, flush=True)
         # end if
 
+    def test_eval(self, test_folders: list[str]) -> None:
+        annotated_examples = {}
+
+        for folder in test_folders:
+            read_txt_ann_folder(ann_folder=folder,
+                                annotations=annotated_examples)
+        # end for
+
+        test_examples = self.prepare_train_dev_data(
+            examples=annotated_examples)
+        test_dataloader = DataLoader(
+            dataset=NERDataset(examples=test_examples),
+            batch_size=BERTEntityTagger._conf_batch_size, shuffle=False, collate_fn=self._ner_collate_fn)
+        
+        self.eval(dataloader=test_dataloader)
+
 
 class NeuralAnnotator(CoNLLUFileAnnotator):
     def __init__(self, input_file: str, tagger: BERTEntityTagger):
@@ -600,26 +616,34 @@ class NeuralAnnotator(CoNLLUFileAnnotator):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print('Usage: python3 annotator.py <BERT checkpoint folder> <folder with .txt,.ann sub-folders>',
+    if len(sys.argv) != 4:
+        print('Usage: python3 annotator.py -train <BERT checkpoint folder> <folder with .txt,.ann sub-folders>',
+              file=sys.stderr, flush=True)
+        print('Usage: python3 annotator.py -test <BERTAnnotator model folder> <folder with .txt,.ann sub-folders>',
+              file=sys.stderr, flush=True)
+        exit(1)
+    # end if
+    
+    bert_checkpoint_folder = ''
+    ner_model_folder = ''
+
+    if sys.argv[1] == '-train':
+        bert_checkpoint_folder = sys.argv[2]
+    elif sys.argv[1] == '-test':
+        ner_model_folder = sys.argv[2]
+    else:
+        print('Usage: python3 annotator.py -train <BERT checkpoint folder> <folder with .txt,.ann sub-folders>',
+              file=sys.stderr, flush=True)
+        print('Usage: python3 annotator.py -test <BERTAnnotator model folder> <folder with .txt,.ann sub-folders>',
               file=sys.stderr, flush=True)
         exit(1)
     # end if
 
-    nann = BERTEntityTagger(seq_len=256)
-    bert_checkpoint_folder = sys.argv[1]
-
-    if os.path.isdir(bert_checkpoint_folder):
-        print(f'Fine-tuning checkpoint [{bert_checkpoint_folder}]', file=sys.stderr, flush=True)
-    else:
-        print(f'Error: BERT checkpoint [{bert_checkpoint_folder}] is not a folder', file=sys.stderr, flush=True)
-        exit(1)
-    # end if
-
+    data_folder = sys.argv[3]
     input_folders = []
 
-    for txtann_folder in os.listdir(sys.argv[2]):
-        txtann_folder = os.path.join(sys.argv[2], txtann_folder)
+    for txtann_folder in os.listdir(data_folder):
+        txtann_folder = os.path.join(data_folder, txtann_folder)
 
         if os.path.isdir(txtann_folder):
             print(
@@ -634,6 +658,21 @@ if __name__ == '__main__':
         exit(1)
     # end if
 
-    nann.train(
-        train_folders=input_folders,
-        bert_checkpoint=bert_checkpoint_folder, epochs=5)
+    nann = BERTEntityTagger(seq_len=256)
+
+    if bert_checkpoint_folder:
+        if os.path.isdir(bert_checkpoint_folder):
+            print(f'Fine-tuning checkpoint [{bert_checkpoint_folder}]', file=sys.stderr, flush=True)
+        else:
+            print(f'Error: BERT checkpoint [{bert_checkpoint_folder}] is not a folder', file=sys.stderr, flush=True)
+            exit(1)
+        # end if
+
+        nann.train(
+            train_folders=input_folders,
+            bert_checkpoint=bert_checkpoint_folder, epochs=5)
+    else:
+        # We know that ner_model_folder is set here
+        nann.load(model_folder=ner_model_folder)
+        nann.test_eval(test_folders=input_folders)
+    # end if
