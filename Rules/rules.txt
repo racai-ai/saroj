@@ -1,0 +1,30 @@
+The rules are expressed as json objects.
+Each rule contains one or more RuleCond objects.
+
+Main file:
+max_sequence_length = maximum number of tokens for rule application
+rules = array of Rule objects 
+
+Rule fields:
+name = the name of the rule
+conditions = array of RuleCond conditions; the conditions will be applied sequentially on a sequence of tokens
+
+
+RuleCond fields:
+
+min = minimum number of matching tokens (default=1)
+max = maximum number of matching tokens (default=9999)
+
+form = regex for matching against the form
+formMatchCased = true if matching is done case sensitive
+
+formFirstLetter = 0 doesn't matter (default), 1 = capital, 2 = lowercase
+
+formAllLetters = 0 doesn't matter (default), 1 = all capital, 2 = lowercase 
+
+lemma = regex for matching against the lemma
+lemmaMatchCased = true if matching is done case sensitive
+
+ner = ner type (without B-/I-)
+
+ann = annotation to apply

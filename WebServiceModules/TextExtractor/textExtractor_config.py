@@ -9,6 +9,8 @@ def parse_command_line_args():
     parser.add_argument('--SAVE_INTERNAL_FILES', '-s', action='store_true',
                         help='if present, will save internal files, useful for debugging')
     parser.add_argument("--udpipe_model", type=str, help="Path to the UDPipe model file.")
+    parser.add_argument("--dtw", '-d', action='store_true', help="Use DTW for token matching.")
+    parser.add_argument("--align2", '-a2', action='store_true', help="Use text alignment 2 for token matching.")
     return parser.parse_args()
 
 

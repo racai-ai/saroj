@@ -10,6 +10,8 @@ from lib.saroj.conllu_utils import is_file_conllu
 from lib.saroj.dictionary_helper import read_replacement_dictionary, count_instances_in_dict
 from lib.saroj.gunicorn import StandaloneApplication
 
+import sys, traceback
+
 app = Flask(__name__)
 
 
@@ -60,6 +62,7 @@ def anonymize_conllup():
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             return jsonify({"status": "ERROR", "message": str(e)})
 
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})

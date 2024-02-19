@@ -313,4 +313,5 @@ def process_and_update_ner_tags(input_path, output_path, entity_mapping, tokens)
 
         # Process the last line (if any) after the loop
         if current_line is not None:
+            ner_processor.last_line = True
             process_line(current_line, next_line, ner_processor)

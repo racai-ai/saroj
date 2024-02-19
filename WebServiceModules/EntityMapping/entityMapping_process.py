@@ -79,7 +79,7 @@ def filter_neutral_valid_replacements(replacements):
 
     If valid replacements are found, one of them is randomly chosen and returned.
     If no valid replacements are found, a random replacement from the original list is returned.
-    If the original list of replacements is empty, a random value is generated using get_random_X().
+    If the original list of replacements is empty, a random value is generated.
     """
     filtered_replacements = [replacement for replacement in replacements
                              if not replacement.split()[FIRST_TOKEN].endswith('a')]
@@ -90,7 +90,7 @@ def filter_neutral_valid_replacements(replacements):
     if valid_replacements:
         return random.choice(valid_replacements)
 
-    return random.choice(replacements) if replacements else get_random_X()
+    return random.choice(replacements) if replacements else None
 
 
 def process_suffix_tokens(replacement, ner_id_and_potential_suffix):
@@ -137,25 +137,36 @@ def already_mapped_I_inst(replacement):
         return DELETE_MARK
 
 
-def process_already_mapped_replacement(replacement, ner_inst, type, ner_id_and_potential_suffix):
+def process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix, config_dict):
     """
-    Process a replacement based on NER instance and potential suffix.
+    Process a replacement string based on a Named Entity Recognition (NER) instance and a potential suffix.
+
+    This function modifies the replacement string based on the type of the NER instance. If the type is "initials",
+    it adds extra information after each token in the replacement string.
 
     Args:
-        replacement (str): The original replacement.
+        replacement (str): The original replacement string.
         ner_inst (str): The NER instance.
         ner_id_and_potential_suffix (str): The NER identifier and potential suffix.
+        config_dict (dict): A dictionary containing configuration information.
 
     Returns:
-        str: The processed replacement.
+        str: The processed replacement string.
     """
+    ner, _ = get_ner_and_suffix(ner_id_and_potential_suffix)
+    ner_config = config_dict.get(ner, {})
+
+    entity_type, extra_info = ner_config.get("type", ""), ner_config.get("extra_info", "")
+
+    if entity_type == "initials":
+        replacement = ' '.join([token + extra_info for token in replacement.split()])
 
     if ner_inst.startswith("I-"):
         return already_mapped_I_inst(replacement)
 
     conditions = ["_" in ner_id_and_potential_suffix,
                   NOT_FOUND not in replacement,
-                  type == "dictionary"]
+                  entity_type == "dictionary"]
     if all(conditions):
         return process_suffix_tokens(replacement, ner_id_and_potential_suffix)
 
@@ -217,7 +228,7 @@ def process_female_entity(lemma, ner_id_and_potential_suffix, replacement_dict, 
         replacement = next((fname for fname in replacement_list), None)
 
     if replacement is None:
-        replacement = random.choice(replacement_dict[ner]) if replacement_dict[ner] else get_random_X()
+        replacement = random.choice(replacement_dict[ner]) if replacement_dict[ner] else get_random_ner(ner)
 
     old_rep = replacement
     # Modify the replacement with the suffix
@@ -247,6 +258,8 @@ def process_neutral_entity(ner_id_and_potential_suffix, replacement_dict, mappin
 
     replacements = replacement_dict[ner]
     replacement = filter_neutral_valid_replacements(replacements)
+    if replacement is None:
+        replacement = get_random_ner(ner)
 
     # Set the new value for columns
     old_rep = rep = insert_suffix_multiple_tokens(replacement, suffix)
@@ -291,11 +304,12 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts):
 
     This function processes a named entity based on the information in `token_tpl` and `ner_id_and_potential_suffix`.
     It uses the `mapping_file` to update the mappings as it processes each entity, and the `dicts` dictionary to 
-    specify additional configuration and replacement options. The function returns the processed replacement for the entity.
+    specify additional configuration and replacement options. The function returns the processed replacement for the
+    entity.
     """
     global extra_initials
     ner, _ = get_ner_and_suffix(ner_id_and_potential_suffix)
-    ner_inst, lemma = token_tpl
+    _, lemma = token_tpl
     replacement_dict = dicts["replacement"]
     config_dict = dicts["config"]
 
@@ -320,6 +334,7 @@ def process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts):
         replacement = case_func(ner, lemma, mapping_file, config_dict)
         extra_initials = counter_inst != 1
         update_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix), replacement)
+        replacement += ner_config.get('extra_info', '')
     else:
         replacement = case_func(ner_id_and_potential_suffix, token_tpl, replacement_dict, mapping_file)
 
@@ -383,7 +398,8 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
     counter_inst_list = count_inst_entities(input_file)
 
     # Open the input and output files
-    with open(input_file, 'r', encoding="utf-8", errors="ignore") as input_f, open(output_file, 'w', encoding="utf-8") as output_f:
+    with open(input_file, 'r', encoding="utf-8", errors="ignore") as input_f, open(output_file, 'w',
+                                                                                   encoding="utf-8") as output_f:
         # Process each line in the input file
         for line in input_f:
             # Preprocess the line to extract the columns and token information
@@ -400,15 +416,14 @@ def anonymize_entities(input_file, output_file, mapping_file, dicts):
             # Extract the NER ID and potential suffix, and the NER instance from the token information
             ner_id_and_potential_suffix, token_tpl = token_info
             ner_inst = token_tpl[FIRST_TOKEN]
-            ner = token_tpl[SECOND_TOKEN]
 
             # Search for a replacement for the NER ID in the mapping file
             replacement = search_mapping_file(mapping_file, hashtag_ner(ner_id_and_potential_suffix))
 
             # If a replacement was found, process it and write it to the output file
             if replacement and not extra_initials:
-                replacement = process_already_mapped_replacement(replacement, ner_inst, dicts["config"].get(ner),
-                                                                 ner_id_and_potential_suffix)
+                replacement = process_already_mapped_replacement(replacement, ner_inst, ner_id_and_potential_suffix,
+                                                                 dicts["config"])
             else:
                 replacement = process_entity(token_tpl, ner_id_and_potential_suffix, mapping_file, dicts)
 

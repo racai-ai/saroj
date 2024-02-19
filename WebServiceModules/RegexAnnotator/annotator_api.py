@@ -1,5 +1,5 @@
 import os
-import sys
+import sys, traceback
 import argparse
 from flask import Flask, jsonify
 from annotator import RegExAnnotator
@@ -49,6 +49,7 @@ def annotate_conllu():
         ann.annotate(output_file)
         return jsonify({'status': 'OK', 'message': output_file})
     except Exception as e:
+        traceback.print_exc(file=sys.stdout)
         return jsonify({'status': 'ERROR', 'message': str(e)})
     # end try
 

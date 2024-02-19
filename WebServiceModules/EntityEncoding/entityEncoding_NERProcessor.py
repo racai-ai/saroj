@@ -9,6 +9,7 @@ class NERProcessor:
         self.search = []
         self.acc = []
         self.sfxs = []
+        self.last_line = False
 
     def process_comment_or_empty_line(self, current_line):
         if current_line.startswith("#") or not current_line.strip():
@@ -42,16 +43,23 @@ class NERProcessor:
             if match_tpl is not None:
                 _, self.new_ner_id = match_tpl
                 self.search.clear()
-
-                if self.acc:
-                    self.update_accumulated_entities()
-                    self.acc.clear()
-                    self.sfxs.clear()
+                self.acc_write()
 
             if ner_tag != "_":
                 fields.append(f"{self.new_ner_id}{sfx}")
-
             self.output_file.write('\t'.join(fields) + '\n')
+
+        if self.last_line:
+            match_tpl = next((t for t in self.mapped_tokens if t[0] == " ".join(self.search)), None)
+            if match_tpl is not None:
+                _, self.new_ner_id = match_tpl
+            self.acc_write()
+
+    def acc_write(self):
+        if self.acc:
+            self.update_accumulated_entities()
+            self.acc.clear()
+            self.sfxs.clear()
 
     def update_accumulated_entities(self):
         for acc_item, sfx in zip(self.acc, self.sfxs):

@@ -1,5 +1,5 @@
 import os
-import sys
+import sys, traceback
 from flask import Flask, jsonify
 
 from voting_config import *
@@ -59,6 +59,7 @@ def anonymize_conllup():
 
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             return jsonify({"status": "ERROR", "message": str(e)})
 
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})

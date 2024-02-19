@@ -1,6 +1,6 @@
 import argparse
 import os
-import sys
+import sys, traceback
 
 from flask import Flask, jsonify
 from entityEncoding_process import read_mapping, process_and_update_ner_tags, read_tokens_from_file, update_mapping
@@ -42,6 +42,7 @@ def anonymize_docx():
             process_and_update_ner_tags(input_path, output_path, updated_mapping, tokens)
             return jsonify({"status": "OK", "message": ""})
         except Exception as e:
+            traceback.print_exc(file=sys.stdout)
             return jsonify({"status": "ERROR", "message": str(e)})
 
     return jsonify({"status": "ERROR", "message": "Invalid file format or other error occurred."})

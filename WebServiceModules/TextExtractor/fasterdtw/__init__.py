@@ -1,0 +1,1 @@
+from .fasterdtw import fastdtw

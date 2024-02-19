@@ -10,6 +10,7 @@ RUN apt-get update
 
 # System stuff
 RUN apt-get install -y tar zip unzip curl wget mc locales
+RUN echo "en_US.UTF-8 UTF-8" | tee -a /etc/locale.gen
 RUN locale-gen en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
@@ -29,6 +30,11 @@ RUN /programs/python-3.11/bin/python3 -m venv /venv
 COPY --from=intermediate /saroj/WebServiceModules/ /modules/
 RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
 RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn
+
+# Setup Java
+#RUN apt-get install -y default-jre
+RUN apt-get install -y openjdk-17-jre-headless
+COPY --from=intermediate /saroj/Rules/ /Rules/
 
 # Setup site
 COPY --from=intermediate /saroj/WebService/web/ /site/

@@ -50,9 +50,19 @@ def most_frequent_item(lst):
 def read_conll_file(file_path):
     data = []
     with open(file_path, 'r', encoding='utf-8', errors="ignore") as file:
+        lastEmpty=False
         for line in file:
             tokens = line.strip().split('\t')
-            data.append(tokens)
+            if len(tokens)>1:
+                if lastEmpty:
+                    data.append([])
+                    lastEmpty=False
+                data.append(tokens)
+            else:
+                lastEmpty=True
+
+    data.append([])
+
     return data
 
 
@@ -86,13 +96,14 @@ def add_algorithm(files):
     previous_ner = ''
 
     for line in zip(*files):
-        ner = replace_underscore_and_empty(list(OrderedDict.fromkeys([sublist[-1].split('-')[-1] for sublist in line])))
-        ner_w = next((value for value in ner if value != "O"), "O")
 
         if is_empty(line[0]) or startswith_hashtag(line[0]):
             result_data.append(line[0])
             body = False
             continue
+
+        ner = replace_underscore_and_empty(list(OrderedDict.fromkeys([sublist[-1].split('-')[-1] for sublist in line])))
+        ner_w = next((value for value in ner if value != "O"), "O")
 
         if ner_w != 'O' and (not body or previous_ner != ner_w):
             result_data.append(line[0][:-1] + ["B-" + str(ner_w)])
