@@ -31,7 +31,7 @@ def anonymize_docx():
     original_docx_path = data["original"]
 
     input_type="docx"
-    valid_types={"txt":True,"docx":True}
+    valid_types={"txt":True,"docx":True,"html":True}
     if "type" in data:
         input_type = data["type"].lower()
         if input_type not in valid_types: input_type="docx"
