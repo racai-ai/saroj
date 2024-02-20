@@ -1,0 +1,71 @@
+1	Acesta	acesta	PRON	Pd3msr	Case=Acc,Nom|Gender=Masc|Number=Sing|Person=3|PronType=Dem	4	nsubj	_	_	14	20	_	_
+2	este	fi	AUX	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	4	cop	_	_	21	25	_	_
+3	un	un	DET	Timsr	Case=Acc,Nom|Gender=Masc|Number=Sing|PronType=Ind	4	det	_	_	26	28	_	_
+4	test	test	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	0	root	_	_	29	33	_	_
+5	in	in	ADP	Spsa	AdpType=Prep|Case=Acc	6	case	_	_	34	36	_	_
+6	format	format	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	4	nmod	_	_	37	43	_	_
+7	txt	txt	ADJ	Afpms-n	Definite=Ind|Degree=Pos|Gender=Masc|Number=Sing	6	amod	_	SpaceAfter=No	44	47	_	_
+8	.	.	PUNCT	PERIOD	_	4	punct	_	SpacesAfter=\s\n\s	47	48	_	_
+
+1	Maria	Maria	PROPN	Np	_	2	nsubj	_	_	94	99	_	GHEORGHE
+2	merge	merge	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	_	100	105	_	_
+3	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	4	case	_	_	106	108	_	_
+4	serviciu	serviciu	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	2	obl	_	SpaceAfter=No	109	117	_	_
+5	.	.	PUNCT	PERIOD	_	2	punct	_	_	117	118	_	_
+
+1	Se	sine	PRON	Px3--a--------w	Case=Acc|Person=3|PronType=Prs|Reflex=Yes|Strength=Weak	2	expl:pv	_	_	119	121	_	_
+2	întâlnește	întâlni	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	_	122	135	_	_
+3	cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	4	case	_	_	136	138	_	_
+4	Georgiana	Georgiana	PROPN	Np	_	2	obl	_	SpaceAfter=No	139	148	_	RADU
+5	.	.	PUNCT	PERIOD	_	2	punct	_	_	148	149	_	_
+
+1	Discută	Diaște	VERB	Vmp--sf	Gender=Fem|Number=Sing|VerbForm=Part	0	root	_	_	150	158	_	_
+2	despre	despre	ADP	Spsa	AdpType=Prep|Case=Acc	3	case	_	_	159	165	_	_
+3	treburile	treabă	NOUN	Ncfpry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Plur	1	obl	_	_	166	175	_	_
+4	din	din	ADP	Spsa	AdpType=Prep|Case=Acc	5	case	_	_	176	179	_	_
+5	ziua	zi	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	3	nmod	_	_	180	184	_	_
+6	curentă	curent	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	5	amod	_	SpaceAfter=No	185	193	_	_
+7	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\s\n\s	193	194	_	_
+
+1	Mai	mai	ADV	Rp	_	2	advmod	_	_	240	243	_	_
+2	târziu	târziu	ADV	Rgp	Degree=Pos	6	advmod	_	SpaceAfter=No	244	251	_	_
+3	,	,	PUNCT	COMMA	_	2	punct	_	_	251	252	_	_
+4	Maria	Maria	PROPN	Np	_	6	nsubj	_	_	253	258	_	_
+5	se	sine	PRON	Px3--a--------w	Case=Acc|Person=3|PronType=Prs|Reflex=Yes|Strength=Weak	6	expl:pv	_	_	259	261	_	_
+6	duce	duce	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	_	262	266	_	_
+7	acasă	acasă	ADV	Rgp	Degree=Pos	6	advmod	_	SpaceAfter=No	267	273	_	_
+8	.	.	PUNCT	PERIOD	_	6	punct	_	_	273	274	_	_
+
+1	Adresa	adresă	NOUN	Ncfsry	Case=Acc,Nom|Definite=Def|Gender=Fem|Number=Sing	6	nsubj	_	_	275	281	_	_
+2	ei	lui	DET	Ds3---s	Number[psor]=Sing|Person=3|Poss=Yes|PronType=Prs	1	det	_	_	282	284	_	_
+3	de	de	ADP	Spsa	AdpType=Prep|Case=Acc	4	case	_	_	285	287	_	_
+4	email	email	NOUN	Ncms-n	Definite=Ind|Gender=Masc|Number=Sing	1	nmod	_	_	288	293	_	_
+5	este	fi	AUX	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	6	cop	_	_	294	298	_	_
+6	maria@firma.com	maria@firma.co	VERB	Vmip1p	Mood=Ind|Number=Plur|Person=1|Tense=Pres|VerbForm=Fin	0	root	_	SpaceAfter=No	299	314	_	#############
+7	.	.	PUNCT	PERIOD	_	6	punct	_	SpacesAfter=\s\n\s	314	315	_	_
+
+1	CNP	CNP	PROPN	Np	_	5	nsubj	_	SpaceAfter=No	361	364	_	_
+2	-ul	-ul	DET	Tfmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing|PronType=Art|Variant=Short	1	det	_	_	364	367	_	_
+3	Mariei	Maria	PROPN	Npfsoy	Case=Dat,Gen|Definite=Def|Gender=Fem|Number=Sing	1	nmod	_	_	368	374	_	IOANEI
+4	este	fi	AUX	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	5	cop	_	_	375	379	_	_
+5	1818181818181	1818181818181	NUM	Mc-p-d	Number=Plur|NumForm=Digit|NumType=Card	0	root	_	SpaceAfter=No	380	393	_	==========
+6	.	.	PUNCT	PERIOD	_	5	punct	_	_	393	394	_	_
+
+1	Are	avea	VERB	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	_	_	395	398	_	_
+2	o	un	DET	Tifsr	Case=Acc,Nom|Gender=Fem|Number=Sing|PronType=Ind	3	det	_	_	399	400	_	_
+3	mașină	mașină	NOUN	Ncfsrn	Case=Acc,Nom|Definite=Ind|Gender=Fem|Number=Sing	1	obj	_	_	401	409	_	_
+4	roșie	roșu	ADJ	Afpfsrn	Case=Acc,Nom|Definite=Ind|Degree=Pos|Gender=Fem|Number=Sing	3	amod	_	_	410	416	_	_
+5	cu	cu	ADP	Spsa	AdpType=Prep|Case=Acc	6	case	_	_	417	419	_	_
+6	numărul	număr	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	3	nmod	_	_	420	428	_	_
+7	XY-89-XYZ	XY-89-XYZ	PROPN	Np	_	6	nmod	_	SpaceAfter=No	429	438	_	*************
+8	.	.	PUNCT	PERIOD	_	1	punct	_	SpacesAfter=\s\n\s	438	439	_	_
+
+1	Numărul	număr	NOUN	Ncmsry	Case=Acc,Nom|Definite=Def|Gender=Masc|Number=Sing	7	nsubj	_	_	486	494	_	_
+2	dosarului	dosar	NOUN	Ncmsoy	Case=Dat,Gen|Definite=Def|Gender=Masc|Number=Sing	1	nmod	_	_	495	504	_	_
+3	la	la	ADP	Spsa	AdpType=Prep|Case=Acc	4	case	_	_	505	507	_	_
+4	care	care	PRON	Pw3--r	Case=Acc,Nom|Person=3|PronType=Int,Rel	5	obl	_	_	508	512	_	_
+5	lucrează	lucra	VERB	Vmip3	Mood=Ind|Person=3|Tense=Pres|VerbForm=Fin	1	acl	_	_	513	522	_	_
+6	este	fi	AUX	Vmip3s	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	7	cop	_	_	523	527	_	_
+7	XYZ/9999/9999	XYZ/9999/9999	PROPN	Np	_	0	root	_	SpaceAfter=No	528	541	_	+++++++++++
+8	.	.	PUNCT	PERIOD	_	7	punct	_	SpacesAfter=\s\n	541	542	_	_
+
