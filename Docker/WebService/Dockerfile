@@ -22,8 +22,14 @@ RUN mkdir -p /programs ; mkdir -p /programs_build/python_build
 RUN cd /programs_build/python_build && wget https://github.com/python/cpython/archive/v3.11.4.tar.gz 
 RUN cd /programs_build/python_build && tar -zxf v3.11.4.tar.gz 
 RUN cd /programs_build/python_build/cpython-3.11.4 && ./configure --prefix=/programs/python-3.11 --enable-optimizations
-RUN cd /programs_build/python_build/cpython-3.11.4 && make
-RUN cd /programs_build/python_build/cpython-3.11.4 && make install
+RUN cd /programs_build/python_build/cpython-3.11.4 && make -j10
+RUN cd /programs_build/python_build/cpython-3.11.4 && make -j10 install
+
+RUN cd /programs_build/python_build && wget https://github.com/python/cpython/archive/v3.7.4.tar.gz 
+RUN cd /programs_build/python_build && tar -zxf v3.7.4.tar.gz 
+RUN cd /programs_build/python_build/cpython-3.7.4 && ./configure --prefix=/programs/python-3.7
+RUN cd /programs_build/python_build/cpython-3.7.4 && make -j10
+RUN cd /programs_build/python_build/cpython-3.7.4 && make -j10 install
 
 # Create venv
 RUN /programs/python-3.11/bin/python3 -m venv /venv
@@ -31,9 +37,16 @@ COPY --from=intermediate /saroj/WebServiceModules/ /modules/
 RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
 RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn
 
+RUN /programs/python-3.7/bin/python3 -m venv /venv-3.7
+RUN source /venv-3.7/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/RNER/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn spacy flask
+
+
 # Setup Java
 #RUN apt-get install -y default-jre
-RUN apt-get install -y openjdk-17-jre-headless
+#RUN apt-get install -y openjdk-17-jre-headless
+COPY openjdk-17-jre-headless_17.0.10+7-1~deb11u1_amd64.deb /
+RUN apt install -y /openjdk-17-jre-headless_17.0.10+7-1~deb11u1_amd64.deb
+
 COPY --from=intermediate /saroj/Rules/ /Rules/
 
 # Setup site
