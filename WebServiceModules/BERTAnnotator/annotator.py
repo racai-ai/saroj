@@ -1,3 +1,4 @@
+from bert import NERBertModel, ReaderbenchSmall
 import sys
 import os
 import re
@@ -9,9 +10,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import ExponentialLR
 from tqdm import tqdm
 from brat import read_txt_ann_folder, produce_ner_labels
-# This is the Romanian WordPiece new PyPI package, at version 1.0.2
-from rwpt import load_ro_pretrained_tokenizer
-from transformers import AutoModel, BatchEncoding
+from transformers import BatchEncoding, AutoModel
 from sklearn.metrics import classification_report
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.conllu_utils import CoNLLUFileAnnotator
@@ -58,33 +57,36 @@ class NERDataset(Dataset):
     def __getitem__(self, idx):
         return self._examples[idx]
 
+# Define type of dictionary of annotated examples
+ExampleDict = dict[str, list[tuple[str, int, int]]]
+
 
 class BERTEntityTagger(object):
     # Initial learning rate
-    _conf_lr = 1e-4
+    _conf_lr = 1e-5
     # Multiplying factor between epochs of the LR
     _conf_gamma_lr = 0.8
-    _conf_batch_size = 4
+    _conf_batch_size = 8
     _whitespace_rx = re.compile('\\s+')
     _sent_case_rx = re.compile('[A-ZȘȚĂÎÂ][a-zșțăîâ-]+')
 
-    def __init__(self, seq_len: int) -> None:
-        """Takes the BERT model input sequence length `seq_len`."""
+    def __init__(self, bert_model: NERBertModel) -> None:
+        """Takes the BERT model details and loads them up."""
 
-        self._model_max_length = seq_len
+        self._checkpoint_model = bert_model
+        self._model_max_length = bert_model._max_seq_len
         self._model_folder = \
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 'model'
             )
-        self._tokenizer = \
-            load_ro_pretrained_tokenizer(max_sequence_len=self._model_max_length)
+        self._tokenizer = bert_model.get_tokenizer()
 
     def _tokenize_with_offsets(self, text: str) -> list[tuple[int, int, int]]:
         """Assume that tokenizer does not insert/delete characters!
         `RoBertPreTrainedTokenizer` will only change some characters."""
 
-        tokens = self._tokenizer(text)
+        tokens = self._tokenizer(text, add_special_tokens=False)
         int_tokens_offsets = []
         coff = 0
 
@@ -108,8 +110,7 @@ class BERTEntityTagger(object):
 
         return int_tokens_offsets
 
-    def prepare_train_dev_data(self,
-                               examples: dict[str, list[tuple[str, int, int]]]) -> list[tuple]:
+    def tokenize_examples(self, examples: ExampleDict) -> list[tuple]:
         tokenized_labeled_examples = []
 
         for text in tqdm(examples, desc='Tokenization'):
@@ -205,25 +206,99 @@ class BERTEntityTagger(object):
 
         return torch.cat(bert_encodings, dim=0), torch.cat(token_labels, dim=0)
 
-    def train(self, train_folders: list[str], bert_checkpoint: str, epochs: int):
-        """`train_folders` contain all folders which have .txt/.ann file pairs."""
-        # 1. Get train/dev examples
+    def read_brat_folders(self, brat_folders: list[str]) -> ExampleDict:
         annotated_examples = {}
 
-        for folder in train_folders:
+        for folder in brat_folders:
             read_txt_ann_folder(ann_folder=folder,
                                 annotations=annotated_examples)
         # end for
+            
+        return annotated_examples
+    
+    def train_dev_split(self,
+                        annotated_examples: ExampleDict,
+                        split_perc: float = 0.03) -> tuple[ExampleDict, ExampleDict]:
+        ex_count = {}
+
+        for example in annotated_examples:
+            for label, soff, eoff in annotated_examples[example]:
+                if label not in ex_count:
+                    ex_count[label] = eoff - soff
+                else:
+                    ex_count[label] += eoff - soff
+                # end if
+            # end for
+        # end for
+        
+        random_examples = list(annotated_examples.keys())
+        shuffle(random_examples)
+        
+        dev_annotated_examples = {}
+        added_count = {}
+
+        def is_added_count_done() -> bool:
+            for label in ex_count:
+                if label not in added_count:
+                    return False
+                else:
+                    if added_count[label] < \
+                            split_perc * ex_count[label]:
+                        return False
+                    # end if
+                # end if
+            # end for
+            
+            return True
+        # end def
+
+        def can_add_count(entities: list[tuple[str, int, int]]) -> bool:
+            for label, _, _ in entities:
+                if label not in added_count or \
+                        added_count[label] < \
+                        split_perc * ex_count[label]:
+                    return True
+                # end if
+            # end for
+            
+            return False
+        # end def
+
+        while not is_added_count_done():
+            rex = random_examples.pop(0)
+
+            if can_add_count(entities=annotated_examples[rex]):
+                dev_annotated_examples[rex] = annotated_examples[rex]
+                
+                for label, soff, eoff in annotated_examples[rex]:
+                    if label not in added_count:
+                        added_count[label] = eoff - soff
+                    else:
+                        added_count[label] += eoff - soff
+                    # end if
+                # end for
+
+                del annotated_examples[rex]
+            # end if
+        # end while
+        
+        return annotated_examples, dev_annotated_examples
+
+    def train(self,
+              annotated_examples: ExampleDict,
+              epochs: int):
+        """`train_folders` contain all folders which have .txt/.ann file pairs."""
 
         self._ner_labels = produce_ner_labels(annotations=annotated_examples)
-        tokenized_examples = self.prepare_train_dev_data(
-            examples=annotated_examples)
+        train_examples, dev_examples = \
+            self.train_dev_split(annotated_examples, split_perc=0.03)
 
         # 2. Set up models
-        self._bertmodel = AutoModel.from_pretrained(bert_checkpoint)
+        self._bertmodel = self._checkpoint_model.get_model()
         self._bertmodel.to(device)
-        self._nermodel = NERAddOn(labels_dim=len(
-            self._ner_labels), bert_hidden_dim=self._model_max_length)
+        self._nermodel = NERAddOn(
+            labels_dim=len(self._ner_labels),
+            bert_hidden_dim=self._checkpoint_model.bert_hidden_size)
         self._loss_fn = nn.NLLLoss()
         both_models_parameters = []
 
@@ -234,21 +309,13 @@ class BERTEntityTagger(object):
         self._lr_scheduler = ExponentialLR(
             optimizer=self._optimizer, gamma=BERTEntityTagger._conf_gamma_lr, verbose=True)
 
-        # 3. Create data sets
-        shuffle(tokenized_examples)
-        dev_size = int(len(tokenized_examples) * 0.1)
-        dev_examples = tokenized_examples[0:dev_size]
-        train_examples = tokenized_examples[dev_size:]
-
-        train_dataset = NERDataset(examples=train_examples)
+        tokenized_train_examples = self.tokenize_examples(examples=train_examples)
+        train_dataset = NERDataset(examples=tokenized_train_examples)
         train_dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=BERTEntityTagger._conf_batch_size, shuffle=False, collate_fn=self._ner_collate_fn)
-        dev_dataloader = DataLoader(
-            dataset=NERDataset(examples=dev_examples),
-            batch_size=BERTEntityTagger._conf_batch_size, shuffle=False, collate_fn=self._ner_collate_fn)
 
-        best_acc = 0.
+        best_opt = 0.
 
         for ep in range(epochs):
             self._nermodel.train(True)
@@ -256,14 +323,17 @@ class BERTEntityTagger(object):
             self._do_one_epoch(epoch=ep + 1, dataloader=train_dataloader)
             self._nermodel.eval()
             self._bertmodel.eval()
-            ep_acc = self.eval(dataloader=dev_dataloader)
+            # Do not need the token accuracy
+            #ep_tok_acc = self.eval(annotated_examples=dev_examples)
+            self.eval(annotated_examples=dev_examples)
+            ep_chr_fone = self.test_eval(annotated_examples=dev_examples)
 
-            if ep_acc > best_acc:
+            if ep_chr_fone > best_opt:
                 print(file=sys.stderr)
                 print(
-                    f'Saving better BERTEntityTagger model with Acc = {ep_acc:.5f}',
+                    f'Saving better BERTEntityTagger model with char F1 = {ep_chr_fone:.5f}',
                     file=sys.stderr)
-                best_acc = ep_acc
+                best_opt = ep_chr_fone
                 self._save()
                 print(file=sys.stderr, flush=True)
             # end if
@@ -271,13 +341,6 @@ class BERTEntityTagger(object):
             self._lr_scheduler.step()
             train_dataset.reshuffle()
         # end for
-
-    def _get_abbrev_file(self) -> str:
-        abbr_file = os.path.join(self._model_folder,
-            'abbrev.txt')
-        print(
-            f'Abbreviations file is [{abbr_file}]', file=sys.stderr, flush=True)
-        return abbr_file
 
     def _get_neraddon_model_file(self) -> str:
         addon_path = os.path.join(self._model_folder,
@@ -328,8 +391,9 @@ class BERTEntityTagger(object):
             # end for
         # end with
 
-        self._nermodel = NERAddOn(labels_dim=len(
-            self._ner_labels), bert_hidden_dim=self._model_max_length)
+        self._nermodel = NERAddOn(
+            labels_dim=len(self._ner_labels),
+            bert_hidden_dim=self._checkpoint_model.bert_hidden_size)
         self._nermodel.load_state_dict(torch.load(
             self._get_neraddon_model_file(), map_location=device))
         # Put model into eval mode. It is used for inferencing.
@@ -337,8 +401,7 @@ class BERTEntityTagger(object):
 
     def tag_text(self, text: str) -> list[tuple[int, int, str]]:
         """Main method of this class: takes the input `text` and returns
-        a list of (start_offset, end_offset, label) tuples.
-        If `with_sentence_splitting is True`, do sentence splitting prior to NER."""
+        a list of (start_offset, end_offset, label) tuples."""
         
         tokens_offsets = self._tokenize_with_offsets(text)
         annotations = []
@@ -510,7 +573,11 @@ class BERTEntityTagger(object):
 
         return predicted_labels
 
-    def eval(self, dataloader: DataLoader) -> float:
+    def eval(self, annotated_examples: ExampleDict) -> float:
+        tokenized_examples = self.tokenize_examples(examples=annotated_examples)
+        dataloader = DataLoader(
+            dataset=NERDataset(examples=tokenized_examples),
+            batch_size=BERTEntityTagger._conf_batch_size, shuffle=False, collate_fn=self._ner_collate_fn)
         devset_target_labels = []
         devset_predicted_labels = []
 
@@ -589,21 +656,150 @@ class BERTEntityTagger(object):
                 f'  -> average epoch {epoch} loss: {average_epoch_loss:.5f}', file=sys.stderr, flush=True)
         # end if
 
-    def test_eval(self, test_folders: list[str]) -> None:
-        annotated_examples = {}
+    def test_eval(self, annotated_examples: ExampleDict) -> float:
+        labels_chars = {}
 
-        for folder in test_folders:
-            read_txt_ann_folder(ann_folder=folder,
-                                annotations=annotated_examples)
+        for line in tqdm(annotated_examples, desc='Test'):
+            line_predictions = self.tag_text(text=line)
+            line_annotations = annotated_examples[line]
+
+            # Label each char with the predicted label
+            char_pred_labels = []
+            
+            for i in range(len(line)):
+                i_pred_label = 'O'
+
+                for so, eo, lb in line_predictions:
+                    if i >= so and i < eo:
+                        if lb != 'O':
+                            i_pred_label = lb[2:]
+                        # end if
+                        
+                        break
+                    # end if
+                # end for
+                    
+                char_pred_labels.append(i_pred_label)
+            # end for
+            
+            # See if label on char, if not O, is correct or not
+            for i in range(len(char_pred_labels)):
+                c_label = char_pred_labels[i]
+
+                if c_label != 'O':
+                    c_found = False
+
+                    for gs_label, gs_soff, gs_eoff in line_annotations:
+                        if gs_soff <= i and i < gs_eoff:
+                            if c_label == gs_label:
+                                if gs_label not in labels_chars:
+                                    labels_chars[gs_label] = {
+                                        'correct_count': 0,
+                                        'wrong_count': 0,
+                                        'target_count': 0,
+                                        'example_count': 0
+                                    }
+                                # end if
+                                
+                                labels_chars[gs_label]['correct_count'] += 1
+                            else:
+                                if c_label not in labels_chars:
+                                    labels_chars[c_label] = {
+                                        'correct_count': 0,
+                                        'wrong_count': 0,
+                                        'target_count': 0,
+                                        'example_count': 0
+                                    }
+                                # end if
+                                
+                                labels_chars[c_label]['wrong_count'] += 1
+                            # end if
+                            
+                            c_found = True
+                            break
+                        # end if
+                    # end for GS annotations
+                        
+                    if not c_found:
+                        if c_label not in labels_chars:
+                            labels_chars[c_label] = {
+                                'correct_count': 0,
+                                'wrong_count': 0,
+                                'target_count': 0,
+                                'example_count': 0
+                            }
+                        # end if
+                        
+                        labels_chars[c_label]['wrong_count'] += 1
+                    # end if c was wrongly labeled outside any annotation
+                # end if not O label
+            # end for all labeled chars
+                                
+            # See what was the targeted count
+            for gs_label, gs_soff, gs_eoff in line_annotations:
+                if gs_label not in labels_chars:
+                    labels_chars[gs_label] = {
+                        'correct_count': 0,
+                        'wrong_count': 0,
+                        'target_count': 0,
+                        'example_count': 0
+                    }
+                # end if
+                
+                labels_chars[gs_label]['target_count'] += gs_eoff - gs_soff
+                labels_chars[gs_label]['example_count'] += 1
+            # end for
+        # end for all annotated lines
+
+        def _precrec(correct: int, incorrect: int, target: int) -> tuple[float, float, float]:
+            prec = 0
+            rec = 0
+            fone = 0
+
+            if correct + incorrect > 0:
+                prec = correct / (correct + incorrect)
+                prec *= 100
+            # end if
+                
+            if target > 0:
+                rec = correct / target
+                rec *= 100
+            # end if
+            
+            if prec + rec > 0:
+                fone = 2 * prec * rec / (prec + rec)
+            # end if
+                
+            return prec, rec, fone
+        # end def
+
+        total_cc = 0
+        total_wc = 0
+        total_tc = 0
+        total_exc = 0
+
+        print()
+        # Print results        
+        for label in sorted(labels_chars.keys()):
+            cc = labels_chars[label]['correct_count']
+            wc = labels_chars[label]['wrong_count']
+            tc = labels_chars[label]['target_count']
+            exc = labels_chars[label]['example_count']
+
+            total_cc += cc
+            total_wc += wc
+            total_tc += tc
+            total_exc += exc
+            
+            p, r, f1 = _precrec(correct=cc, incorrect=wc, target=tc)
+            print(
+                f'{label}: P = {p:.1f}%, R = {r:.1f}%, F1 = {f1:.1f}%, examples: {exc}')
         # end for
-
-        test_examples = self.prepare_train_dev_data(
-            examples=annotated_examples)
-        test_dataloader = DataLoader(
-            dataset=NERDataset(examples=test_examples),
-            batch_size=BERTEntityTagger._conf_batch_size, shuffle=False, collate_fn=self._ner_collate_fn)
         
-        self.eval(dataloader=test_dataloader)
+        p, r, f1 = _precrec(correct=total_cc, incorrect=total_wc, target=total_tc)
+        print(f'TOTAL: P = {p:.1f}%, R = {r:.1f}%, F1 = {f1:.1f}%, examples: {total_exc}')
+        print()
+        return f1
 
 
 class NeuralAnnotator(CoNLLUFileAnnotator):
@@ -616,30 +812,36 @@ class NeuralAnnotator(CoNLLUFileAnnotator):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print('Usage: python3 annotator.py -train <BERT checkpoint folder> <folder with .txt,.ann sub-folders>',
+    if len(sys.argv) != 4 and len(sys.argv) != 3:
+        print('Usage: python3 annotator.py -train [<CoRoLa BERT checkpoint folder>] <folder with .txt,.ann sub-folders>',
               file=sys.stderr, flush=True)
         print('Usage: python3 annotator.py -test <BERTAnnotator model folder> <folder with .txt,.ann sub-folders>',
               file=sys.stderr, flush=True)
         exit(1)
     # end if
     
-    bert_checkpoint_folder = ''
+    corola_checkpoint_folder = ''
     ner_model_folder = ''
+    data_folder = ''
 
     if sys.argv[1] == '-train':
-        bert_checkpoint_folder = sys.argv[2]
+        if len(sys.argv) == 4:
+            corola_checkpoint_folder = sys.argv[2]
+            data_folder = sys.argv[3]
+        else:
+            data_folder = sys.argv[2]
+        # end if
     elif sys.argv[1] == '-test':
         ner_model_folder = sys.argv[2]
+        data_folder = sys.argv[3]
     else:
-        print('Usage: python3 annotator.py -train <BERT checkpoint folder> <folder with .txt,.ann sub-folders>',
+        print('Usage: python3 annotator.py -train [<CoRoLa BERT checkpoint folder>] <folder with .txt,.ann sub-folders>',
               file=sys.stderr, flush=True)
         print('Usage: python3 annotator.py -test <BERTAnnotator model folder> <folder with .txt,.ann sub-folders>',
               file=sys.stderr, flush=True)
         exit(1)
     # end if
 
-    data_folder = sys.argv[3]
     input_folders = []
 
     for txtann_folder in os.listdir(data_folder):
@@ -647,7 +849,7 @@ if __name__ == '__main__':
 
         if os.path.isdir(txtann_folder):
             print(
-                f'Adding folder [{txtann_folder}] to the training set',
+                f'Adding folder [{txtann_folder}] to the input set',
                 file=sys.stderr, flush=True)
             input_folders.append(txtann_folder)
         # end if
@@ -658,21 +860,16 @@ if __name__ == '__main__':
         exit(1)
     # end if
 
-    nann = BERTEntityTagger(seq_len=256)
+    nann = BERTEntityTagger(bert_model=ReaderbenchSmall())
+    examples = nann.read_brat_folders(brat_folders=input_folders)
 
-    if bert_checkpoint_folder:
-        if os.path.isdir(bert_checkpoint_folder):
-            print(f'Fine-tuning checkpoint [{bert_checkpoint_folder}]', file=sys.stderr, flush=True)
-        else:
-            print(f'Error: BERT checkpoint [{bert_checkpoint_folder}] is not a folder', file=sys.stderr, flush=True)
-            exit(1)
-        # end if
+    print('Using ReaderbenchSmall BERT model', file=sys.stderr, flush=True)
 
-        nann.train(
-            train_folders=input_folders,
-            bert_checkpoint=bert_checkpoint_folder, epochs=5)
+    if sys.argv[1] == '-train':
+        nann.train(annotated_examples=examples, epochs=5)
     else:
         # We know that ner_model_folder is set here
         nann.load(model_folder=ner_model_folder)
-        nann.test_eval(test_folders=input_folders)
+        nann.eval(annotated_examples=examples)
+        nann.test_eval(annotated_examples=examples)
     # end if

@@ -4,20 +4,12 @@ import os
 from pathlib import Path
 
 
-# If the .txt files have \r\n, have this set to `True`
-_with_crlf = True
 _crlf_rx = re.compile('\r?\n$')
 
 
 def read_txt_ann_pair(txt_file: str, ann_file: str) -> dict[str, list[tuple[str, int, int]]]:
     """Reads in a pair of a text file and its BRAT annotation counterpart
     and returns the list of paragraphs along with start/end offsets of annotations."""
-
-    txt_lines = []
-
-    with open(txt_file, mode='r', encoding='utf-8') as f:
-        txt_lines = f.readlines()
-    # end with
 
     ann_offsets = []
 
@@ -56,30 +48,21 @@ def read_txt_ann_pair(txt_file: str, ann_file: str) -> dict[str, list[tuple[str,
     eol_offset = 0
     annotations = {}
 
-    # For each paragraph line
-    for p_line in txt_lines:
-        p_line = _crlf_rx.sub('', p_line)
-        # If you want to split p_line into sentences,
-        # add s_lines = list of sentences from p_line
-        s_lines = [p_line]
-
-        if not s_lines:
-            if _with_crlf:
-                # Skip over \r and \n
-                eol_offset += 2
+    with open(txt_file, mode='r', encoding='utf-8', newline='') as f:
+        # For each paragraph line
+        for p_line in f:
+            if p_line.endswith('\r\n'):
+                _with_crlf = True
             else:
-                # Skip over \n
-                eol_offset += 1
+                _with_crlf = False
             # end if
+            
+            p_line = _crlf_rx.sub('', p_line)
+            # If you want to split p_line into sentences,
+            # add s_lines = list of sentences from p_line
+            s_lines = [p_line]
 
-            crt_offset = eol_offset
-        # end if
-
-        # For each sentence line
-        for i, line in enumerate(s_lines):
-            eol_offset = crt_offset + len(line)
-
-            if i == len(s_lines) - 1:
+            if not s_lines:
                 if _with_crlf:
                     # Skip over \r and \n
                     eol_offset += 2
@@ -87,26 +70,43 @@ def read_txt_ann_pair(txt_file: str, ann_file: str) -> dict[str, list[tuple[str,
                     # Skip over \n
                     eol_offset += 1
                 # end if
+
+                crt_offset = eol_offset
             # end if
 
-            for lbl, soff, eoff, ent in ann_offsets:
-                if soff >= crt_offset and eoff <= eol_offset:
-                    line_soff = soff - crt_offset
-                    line_eoff = eoff - crt_offset
-                    
-                    assert line[line_soff:line_eoff] == ent
+            # For each sentence line
+            for i, line in enumerate(s_lines):
+                eol_offset = crt_offset + len(line)
 
-                    if line not in annotations:
-                        annotations[line] = []
+                if i == len(s_lines) - 1:
+                    if _with_crlf:
+                        # Skip over \r and \n
+                        eol_offset += 2
+                    else:
+                        # Skip over \n
+                        eol_offset += 1
                     # end if
-
-                    annotations[line].append((lbl, line_soff, line_eoff))
                 # end if
-            # end for
 
-            crt_offset = eol_offset
-        # end all sentence lines
-    # end for
+                for lbl, soff, eoff, ent in ann_offsets:
+                    if soff >= crt_offset and eoff <= eol_offset:
+                        line_soff = soff - crt_offset
+                        line_eoff = eoff - crt_offset
+                        
+                        assert line[line_soff:line_eoff] == ent
+
+                        if line not in annotations:
+                            annotations[line] = []
+                        # end if
+
+                        annotations[line].append((lbl, line_soff, line_eoff))
+                    # end if
+                # end for
+
+                crt_offset = eol_offset
+            # end all sentence lines
+        # end for
+    # end with
 
     return annotations
 
