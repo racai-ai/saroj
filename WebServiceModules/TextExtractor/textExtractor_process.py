@@ -421,6 +421,11 @@ def get_words_with_positions(docx_file, input_type):
                 txt+="</w:t></w:p>"
                 XMLparser.parser.Parse(txt)
         XMLparser.parser.Parse("</d>")
+    elif input_type == "html":
+        with open(docx_file, 'r', encoding='utf-8', errors='ignore') as fin: 
+            for line in fin:
+                txt=line.replace("<p>","<w:p><w:t>").replace("</p>","</w:t></w:p>")
+                XMLparser.parser.Parse(txt)
     else:
         with zipfile.ZipFile(docx_file, 'r') as zip_ref:
             with zip_ref.open("word/document.xml") as xml_file:

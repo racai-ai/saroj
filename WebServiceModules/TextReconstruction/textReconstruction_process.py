@@ -62,6 +62,11 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
             content_path = os.path.join(temp_file_path, "word", "document.xml")
             with open(content_path, "rb") as content_file:
                 docx_content = content_file.read()
+        elif input_type == "html":
+            with open(input_path, "r", encoding="utf-8", errors='ignore') as fin:
+                for line in fin:
+                    docx_content+=line.replace("<p>","<w:p><w:t>").replace("</p>","</w:t></w:p>")
+            docx_content=docx_content.encode("utf-8")
         else:
             docx_content="<d>"
             with open(input_path, "r", encoding="utf-8", errors='ignore') as fin:
@@ -111,6 +116,11 @@ def anonymize(conllup_list, input_path, output_path, save_internal_files=False, 
                         file_path = os.path.join(root, file)
                         arcname = os.path.relpath(file_path, temp_file_path)
                         new_zip_ref.write(file_path, arcname=arcname)
+        elif input_type == "html":
+            docx_content=docx_content.decode()
+            docx_content=docx_content.replace("<w:p><w:t>","<p>").replace("</w:t></w:p>","</p>")
+            with open(output_path, "w", encoding='utf-8') as fout:
+                fout.write(docx_content)
         else:
             docx_content=docx_content.decode()
             docx_content=docx_content.replace("<d>","").replace("</d>","").replace("<w:t>","").replace("</w:t>","").replace("<w:p>","").replace("</w:p>","")

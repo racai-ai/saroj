@@ -73,23 +73,32 @@ public class RulesProcessor {
 		out.setColumnsOrder(in.getColumns());*/
 		
 		for(Sentence s=in.readSentence(); s!=null; s=in.readSentence()) {
-			for(Token t : s.getTokens()) {
-				tokens.addLast(t);
-				if(tokens.size()>=max_length) {
+			int numSteps=0;
+			boolean wasMatch=true;
+			while(wasMatch && numSteps<3) {
+				wasMatch=false;
+				numSteps++;
+				
+				for(Token t : s.getTokens()) {
+					tokens.addLast(t);
+					if(tokens.size()>=max_length) {
+						MatchResult mr=match((Token[])tokens.toArray(new Token[] {}));
+						if(mr==null)tokens.removeFirst();
+						else {
+							wasMatch=true;
+							mr.matchRule.match((Token[])tokens.toArray(new Token[] {}), true);
+							for(int i=0;i<mr.numMatch;i++)tokens.removeFirst();
+						}
+					}
+				}
+				while(tokens.size()>0) {
 					MatchResult mr=match((Token[])tokens.toArray(new Token[] {}));
 					if(mr==null)tokens.removeFirst();
 					else {
+						wasMatch=true;
 						mr.matchRule.match((Token[])tokens.toArray(new Token[] {}), true);
 						for(int i=0;i<mr.numMatch;i++)tokens.removeFirst();
 					}
-				}
-			}
-			while(tokens.size()>0) {
-				MatchResult mr=match((Token[])tokens.toArray(new Token[] {}));
-				if(mr==null)tokens.removeFirst();
-				else {
-					mr.matchRule.match((Token[])tokens.toArray(new Token[] {}), true);
-					for(int i=0;i<mr.numMatch;i++)tokens.removeFirst();
 				}
 			}
 			
