@@ -3,6 +3,7 @@ import sys
 import argparse
 from flask import Flask, jsonify
 from annotator import NeuralAnnotator, BERTEntityTagger
+from bert import ReaderbenchSmall
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from lib.saroj.gunicorn import StandaloneApplication
 from lib.saroj.input_data import get_input_data
@@ -51,7 +52,7 @@ def annotate_conllu():
     global tagger
 
     if tagger is None:
-        tagger = BERTEntityTagger(seq_len=256)
+        tagger = BERTEntityTagger(bert_model=ReaderbenchSmall())
         tagger.load(model_folder=args.MODEL)
     # end if
 
