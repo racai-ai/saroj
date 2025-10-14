@@ -35,7 +35,17 @@ RUN cd /programs_build/python_build/cpython-3.7.4 && make -j10 install
 RUN /programs/python-3.11/bin/python3 -m venv /venv
 COPY --from=intermediate /saroj/WebServiceModules/ /modules/
 RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
-RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn
+RUN source /venv/bin/activate && pip3 install --upgrade pip 
+RUN source /venv/bin/activate && pip3 install -r /modules/TextExtractor/requirements.txt 
+RUN source /venv/bin/activate && pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
+#RUN source /venv/bin/activate && pip3 install torch --index-url https://download.pytorch.org/whl/cpu
+#RUN source /venv/bin/activate && pip3 install rwpt scikit-learn
+RUN source /venv/bin/activate && pip3 install tokenizers==0.15.2
+RUN source /venv/bin/activate && pip3 install safetensors==0.4.2
+RUN source /venv/bin/activate && pip3 install rwpt==1.0.2 
+RUN source /venv/bin/activate && pip3 install scikit-learn==1.4.0
+RUN source /venv/bin/activate && pip3 install spacy==3.7.4 
+RUN source /venv/bin/activate && pip3 install flask==3.0.2
 
 RUN /programs/python-3.7/bin/python3 -m venv /venv-3.7
 RUN source /venv-3.7/bin/activate && pip3 install --upgrade pip
