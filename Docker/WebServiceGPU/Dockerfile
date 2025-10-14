@@ -50,7 +50,8 @@ RUN source /venv/bin/activate && pip3 install flask==3.0.2
 RUN /programs/python-3.7/bin/python3 -m venv /venv-3.7
 RUN source /venv-3.7/bin/activate && pip3 install --upgrade pip
 RUN source /venv-3.7/bin/activate && pip3 install -r /modules/RNER/requirements.txt 
-RUN source /venv-3.7/bin/activate && pip3 install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+#RUN source /venv-3.7/bin/activate && pip3 install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+RUN source /venv-3.7/bin/activate && pip3 install torch==1.8.0+cu111 torchvision==0.9.0+cu111 torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html
 RUN source /venv-3.7/bin/activate && pip3 install tokenizers==0.15.1
 RUN source /venv-3.7/bin/activate && pip3 install safetensors==0.4.2
 RUN source /venv-3.7/bin/activate && pip3 install rwpt==1.0.2 
