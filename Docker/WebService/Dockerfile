@@ -38,7 +38,15 @@ RUN rm -f /bin/sh ; ln -s /bin/bash /bin/sh
 RUN source /venv/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/TextExtractor/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn
 
 RUN /programs/python-3.7/bin/python3 -m venv /venv-3.7
-RUN source /venv-3.7/bin/activate && pip3 install --upgrade pip &&  pip3 install -r /modules/RNER/requirements.txt && pip3 install torch --index-url https://download.pytorch.org/whl/cpu && pip3 install rwpt scikit-learn spacy flask
+RUN source /venv-3.7/bin/activate && pip3 install --upgrade pip
+RUN source /venv-3.7/bin/activate && pip3 install -r /modules/RNER/requirements.txt 
+RUN source /venv-3.7/bin/activate && pip3 install torch --index-url https://download.pytorch.org/whl/cpu 
+RUN source /venv-3.7/bin/activate && pip3 install tokenizers==0.15.1
+RUN source /venv-3.7/bin/activate && pip3 install safetensors==0.4.2
+RUN source /venv-3.7/bin/activate && pip3 install rwpt==1.0.2 
+RUN source /venv-3.7/bin/activate && pip3 install scikit-learn==1.0.2 
+RUN source /venv-3.7/bin/activate && pip3 install spacy==3.7.4 
+RUN source /venv-3.7/bin/activate && pip3 install flask==2.2.5
 
 
 # Setup Java
